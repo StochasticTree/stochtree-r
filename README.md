@@ -1,2 +1,3 @@
-# stochtree-r
-StochasticTree R package
+# StochasticTree R package
+
+
