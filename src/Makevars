@@ -1,19 +1,19 @@
 # package root
-PKGROOT=../..
+CPP_PKGROOT=stochtree-cpp
 
-PKG_CPPFLAGS= -I$(PKGROOT)/include -I$(PKGROOT)/dependencies/boost_math/include -I$(PKGROOT)/dependencies/eigen
+PKG_CPPFLAGS= -I$(CPP_PKGROOT)/include -I$(CPP_PKGROOT)/dependencies/boost_math/include -I$(CPP_PKGROOT)/dependencies/eigen
 
 OBJECTS = \
     data.o \
     predictor.o \
     sampler.o \
     cpp11.o \
-	$(PKGROOT)/src/container.o \
-    $(PKGROOT)/src/cutpoint_candidates.o \
-	$(PKGROOT)/src/data.o \
-	$(PKGROOT)/src/io.o \
-	$(PKGROOT)/src/json11.o \
-	$(PKGROOT)/src/leaf_model.o \
-	$(PKGROOT)/src/partition_tracker.o \
-	$(PKGROOT)/src/random_effects.o \
-	$(PKGROOT)/src/tree.o
+	$(CPP_PKGROOT)/src/container.o \
+    $(CPP_PKGROOT)/src/cutpoint_candidates.o \
+	$(CPP_PKGROOT)/src/data.o \
+	$(CPP_PKGROOT)/src/io.o \
+	$(CPP_PKGROOT)/src/json11.o \
+	$(CPP_PKGROOT)/src/leaf_model.o \
+	$(CPP_PKGROOT)/src/partition_tracker.o \
+	$(CPP_PKGROOT)/src/random_effects.o \
+	$(CPP_PKGROOT)/src/tree.o
