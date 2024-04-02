@@ -1,31 +1,41 @@
 #' Class that wraps a C++ random number generator (for reproducibility)
+#'
+#' @description
+#' Persists a C++ random number generator throughout an R session to 
+#' ensure reproducibility from a given random seed. If no seed is provided, 
+#' the C++ random number generator is initialized using `std::random_device`.
 
 CppRNG <- R6::R6Class(
     classname = "CppRNG",
     cloneable = FALSE,
     public = list(
         
-        #' @field data_ptr External pointer to a C++ std::mt19937 class
+        #' @field rng_ptr External pointer to a C++ std::mt19937 class
         rng_ptr = NULL,
 
         #' @description
         #' Create a new CppRNG object.
         #' @param random_seed (Optional) random seed for sampling
         #' @return A new `CppRNG` object.
-        initialize = function(random_seed) {
+        initialize = function(random_seed = -1) {
             self$rng_ptr <- rng_cpp(random_seed)
         }
     )
 )
 
 #' Class that defines and samples a forest model
+#'
+#' @description
+#' Hosts the C++ data structures needed to sample an ensemble of decision 
+#' trees, and exposes functionality to run a forest sampler 
+#' (using either MCMC or the grow-from-root algorithm).
 
 ForestModel <- R6::R6Class(
     classname = "ForestModel",
     cloneable = FALSE,
     public = list(
         
-        #' @field data_ptr External pointer to a C++ ForestTracker class
+        #' @field tracker_ptr External pointer to a C++ ForestTracker class
         tracker_ptr = NULL,
         
         #' @field tree_prior_ptr External pointer to a C++ TreePrior class
@@ -49,8 +59,17 @@ ForestModel <- R6::R6Class(
         
         #' @description
         #' Run a single iteration of the forest sampling algorithm (MCMC or GFR)
-        #' @param basis Updated matrix of bases used to define a leaf regression
-        #' @return 
+        #' @param forest_dataset Dataset used to sample the forest
+        #' @param residual Outcome used to sample the forest
+        #' @param forest_samples Container of forest samples
+        #' @param rng Wrapper around C++ random number generator
+        #' @param feature_types Vector specifying the type of all p covariates in `forest_dataset` (0 = numeric, 1 = ordered categorical, 2 = unordered categorical)
+        #' @param leaf_model_int Integer specifying the leaf model type (0 = constant leaf, 1 = univariate leaf regression, 2 = multivariate leaf regression)
+        #' @param leaf_model_scale Scale parameter used in the leaf node model (should be a q x q matrix where q is the dimensionality of the basis and is only >1 when `leaf_model_int = 2`)
+        #' @param variable_weights Vector specifying sampling probability for all p covariates in `forest_dataset`
+        #' @param global_scale Global variance parameter
+        #' @param cutpoint_grid_size (Optional) Number of unique cutpoints to consider (default: 500, currently only used when `GFR = TRUE`)
+        #' @param gfr (Optional) Whether or not the forest should be sampled using the "grow-from-root" (GFR) algorithm
         sample_one_iteration = function(forest_dataset, residual, forest_samples, rng, feature_types, 
                                         leaf_model_int, leaf_model_scale, variable_weights, 
                                         global_scale, cutpoint_grid_size = 500, gfr = T) {

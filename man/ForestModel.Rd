@@ -4,23 +4,16 @@
 \alias{ForestModel}
 \title{Class that defines and samples a forest model}
 \description{
-Class that defines and samples a forest model
-
-Class that defines and samples a forest model
+Hosts the C++ data structures needed to sample an ensemble of decision
+trees, and exposes functionality to run a forest sampler
+(using either MCMC or the grow-from-root algorithm).
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{data_ptr}}{External pointer to a C++ ForestTracker class}
+\item{\code{tracker_ptr}}{External pointer to a C++ ForestTracker class}
 
 \item{\code{tree_prior_ptr}}{External pointer to a C++ TreePrior class}
-}
-\if{html}{\out{</div>}}
-}
-\section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{data_ptr}}{External pointer to a C++ ForestTracker class}
 }
 \if{html}{\out{</div>}}
 }
@@ -95,7 +88,27 @@ Run a single iteration of the forest sampling algorithm (MCMC or GFR)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{basis}}{Updated matrix of bases used to define a leaf regression}
+\item{\code{forest_dataset}}{Dataset used to sample the forest}
+
+\item{\code{residual}}{Outcome used to sample the forest}
+
+\item{\code{forest_samples}}{Container of forest samples}
+
+\item{\code{rng}}{Wrapper around C++ random number generator}
+
+\item{\code{feature_types}}{Vector specifying the type of all p covariates in \code{forest_dataset} (0 = numeric, 1 = ordered categorical, 2 = unordered categorical)}
+
+\item{\code{leaf_model_int}}{Integer specifying the leaf model type (0 = constant leaf, 1 = univariate leaf regression, 2 = multivariate leaf regression)}
+
+\item{\code{leaf_model_scale}}{Scale parameter used in the leaf node model (should be a q x q matrix where q is the dimensionality of the basis and is only >1 when \code{leaf_model_int = 2})}
+
+\item{\code{variable_weights}}{Vector specifying sampling probability for all p covariates in \code{forest_dataset}}
+
+\item{\code{global_scale}}{Global variance parameter}
+
+\item{\code{cutpoint_grid_size}}{(Optional) Number of unique cutpoints to consider (default: 500, currently only used when \code{GFR = TRUE})}
+
+\item{\code{gfr}}{(Optional) Whether or not the forest should be sampled using the "grow-from-root" (GFR) algorithm}
 }
 \if{html}{\out{</div>}}
 }

@@ -2,11 +2,14 @@
 % Please edit documentation in R/data.R
 \name{Outcome}
 \alias{Outcome}
-\title{Outcome / partial residual used to sample a forest}
+\title{Outcome / partial residual used to sample an additive model.}
 \description{
-Outcome / partial residual used to sample a forest
-
-Outcome / partial residual used to sample a forest
+The outcome class is wrapper around a vector of (mutable)
+outcomes for ML tasks (supervised learning, causal inference).
+When an additive tree ensemble is sampled, the outcome used to
+sample a specific model term is the "partial residual" consisting
+of the outcome minus the predictions of every other model term
+(trees, group random effects, etc...).
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

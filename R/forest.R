@@ -1,4 +1,7 @@
 #' Class that stores draws from an random ensemble of decision trees
+#'
+#' @description
+#' Wrapper around a C++ container of tree ensembles
 
 ForestSamples <- R6::R6Class(
     classname = "ForestSamples",
@@ -31,8 +34,13 @@ ForestSamples <- R6::R6Class(
         #' @description
         #' Predict "raw" leaf values (without being multiplied by basis) for every tree ensemble on every sample in `forest_dataset`
         #' @param forest_dataset `ForestDataset` R class
-        #' @return matrix of predictions with as many rows as in forest_dataset 
-        #' and as many columns as samples in the `ForestContainer`
+        #' @return Array of predictions for each observation in `forest_dataset` and 
+        #' each sample in the `ForestSamples` class with each prediction having the 
+        #' dimensionality of the forests' leaf model. In the case of a constant leaf model 
+        #' or univariate leaf regression, this array is two-dimensional (number of observations, 
+        #' number of forest samples). In the case of a multivariate leaf regression, 
+        #' this array is three-dimension (number of observations, leaf model dimension, 
+        #' number of samples).
         predict_raw = function(forest_dataset) {
             stopifnot(!is.null(forest_dataset$data_ptr))
             # Unpack dimensions
@@ -53,8 +61,9 @@ ForestSamples <- R6::R6Class(
         }, 
         
         #' @description
-        #' Predict "raw" leaf values (without being multiplied by basis) for every tree ensemble on every sample in `forest_dataset`
+        #' Predict "raw" leaf values (without being multiplied by basis) for a specific forest on every sample in `forest_dataset`
         #' @param forest_dataset `ForestDataset` R class
+        #' @param forest_num Index of the forest sample within the container
         #' @return matrix of predictions with as many rows as in forest_dataset 
         #' and as many columns as samples in the `ForestContainer`
         predict_raw_single_forest = function(forest_dataset, forest_num) {

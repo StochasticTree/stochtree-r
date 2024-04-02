@@ -8,6 +8,13 @@
 \description{
 Stochastic tree ensembles (XBART and BART) for supervised learning and causal inference
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://stochastictree.github.io/stochtree-r/}
+}
+
+}
 \author{
 \strong{Maintainer}: Drew Herren \email{drewherrenopensource@gmail.com} (\href{https://orcid.org/0000-0003-4109-6611}{ORCID})
 

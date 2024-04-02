@@ -3,7 +3,7 @@
 #' @description
 #' A dataset consists of three matrices / vectors: covariates, 
 #' bases, and variance weights. Both the basis vector and variance 
-#' weights are optional
+#' weights are optional.
 
 ForestDataset <- R6::R6Class(
     classname = "ForestDataset",
@@ -33,7 +33,6 @@ ForestDataset <- R6::R6Class(
         #' @description
         #' Update basis matrix in a dataset
         #' @param basis Updated matrix of bases used to define a leaf regression
-        #' @return 
         update_basis = function(basis) {
             stopifnot(self$has_basis())
             forest_dataset_update_basis_cpp(self$data_ptr, basis)
@@ -76,7 +75,15 @@ ForestDataset <- R6::R6Class(
     )
 )
 
-#' Outcome / partial residual used to sample a forest
+#' Outcome / partial residual used to sample an additive model.
+#'
+#' @description
+#' The outcome class is wrapper around a vector of (mutable)
+#' outcomes for ML tasks (supervised learning, causal inference).
+#' When an additive tree ensemble is sampled, the outcome used to 
+#' sample a specific model term is the "partial residual" consisting 
+#' of the outcome minus the predictions of every other model term 
+#' (trees, group random effects, etc...).
 
 Outcome <- R6::R6Class(
     classname = "Outcome",
