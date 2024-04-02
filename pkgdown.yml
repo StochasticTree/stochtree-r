@@ -1,0 +1,11 @@
+pandoc: 3.1.11
+pkgdown: 2.0.7
+pkgdown_sha: ~
+articles:
+  Causal-Inference: Causal-Inference.html
+  Supervised-Learning: Supervised-Learning.html
+last_built: 2024-04-02T04:55Z
+urls:
+  reference: https://stochastictree.github.io/stochtree-r/reference
+  article: https://stochastictree.github.io/stochtree-r/articles
+
