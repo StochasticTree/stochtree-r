@@ -6,7 +6,7 @@
 \description{
 A dataset consists of three matrices / vectors: covariates,
 bases, and variance weights. Both the basis vector and variance
-weights are optional
+weights are optional.
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

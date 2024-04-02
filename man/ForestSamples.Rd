@@ -4,9 +4,7 @@
 \alias{ForestSamples}
 \title{Class that stores draws from an random ensemble of decision trees}
 \description{
-Class that stores draws from an random ensemble of decision trees
-
-Class that stores draws from an random ensemble of decision trees
+Wrapper around a C++ container of tree ensembles
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -87,15 +85,20 @@ Predict "raw" leaf values (without being multiplied by basis) for every tree ens
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-matrix of predictions with as many rows as in forest_dataset
-and as many columns as samples in the \code{ForestContainer}
+Array of predictions for each observation in \code{forest_dataset} and
+each sample in the \code{ForestSamples} class with each prediction having the
+dimensionality of the forests' leaf model. In the case of a constant leaf model
+or univariate leaf regression, this array is two-dimensional (number of observations,
+number of forest samples). In the case of a multivariate leaf regression,
+this array is three-dimension (number of observations, leaf model dimension,
+number of samples).
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ForestSamples-predict_raw_single_forest"></a>}}
 \if{latex}{\out{\hypertarget{method-ForestSamples-predict_raw_single_forest}{}}}
 \subsection{Method \code{predict_raw_single_forest()}}{
-Predict "raw" leaf values (without being multiplied by basis) for every tree ensemble on every sample in \code{forest_dataset}
+Predict "raw" leaf values (without being multiplied by basis) for a specific forest on every sample in \code{forest_dataset}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ForestSamples$predict_raw_single_forest(forest_dataset, forest_num)}\if{html}{\out{</div>}}
 }
@@ -104,6 +107,8 @@ Predict "raw" leaf values (without being multiplied by basis) for every tree ens
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{forest_dataset}}{\code{ForestDataset} R class}
+
+\item{\code{forest_num}}{Index of the forest sample within the container}
 }
 \if{html}{\out{</div>}}
 }

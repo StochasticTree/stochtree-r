@@ -4,21 +4,14 @@
 \alias{CppRNG}
 \title{Class that wraps a C++ random number generator (for reproducibility)}
 \description{
-Class that wraps a C++ random number generator (for reproducibility)
-
-Class that wraps a C++ random number generator (for reproducibility)
+Persists a C++ random number generator throughout an R session to
+ensure reproducibility from a given random seed. If no seed is provided,
+the C++ random number generator is initialized using \code{std::random_device}.
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{data_ptr}}{External pointer to a C++ std::mt19937 class}
-}
-\if{html}{\out{</div>}}
-}
-\section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{data_ptr}}{External pointer to a C++ std::mt19937 class}
+\item{\code{rng_ptr}}{External pointer to a C++ std::mt19937 class}
 }
 \if{html}{\out{</div>}}
 }
@@ -34,7 +27,7 @@ Class that wraps a C++ random number generator (for reproducibility)
 \subsection{Method \code{new()}}{
 Create a new CppRNG object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CppRNG$new(random_seed)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CppRNG$new(random_seed = -1)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
