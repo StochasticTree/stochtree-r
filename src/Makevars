@@ -12,7 +12,6 @@ OBJECTS = \
     $(CPP_PKGROOT)/src/cutpoint_candidates.o \
 	$(CPP_PKGROOT)/src/data.o \
 	$(CPP_PKGROOT)/src/io.o \
-	$(CPP_PKGROOT)/src/json11.o \
 	$(CPP_PKGROOT)/src/leaf_model.o \
 	$(CPP_PKGROOT)/src/partition_tracker.o \
 	$(CPP_PKGROOT)/src/random_effects.o \

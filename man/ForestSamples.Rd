@@ -20,6 +20,8 @@ Wrapper around a C++ container of tree ensembles
 \item \href{#method-ForestSamples-predict}{\code{ForestSamples$predict()}}
 \item \href{#method-ForestSamples-predict_raw}{\code{ForestSamples$predict_raw()}}
 \item \href{#method-ForestSamples-predict_raw_single_forest}{\code{ForestSamples$predict_raw_single_forest()}}
+\item \href{#method-ForestSamples-save_json}{\code{ForestSamples$save_json()}}
+\item \href{#method-ForestSamples-load_json}{\code{ForestSamples$load_json()}}
 \item \href{#method-ForestSamples-num_samples}{\code{ForestSamples$num_samples()}}
 }
 }
@@ -115,6 +117,42 @@ Predict "raw" leaf values (without being multiplied by basis) for a specific for
 \subsection{Returns}{
 matrix of predictions with as many rows as in forest_dataset
 and as many columns as samples in the \code{ForestContainer}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ForestSamples-save_json"></a>}}
+\if{latex}{\out{\hypertarget{method-ForestSamples-save_json}{}}}
+\subsection{Method \code{save_json()}}{
+Store the trees and metadata of \code{ForestDataset} class in a json file
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ForestSamples$save_json(json_filename)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{json_filename}}{Name of output json file (must end in ".json")}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ForestSamples-load_json"></a>}}
+\if{latex}{\out{\hypertarget{method-ForestSamples-load_json}{}}}
+\subsection{Method \code{load_json()}}{
+Load trees and metadata for an ensemble from a json file. Note that
+any trees and metadata already present in \code{ForestDataset} class will
+be overwritten.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ForestSamples$load_json(json_filename)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{json_filename}}{Name of model input json file (must end in ".json")}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
