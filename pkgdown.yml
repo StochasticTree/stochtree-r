@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   Causal-Inference: Causal-Inference.html
   Supervised-Learning: Supervised-Learning.html
-last_built: 2024-04-02T07:51Z
+last_built: 2024-04-04T07:38Z
 urls:
   reference: https://stochastictree.github.io/stochtree-r/reference
   article: https://stochastictree.github.io/stochtree-r/articles

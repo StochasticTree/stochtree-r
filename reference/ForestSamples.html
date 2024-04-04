@@ -66,6 +66,8 @@
 <li><p><a href="#method-ForestSamples-predict"><code>ForestSamples$predict()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-predict_raw"><code>ForestSamples$predict_raw()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-predict_raw_single_forest"><code>ForestSamples$predict_raw_single_forest()</code></a></p></li>
+<li><p><a href="#method-ForestSamples-save_json"><code>ForestSamples$save_json()</code></a></p></li>
+<li><p><a href="#method-ForestSamples-load_json"><code>ForestSamples$load_json()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-num_samples"><code>ForestSamples$num_samples()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-ForestSamples-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
@@ -167,10 +169,44 @@ number of samples).</p>
 and as many columns as samples in the <code>ForestContainer</code></p>
 </div>
 
+</div><p></p><hr><a id="method-ForestSamples-save_json"></a><div class="section">
+<h3 id="method-save-json-">Method <code>save_json()</code><a class="anchor" aria-label="anchor" href="#method-save-json-"></a></h3>
+<p>Store the trees and metadata of <code>ForestDataset</code> class in a json file</p><div class="section">
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">save_json</span><span class="op">(</span><span class="va">json_filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>json_filename</code></dt>
+<dd><p>Name of output json file (must end in ".json")</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-ForestSamples-load_json"></a><div class="section">
+<h3 id="method-load-json-">Method <code>load_json()</code><a class="anchor" aria-label="anchor" href="#method-load-json-"></a></h3>
+<p>Load trees and metadata for an ensemble from a json file. Note that
+any trees and metadata already present in <code>ForestDataset</code> class will
+be overwritten.</p><div class="section">
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">load_json</span><span class="op">(</span><span class="va">json_filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>json_filename</code></dt>
+<dd><p>Name of model input json file (must end in ".json")</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
 </div><p></p><hr><a id="method-ForestSamples-num_samples"></a><div class="section">
 <h3 id="method-num-samples-">Method <code>num_samples()</code><a class="anchor" aria-label="anchor" href="#method-num-samples-"></a></h3>
 <p>Return number of samples in a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">num_samples</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
