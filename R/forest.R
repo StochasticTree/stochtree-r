@@ -78,6 +78,22 @@ ForestSamples <- R6::R6Class(
         }, 
         
         #' @description
+        #' Store the trees and metadata of `ForestDataset` class in a json file
+        #' @param json_filename Name of output json file (must end in ".json")
+        save_json = function(json_filename) {
+            invisible(json_save_forest_container_cpp(self$forest_container_ptr, json_filename))
+        }, 
+        
+        #' @description
+        #' Load trees and metadata for an ensemble from a json file. Note that 
+        #' any trees and metadata already present in `ForestDataset` class will 
+        #' be overwritten.
+        #' @param json_filename Name of model input json file (must end in ".json")
+        load_json = function(json_filename) {
+            invisible(json_load_forest_container_cpp(self$forest_container_ptr, json_filename))
+        }, 
+        
+        #' @description
         #' Return number of samples in a `ForestContainer` object
         #' @return Sample count
         num_samples = function() {
