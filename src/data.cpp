@@ -2,7 +2,6 @@
 #include <stochtree/data.h>
 #include <memory>
 #include <vector>
-using namespace cpp11;
 
 [[cpp11::register]]
 cpp11::external_pointer<StochTree::ForestDataset> create_forest_dataset_cpp() {

@@ -8,7 +8,6 @@
 #include <stochtree/variance_model.h>
 #include <memory>
 #include <vector>
-using namespace cpp11;
 
 [[cpp11::register]]
 void sample_gfr_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestDataset> data, 
