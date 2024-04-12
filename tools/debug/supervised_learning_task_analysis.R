@@ -280,7 +280,7 @@ wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
     plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test, 
     plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test, 
     plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test, 
-    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = plm_data$W_train, 
+    num_gfr = 0, num_burnin = 4000, num_mcmc_retained = 2000, W_train = plm_data$W_train, 
     W_test = plm_data$W_test, random_seed = NULL
 )
 gc()
@@ -315,18 +315,18 @@ mcmc_stochtree_results <- stochtree_analysis(
 )
 gc()
 wrapped_bart_warmstart_stochtree_results <- wrapped_bart_stochtree_analysis(
-    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test, 
-    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test, 
-    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test, 
-    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = plm_data$W_train, 
+    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
+    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
+    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test,
+    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = plm_data$W_train,
     W_test = plm_data$W_test, random_seed = NULL
 )
 gc()
 wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
-    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test, 
-    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test, 
-    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test, 
-    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = plm_data$W_train, 
+    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
+    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
+    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test,
+    num_gfr = 0, num_burnin = 4000, num_mcmc_retained = 2000, W_train = plm_data$W_train,
     W_test = plm_data$W_test, random_seed = NULL
 )
 gc()
@@ -362,18 +362,18 @@ mcmc_stochtree_results <- stochtree_analysis(
 )
 gc()
 wrapped_bart_warmstart_stochtree_results <- wrapped_bart_stochtree_analysis(
-    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test, 
-    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test, 
-    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test, 
-    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = stpfn_data$W_train, 
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = stpfn_data$W_train,
     W_test = stpfn_data$W_test, random_seed = NULL
 )
 gc()
 wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
-    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test, 
-    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test, 
-    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test, 
-    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train, 
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 0, num_burnin = 4000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train,
     W_test = stpfn_data$W_test, random_seed = NULL
 )
 gc()
@@ -408,18 +408,18 @@ mcmc_stochtree_results <- stochtree_analysis(
 )
 gc()
 wrapped_bart_warmstart_stochtree_results <- wrapped_bart_stochtree_analysis(
-    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test, 
-    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test, 
-    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test, 
-    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = stpfn_data$W_train, 
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = stpfn_data$W_train,
     W_test = stpfn_data$W_test, random_seed = NULL
 )
 gc()
 wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
-    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test, 
-    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test, 
-    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test, 
-    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train, 
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 0, num_burnin = 4000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train,
     W_test = stpfn_data$W_test, random_seed = NULL
 )
 gc()

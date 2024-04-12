@@ -64,10 +64,10 @@ BART <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
     resid_train <- (y_train-y_bar_train)/y_std_train
 
     # Calibrate priors for sigma^2 and tau
-    sigma2hat <- mean(residuals(lm(resid_train ~ X_train))^2)
+    sigma2hat <- (sigma(lm(resid_train ~ X_train)))^2
+    quantile_cutoff <- 0.9
     if (is.null(lambda)) {
-        objfun <- function(lambda) (0.1-stats::pgamma(1/sigma2hat, shape = nu, rate = nu*lambda))^2
-        lambda <- optim(c(1.), objfun, lower = 0.01, upper = Inf, method = "L-BFGS-B")$par
+        lambda <- (sigma2hat*qgamma(1-quantile_cutoff,nu))/nu
     }
     if (is.null(sigma2_init)) sigma2_init <- sigma2hat
     if (is.null(b_leaf)) b_leaf <- var(resid_train)/(2*num_trees)
@@ -167,8 +167,19 @@ BART <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
     if (sample_tau) tau_samples <- leaf_scale_samples
     
     # Return results as a list
+    model_params <- list(
+        "sigma2_init" = sigma2_init, 
+        "nu" = nu,
+        "lambda" = lambda, 
+        "tau_init" = tau_init,
+        "a" = a_leaf, 
+        "b" = b_leaf,
+        "outcome_mean" = y_bar_train,
+        "outcome_scale" = y_std_train
+    )
     result <- list(
         "forests" = forest_samples, 
+        "model_params" = model_params, 
         "yhat_train" = yhat_train
     )
     if (has_test) result[["yhat_test"]] = yhat_test
