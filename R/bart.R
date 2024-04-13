@@ -55,6 +55,9 @@ BART <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
         y_train <- as.matrix(y_train)
     }
     
+    # Determine whether a basis vector is provided
+    has_basis = !is.null(W_train)
+    
     # Determine whether a test set is provided
     has_test = !is.null(X_test)
 
@@ -64,7 +67,8 @@ BART <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
     resid_train <- (y_train-y_bar_train)/y_std_train
 
     # Calibrate priors for sigma^2 and tau
-    sigma2hat <- (sigma(lm(resid_train ~ X_train)))^2
+    reg_basis <- cbind(W_train, X_train)
+    sigma2hat <- (sigma(lm(resid_train~reg_basis)))^2
     quantile_cutoff <- 0.9
     if (is.null(lambda)) {
         lambda <- (sigma2hat*qgamma(1-quantile_cutoff,nu))/nu

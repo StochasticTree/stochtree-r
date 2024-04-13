@@ -197,13 +197,14 @@ wrapped_bart_stochtree_analysis <- function(resid_train, resid_test, y_train, y_
     # Start timer
     start_time <- proc.time()
     
-    # Run wbart from the BART (add W to X if W is present, since wbart doesn't support leaf regression)
+    # Run BART
     leaf_model = ifelse(is.null(W_train), 0, 1)
     bart_model <- BART(
         X_train = X_train, W_train = W_train, y_train = y_train, 
         X_test = X_test, W_test = W_test, leaf_model = leaf_model, 
         num_trees = 200, num_gfr = num_gfr, num_burnin = num_burnin, 
         num_mcmc = num_mcmc_retained, sample_sigma = T, sample_tau = F, 
+        # random_seed = 1234, nu = 16
         random_seed = 1234
     )
     
@@ -280,7 +281,7 @@ wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
     plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test, 
     plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test, 
     plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test, 
-    num_gfr = 0, num_burnin = 4000, num_mcmc_retained = 2000, W_train = plm_data$W_train, 
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = plm_data$W_train, 
     W_test = plm_data$W_test, random_seed = NULL
 )
 gc()
@@ -326,7 +327,7 @@ wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
     plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
     plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
     plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test,
-    num_gfr = 0, num_burnin = 4000, num_mcmc_retained = 2000, W_train = plm_data$W_train,
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = plm_data$W_train,
     W_test = plm_data$W_test, random_seed = NULL
 )
 gc()
@@ -373,7 +374,7 @@ wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
     stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
     stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
     stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
-    num_gfr = 0, num_burnin = 4000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train,
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train,
     W_test = stpfn_data$W_test, random_seed = NULL
 )
 gc()
@@ -419,7 +420,7 @@ wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
     stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
     stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
     stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
-    num_gfr = 0, num_burnin = 4000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train,
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train,
     W_test = stpfn_data$W_test, random_seed = NULL
 )
 gc()
