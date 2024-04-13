@@ -172,7 +172,9 @@ mod1 <- wrapped_bart_warmstart_stochtree_results$model
 mod2 <- wrapped_bart_mcmc_stochtree_results$model
 mod3 <- mcmc_wbart_results$model
 
+# Plot results
 sim_iter <- 20
-plot(mod1$yhat_train[,sim_iter], sim_data$y_train)
-plot(mod2$yhat_train[,sim_iter], sim_data$y_train)
-plot(mod3$yhat.train[sim_iter,], sim_data$y_train)
+par(mfrow = c(1,3))
+plot(mod1$yhat_train[,sim_iter], sim_data$y_train, main = "Scenario 1: StochTree Warmstart", xlab = "Predicted", ylab = "Actual"); abline(0,1,col="red",lty=3,lwd=2.5)
+plot(mod2$yhat_train[,sim_iter], sim_data$y_train, main = "Scenario 2: StochTree MCMC", xlab = "Predicted", ylab = "Actual"); abline(0,1,col="red",lty=3,lwd=2.5)
+plot(mod3$yhat.train[sim_iter,], sim_data$y_train, main = "Scenario 3: BART MCMC", xlab = "Predicted", ylab = "Actual"); abline(0,1,col="red",lty=3,lwd=2.5)
