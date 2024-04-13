@@ -1,32 +1,64 @@
-#' Run the BART algorithm for supervised learning
+#' Run the BART algorithm for supervised learning. 
 #'
-#' @param X_train 
-#' @param W_train 
-#' @param y_train 
-#' @param X_test 
-#' @param W_test 
-#' @param feature_types 
-#' @param variable_weights 
-#' @param tau_init 
-#' @param alpha 
-#' @param beta 
-#' @param min_samples_leaf 
-#' @param leaf_model 
-#' @param nu 
-#' @param lambda 
-#' @param a_leaf 
-#' @param b_leaf 
-#' @param sigma2_init 
-#' @param num_trees 
-#' @param num_gfr 
-#' @param num_burnin 
-#' @param num_mcmc 
-#' @param sample_sigma 
-#' @param sample_tau 
-#' @param random_seed 
+#' @param X_train Covariates used to split trees in the ensemble.
+#' @param W_train (Optional) Bases used to define a regression model `y ~ W` in 
+#' each leaf of each regression tree. By default, BART assumes constant leaf node 
+#' parameters, implicitly regressing on a constant basis of ones (i.e. `y ~ 1`).
+#' @param y_train Outcome to be modeled by the ensemble.
+#' @param X_test (Optional) Test set of covariates used to define "out of sample" evaluation data.
+#' @param W_test (Optional) Test set of bases used to define "out of sample" evaluation data. 
+#' While a test set is optional, the structure of any provided test set must match that 
+#' of the training set (i.e. if both X_train and W_train are provided, then a test set must 
+#' consist of X_test and W_test with the same number of columns).
+#' @param feature_types Vector of length `ncol(X_train)` indicating the "type" of each covariates 
+#' (0 = numeric, 1 = ordered categorical, 2 = unordered categorical). Default: `rep(0,ncol(X_train))`.
+#' @param variable_weights Vector of length `ncol(X_train)` indicating a "weight" placed on each 
+#' variable for sampling purposes. Default: `rep(1/ncol(X_train),ncol(X_train))`.
+#' @param cutpoint_grid_size Maximum size of the "grid" of potential cutpoints to consider. Default: 100.
+#' @param tau_init Starting value of leaf node scale parameter. Calibrated internally as 1/num_trees if not set here.
+#' @param alpha Prior probability of splitting for a tree of depth 0. Tree split prior combines `alpha` and `beta` via `alpha*(1+node_depth)^-beta`.
+#' @param beta Exponent that decreases split probabilities for nodes of depth > 0. Tree split prior combines `alpha` and `beta` via `alpha*(1+node_depth)^-beta`.
+#' @param min_samples_leaf Minimum allowable size of a leaf, in terms of training samples.
+#' @param leaf_model Integer indicating leaf model, where 0 = constant with Gaussian prior, 1 = univariate regression with Gaussian prior, 2 = multivariate regression with Gaussian prior. W_train will be ignored if this is set to 0. Default: 0.
+#' @param nu Shape parameter in the `IG(nu, nu*lambda)` global error variance model. Default: 3.
+#' @param lambda Component of the scale parameter in the `IG(nu, nu*lambda)` global error variance prior. If not specified, this is calibrated as in Sparapani et al (2021).
+#' @param a_leaf Shape parameter in the `IG(a_leaf, b_leaf)` leaf node parameter variance model. Default: 3.
+#' @param b_leaf Scale parameter in the `IG(a_leaf, b_leaf)` leaf node parameter variance model. Calibrated internally as 0.5/num_trees if not set here.
+#' @param q Quantile used to calibrated `lambda` as in Sparapani et al (2021). Default: 0.9.
+#' @param sigma2_init Starting value of global variance parameter. Calibrated internally as in Sparapani et al (2021) if not set here.
+#' @param num_trees Number of trees in the ensemble. Default: 100.
+#' @param num_gfr Number of "warm-start" iterations run using the grow-from-root algorithm (He and Hahn, 2021). Default: 5.
+#' @param num_burnin Number of "burn-in" iterations of the MCMC sampler. Default: 0.
+#' @param num_mcmc Number of "retained" iterations of the MCMC sampler. Default: 100.
+#' @param sample_sigma Whether or not to update the `sigma^2` global error variance parameter based on `IG(nu, nu*lambda)`. Default: T.
+#' @param sample_tau Whether or not to update the `tau` leaf scale variance parameter based on `IG(a_leaf, b_leaf)`. Cannot be set to true if `leaf_model=2`. Default: T.
+#' @param random_seed Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to `std::random_device`.
 #'
 #' @return An instance of the `BARTModel` class, sampled according to the provided parameters
 #' @export
+#'
+#' @examples
+#' n <- 100
+#' p <- 5
+#' X <- matrix(runif(n*p), ncol = p)
+#' f_XW <- (
+#'     ((0 <= X[,1]) & (0.25 > X[,1])) * (-7.5) + 
+#'     ((0.25 <= X[,1]) & (0.5 > X[,1])) * (-2.5) + 
+#'     ((0.5 <= X[,1]) & (0.75 > X[,1])) * (2.5) + 
+#'     ((0.75 <= X[,1]) & (1 > X[,1])) * (7.5)
+#' )
+#' noise_sd <- 1
+#' y <- f_XW + rnorm(n, 0, noise_sd)
+#' test_set_pct <- 0.2
+#' n_test <- round(test_set_pct*n)
+#' n_train <- n - n_test
+#' test_inds <- sort(sample(1:n, n_test, replace = F))
+#' train_inds <- (1:n)[!((1:n) %in% test_inds)]
+#' X_test <- X[test_inds,]
+#' X_train <- X[train_inds,]
+#' y_test <- y[test_inds]
+#' y_train <- y[train_inds]
+#' bart_model <- BART(X_train = X_train, y_train = y_train, X_test = X_test, leaf_model = 0)
 BART <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL, 
                  feature_types = rep(0, ncol(X_train)), 
                  variable_weights = rep(1/ncol(X_train), ncol(X_train)), 
