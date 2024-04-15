@@ -58,7 +58,7 @@
 #' X_train <- X[train_inds,]
 #' y_test <- y[test_inds]
 #' y_train <- y[train_inds]
-#' bart_model <- BART(X_train = X_train, y_train = y_train, X_test = X_test, leaf_model = 0)
+#' bart_model <- bart(X_train = X_train, y_train = y_train, X_test = X_test, leaf_model = 0)
 bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL, 
                  feature_types = rep(0, ncol(X_train)), 
                  variable_weights = rep(1/ncol(X_train), ncol(X_train)), 
@@ -224,3 +224,5 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
     
     return(result)
 }
+
+
