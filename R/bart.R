@@ -34,7 +34,7 @@
 #' @param sample_tau Whether or not to update the `tau` leaf scale variance parameter based on `IG(a_leaf, b_leaf)`. Cannot be set to true if `leaf_model=2`. Default: T.
 #' @param random_seed Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to `std::random_device`.
 #'
-#' @return An instance of the `BARTModel` class, sampled according to the provided parameters
+#' @return List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).
 #' @export
 #'
 #' @examples

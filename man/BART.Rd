@@ -94,7 +94,7 @@ variable for sampling purposes. Default: \code{rep(1/ncol(X_train),ncol(X_train)
 \item{random_seed}{Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to \code{std::random_device}.}
 }
 \value{
-An instance of the \code{BARTModel} class, sampled according to the provided parameters
+List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).
 }
 \description{
 Run the BART algorithm for supervised learning.
