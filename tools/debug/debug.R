@@ -82,7 +82,7 @@ wrapped_bart_stochtree_analysis <- function(resid_train, resid_test, y_train, y_
     
     # Run BART
     leaf_model = ifelse(is.null(W_train), 0, 1)
-    bart_model <- BART(
+    bart_model <- bart(
         X_train = X_train, W_train = W_train, y_train = y_train, 
         X_test = X_test, W_test = W_test, leaf_model = leaf_model, 
         num_trees = 200, num_gfr = num_gfr, num_burnin = num_burnin, 
