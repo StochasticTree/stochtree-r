@@ -15,10 +15,10 @@
 #' @param variable_weights Vector of length `ncol(X_train)` indicating a "weight" placed on each 
 #' variable for sampling purposes. Default: `rep(1/ncol(X_train),ncol(X_train))`.
 #' @param cutpoint_grid_size Maximum size of the "grid" of potential cutpoints to consider. Default: 100.
-#' @param tau_init Starting value of leaf node scale parameter. Calibrated internally as 1/num_trees if not set here.
+#' @param tau_init Starting value of leaf node scale parameter. Calibrated internally as `1/num_trees` if not set here.
 #' @param alpha Prior probability of splitting for a tree of depth 0. Tree split prior combines `alpha` and `beta` via `alpha*(1+node_depth)^-beta`.
 #' @param beta Exponent that decreases split probabilities for nodes of depth > 0. Tree split prior combines `alpha` and `beta` via `alpha*(1+node_depth)^-beta`.
-#' @param min_samples_leaf Minimum allowable size of a leaf, in terms of training samples.
+#' @param min_samples_leaf Minimum allowable size of a leaf, in terms of training samples. Default: 5.
 #' @param leaf_model Integer indicating leaf model, where 0 = constant with Gaussian prior, 1 = univariate regression with Gaussian prior, 2 = multivariate regression with Gaussian prior. W_train will be ignored if this is set to 0. Default: 0.
 #' @param nu Shape parameter in the `IG(nu, nu*lambda)` global error variance model. Default: 3.
 #' @param lambda Component of the scale parameter in the `IG(nu, nu*lambda)` global error variance prior. If not specified, this is calibrated as in Sparapani et al (2021).
@@ -59,6 +59,8 @@
 #' y_test <- y[test_inds]
 #' y_train <- y[train_inds]
 #' bart_model <- bart(X_train = X_train, y_train = y_train, X_test = X_test, leaf_model = 0)
+#' # plot(rowMeans(bart_model$yhat_test), y_test, xlab = "predicted", ylab = "actual")
+#' # abline(0,1,col="red",lty=3,lwd=3)
 bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL, 
                  feature_types = rep(0, ncol(X_train)), 
                  variable_weights = rep(1/ncol(X_train), ncol(X_train)), 
@@ -133,10 +135,10 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
     # Data
     if (leaf_regression) {
         forest_dataset_train <- createForestDataset(X_train, W_train)
-        forest_dataset_test <- createForestDataset(X_test, W_test)
+        if (has_test) forest_dataset_test <- createForestDataset(X_test, W_test)
     } else {
         forest_dataset_train <- createForestDataset(X_train)
-        forest_dataset_test <- createForestDataset(X_test)
+        if (has_test) forest_dataset_test <- createForestDataset(X_test)
     }
     outcome_train <- createOutcome(resid_train)
     
@@ -176,19 +178,21 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
     }
     
     # Run MCMC
-    for (i in (num_gfr+1):num_samples) {
-        forest_model$sample_one_iteration(
-            forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
-            leaf_model, current_leaf_scale, variable_weights, 
-            current_sigma2, cutpoint_grid_size, gfr = F
-        )
-        if (sample_sigma) {
-            global_var_samples[i] <- sample_sigma2_one_iteration(outcome_train, rng, nu, lambda)
-            current_sigma2 <- global_var_samples[i]
-        }
-        if (sample_tau) {
-            leaf_scale_samples[i] <- sample_tau_one_iteration(forest_samples, rng, a_leaf, b_leaf, i-1)
-            current_leaf_scale <- as.matrix(leaf_scale_samples[i])
+    if (num_burnin + num_mcmc > 0) {
+        for (i in (num_gfr+1):num_samples) {
+            forest_model$sample_one_iteration(
+                forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
+                leaf_model, current_leaf_scale, variable_weights, 
+                current_sigma2, cutpoint_grid_size, gfr = F
+            )
+            if (sample_sigma) {
+                global_var_samples[i] <- sample_sigma2_one_iteration(outcome_train, rng, nu, lambda)
+                current_sigma2 <- global_var_samples[i]
+            }
+            if (sample_tau) {
+                leaf_scale_samples[i] <- sample_tau_one_iteration(forest_samples, rng, a_leaf, b_leaf, i-1)
+                current_leaf_scale <- as.matrix(leaf_scale_samples[i])
+            }
         }
     }
     
@@ -199,7 +203,7 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
     # Global error variance
     if (sample_sigma) sigma2_samples <- global_var_samples*(y_std_train^2)
     
-    # Global error variance
+    # Leaf parameter variance
     if (sample_tau) tau_samples <- leaf_scale_samples
     
     # Return results as a list

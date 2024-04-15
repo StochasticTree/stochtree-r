@@ -57,7 +57,7 @@ variable for sampling purposes. Default: \code{rep(1/ncol(X_train),ncol(X_train)
 
 \item{cutpoint_grid_size}{Maximum size of the "grid" of potential cutpoints to consider. Default: 100.}
 
-\item{tau_init}{Starting value of leaf node scale parameter. Calibrated internally as 1/num_trees if not set here.}
+\item{tau_init}{Starting value of leaf node scale parameter. Calibrated internally as \code{1/num_trees} if not set here.}
 
 \item{alpha}{Prior probability of splitting for a tree of depth 0. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}.}
 
@@ -121,4 +121,6 @@ X_train <- X[train_inds,]
 y_test <- y[test_inds]
 y_train <- y[train_inds]
 bart_model <- bart(X_train = X_train, y_train = y_train, X_test = X_test, leaf_model = 0)
+plot(rowMeans(bart_model$yhat_test), y_test, xlab = "predicted", ylab = "actual")
+abline(0,1,col="red",lty=3,lwd=3)
 }
