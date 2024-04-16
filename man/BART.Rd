@@ -63,7 +63,7 @@ variable for sampling purposes. Default: \code{rep(1/ncol(X_train),ncol(X_train)
 
 \item{beta}{Exponent that decreases split probabilities for nodes of depth > 0. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}.}
 
-\item{min_samples_leaf}{Minimum allowable size of a leaf, in terms of training samples.}
+\item{min_samples_leaf}{Minimum allowable size of a leaf, in terms of training samples. Default: 5.}
 
 \item{leaf_model}{Integer indicating leaf model, where 0 = constant with Gaussian prior, 1 = univariate regression with Gaussian prior, 2 = multivariate regression with Gaussian prior. W_train will be ignored if this is set to 0. Default: 0.}
 
@@ -121,6 +121,6 @@ X_train <- X[train_inds,]
 y_test <- y[test_inds]
 y_train <- y[train_inds]
 bart_model <- bart(X_train = X_train, y_train = y_train, X_test = X_test, leaf_model = 0)
-plot(rowMeans(bart_model$yhat_test), y_test, xlab = "predicted", ylab = "actual")
-abline(0,1,col="red",lty=3,lwd=3)
+# plot(rowMeans(bart_model$yhat_test), y_test, xlab = "predicted", ylab = "actual")
+# abline(0,1,col="red",lty=3,lwd=3)
 }

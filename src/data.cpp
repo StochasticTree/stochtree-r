@@ -1,4 +1,5 @@
 #include <cpp11.hpp>
+#include <stochtree/container.h>
 #include <stochtree/data.h>
 #include <memory>
 #include <vector>

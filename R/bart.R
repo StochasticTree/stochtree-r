@@ -84,6 +84,23 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
         W_test <- as.matrix(W_test)
     }
     
+    # Data consistency checks
+    if ((!is.null(X_test)) && (ncol(X_test) != ncol(X_train))) {
+        stop("X_train and X_test must have the same number of columns")
+    }
+    if ((!is.null(W_test)) && (ncol(W_test) != ncol(W_train))) {
+        stop("W_train and W_test must have the same number of columns")
+    }
+    if ((!is.null(W_train)) && (nrow(W_train) != nrow(X_train))) {
+        stop("W_train and X_train must have the same number of rows")
+    }
+    if ((!is.null(W_test)) && (nrow(W_test) != nrow(X_test))) {
+        stop("W_test and X_test must have the same number of rows")
+    }
+    if (nrow(X_train) != length(y_train)) {
+        stop("X_train and y_train must have the same number of observations")
+    }
+
     # Convert y_train to numeric vector if not already converted
     if (!is.null(dim(y_train))) {
         y_train <- as.matrix(y_train)
@@ -136,9 +153,11 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
     if (leaf_regression) {
         forest_dataset_train <- createForestDataset(X_train, W_train)
         if (has_test) forest_dataset_test <- createForestDataset(X_test, W_test)
+        requires_basis <- T
     } else {
         forest_dataset_train <- createForestDataset(X_train)
         if (has_test) forest_dataset_test <- createForestDataset(X_test)
+        requires_basis <- F
     }
     outcome_train <- createOutcome(resid_train)
     
@@ -164,7 +183,7 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
             forest_model$sample_one_iteration(
                 forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
                 leaf_model, current_leaf_scale, variable_weights, 
-                current_sigma2, cutpoint_grid_size, gfr = T
+                current_sigma2, cutpoint_grid_size, gfr = T, pre_initialized = F
             )
             if (sample_sigma) {
                 global_var_samples[i] <- sample_sigma2_one_iteration(outcome_train, rng, nu, lambda)
@@ -183,7 +202,7 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
             forest_model$sample_one_iteration(
                 forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
                 leaf_model, current_leaf_scale, variable_weights, 
-                current_sigma2, cutpoint_grid_size, gfr = F
+                current_sigma2, cutpoint_grid_size, gfr = F, pre_initialized = F
             )
             if (sample_sigma) {
                 global_var_samples[i] <- sample_sigma2_one_iteration(outcome_train, rng, nu, lambda)
@@ -215,7 +234,14 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
         "a" = a_leaf, 
         "b" = b_leaf,
         "outcome_mean" = y_bar_train,
-        "outcome_scale" = y_std_train
+        "outcome_scale" = y_std_train, 
+        "output_dimension" = output_dimension,
+        "is_leaf_constant" = is_leaf_constant,
+        "leaf_regression" = leaf_regression,
+        "requires_basis" = requires_basis, 
+        "num_covariates" = ncol(X_train), 
+        "num_basis" = ifelse(is.null(W_train),0,ncol(W_train)), 
+        "num_samples" = num_samples
     )
     result <- list(
         "forests" = forest_samples, 
@@ -225,8 +251,73 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
     if (has_test) result[["yhat_test"]] = yhat_test
     if (sample_sigma) result[["sigma2_samples"]] = sigma2_samples
     if (sample_tau) result[["tau_samples"]] = tau_samples
+    class(result) <- "bart"
     
     return(result)
 }
 
 
+#' Predict from a sampled BART model on new data
+#'
+#' @param bart Object of type `bart` containing draws of a regression forest and associated sampling outputs.
+#' @param X_test Covariates used to determine tree leaf predictions for each observation.
+#' @param W_test (Optional) Bases used for prediction (by e.g. dot product with leaf values). Default: `NULL`.
+#'
+#' @return Matrix of predictions with `nrow(X_test)` rows and `bart$num_samples` columns
+#' @export
+#'
+#' @examples
+#' n <- 100
+#' p <- 5
+#' X <- matrix(runif(n*p), ncol = p)
+#' f_XW <- (
+#'     ((0 <= X[,1]) & (0.25 > X[,1])) * (-7.5) + 
+#'     ((0.25 <= X[,1]) & (0.5 > X[,1])) * (-2.5) + 
+#'     ((0.5 <= X[,1]) & (0.75 > X[,1])) * (2.5) + 
+#'     ((0.75 <= X[,1]) & (1 > X[,1])) * (7.5)
+#' )
+#' noise_sd <- 1
+#' y <- f_XW + rnorm(n, 0, noise_sd)
+#' test_set_pct <- 0.2
+#' n_test <- round(test_set_pct*n)
+#' n_train <- n - n_test
+#' test_inds <- sort(sample(1:n, n_test, replace = F))
+#' train_inds <- (1:n)[!((1:n) %in% test_inds)]
+#' X_test <- X[test_inds,]
+#' X_train <- X[train_inds,]
+#' y_test <- y[test_inds]
+#' y_train <- y[train_inds]
+#' bart_model <- bart(X_train = X_train, y_train = y_train, leaf_model = 0)
+#' yhat_test <- predict(bart_model, X_test)
+#' # plot(rowMeans(yhat_test), y_test, xlab = "predicted", ylab = "actual")
+#' # abline(0,1,col="red",lty=3,lwd=3)
+predict.bart <- function(bart, X_test, W_test = NULL){
+    # Convert all input data to matrices if not already converted
+    if ((is.null(dim(X_test))) && (!is.null(X_test))) {
+        X_test <- as.matrix(X_test)
+    }
+    if ((is.null(dim(W_test))) && (!is.null(W_test))) {
+        W_test <- as.matrix(W_test)
+    }
+    
+    # Data checks
+    if ((bart$model_params$requires_basis) && (is.null(W_test))) {
+        stop("Basis (W_test) must be provided for this model")
+    }
+    if ((!is.null(W_test)) && (nrow(X_test) != nrow(W_test))) {
+        stop("X_test and W_test must have the same number of rows")
+    }
+    if (bart$model_params$num_covariates != ncol(X_test)) {
+        stop("X_test and W_test must have the same number of rows")
+    }
+    
+    # Create prediction dataset
+    if (!is.null(W_test)) prediction_dataset <- createForestDataset(X_test, W_test)
+    else prediction_dataset <- createForestDataset(X_test)
+    
+    # Compute and return predictions
+    y_std <- bart$model_params$outcome_scale
+    y_bar <- bart$model_params$outcome_mean
+    result <- bart$forests$predict(prediction_dataset)*y_std + y_bar
+    return(result)
+}

@@ -20,9 +20,11 @@ Wrapper around a C++ container of tree ensembles
 \item \href{#method-ForestSamples-predict}{\code{ForestSamples$predict()}}
 \item \href{#method-ForestSamples-predict_raw}{\code{ForestSamples$predict_raw()}}
 \item \href{#method-ForestSamples-predict_raw_single_forest}{\code{ForestSamples$predict_raw_single_forest()}}
+\item \href{#method-ForestSamples-set_root_leaves}{\code{ForestSamples$set_root_leaves()}}
 \item \href{#method-ForestSamples-save_json}{\code{ForestSamples$save_json()}}
 \item \href{#method-ForestSamples-load_json}{\code{ForestSamples$load_json()}}
 \item \href{#method-ForestSamples-num_samples}{\code{ForestSamples$num_samples()}}
+\item \href{#method-ForestSamples-output_dimension}{\code{ForestSamples$output_dimension()}}
 }
 }
 \if{html}{\out{<hr>}}
@@ -120,6 +122,26 @@ and as many columns as samples in the \code{ForestContainer}
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ForestSamples-set_root_leaves"></a>}}
+\if{latex}{\out{\hypertarget{method-ForestSamples-set_root_leaves}{}}}
+\subsection{Method \code{set_root_leaves()}}{
+Set a constant predicted value for every tree in the ensemble.
+Stops program if any tree is more than a root node.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ForestSamples$set_root_leaves(forest_num, leaf_value)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{forest_num}}{Index of the forest sample within the container.}
+
+\item{\code{leaf_value}}{Constant leaf value(s) to be fixed for each tree in the ensemble indexed by \code{forest_num}. Can be either a single number or a vector, depending on the forest's leaf dimension.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ForestSamples-save_json"></a>}}
 \if{latex}{\out{\hypertarget{method-ForestSamples-save_json}{}}}
 \subsection{Method \code{save_json()}}{
@@ -166,6 +188,19 @@ Return number of samples in a \code{ForestContainer} object
 
 \subsection{Returns}{
 Sample count
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ForestSamples-output_dimension"></a>}}
+\if{latex}{\out{\hypertarget{method-ForestSamples-output_dimension}{}}}
+\subsection{Method \code{output_dimension()}}{
+Return output dimension of trees in a \code{ForestContainer} object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ForestSamples$output_dimension()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Leaf node parameter size
 }
 }
 }

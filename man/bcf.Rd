@@ -17,9 +17,9 @@ bcf(
   sigma_leaf_mu = NULL,
   sigma_leaf_tau = NULL,
   alpha_mu = 0.95,
-  alpha_tau = 0.95,
+  alpha_tau = 0.25,
   beta_mu = 2,
-  beta_tau = 2,
+  beta_tau = 3,
   min_samples_leaf_mu = 5,
   min_samples_leaf_tau = 5,
   nu = 3,
@@ -29,8 +29,8 @@ bcf(
   b_leaf_mu = NULL,
   b_leaf_tau = NULL,
   q = 0.9,
-  sigma2_init = NULL,
-  num_trees_mu = 200,
+  sigma2 = NULL,
+  num_trees_mu = 250,
   num_trees_tau = 50,
   num_gfr = 5,
   num_burnin = 0,
@@ -39,6 +39,9 @@ bcf(
   sample_sigma_leaf_mu = T,
   sample_sigma_leaf_tau = T,
   propensity_covariate = "mu",
+  adaptive_coding = T,
+  b_0 = -0.5,
+  b_1 = 0.5,
   random_seed = -1
 )
 }
@@ -66,17 +69,17 @@ bcf(
 
 \item{sigma_leaf_tau}{Starting value of leaf node scale parameter for the treatment effect forest. Calibrated internally as \code{1/num_trees_tau} if not set here.}
 
-\item{alpha_mu}{Prior probability of splitting for a tree of depth 0 for the prognostic forest. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}.}
+\item{alpha_mu}{Prior probability of splitting for a tree of depth 0 for the prognostic forest. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}. Default: 0.95.}
 
-\item{alpha_tau}{Prior probability of splitting for a tree of depth 0 for the treatment effect forest. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}.}
+\item{alpha_tau}{Prior probability of splitting for a tree of depth 0 for the treatment effect forest. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}. Default: 0.25.}
 
-\item{beta_mu}{Exponent that decreases split probabilities for nodes of depth > 0 for the prognostic forest. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}.}
+\item{beta_mu}{Exponent that decreases split probabilities for nodes of depth > 0 for the prognostic forest. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}. Default: 2.0.}
 
-\item{beta_tau}{Exponent that decreases split probabilities for nodes of depth > 0 for the treatment effect forest. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}.}
+\item{beta_tau}{Exponent that decreases split probabilities for nodes of depth > 0 for the treatment effect forest. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}. Default: 3.0.}
 
-\item{min_samples_leaf_mu}{Minimum allowable size of a leaf, in terms of training samples, for the prognostic forest.}
+\item{min_samples_leaf_mu}{Minimum allowable size of a leaf, in terms of training samples, for the prognostic forest. Default: 5.}
 
-\item{min_samples_leaf_tau}{Minimum allowable size of a leaf, in terms of training samples, for the treatment effect forest.}
+\item{min_samples_leaf_tau}{Minimum allowable size of a leaf, in terms of training samples, for the treatment effect forest. Default: 5.}
 
 \item{nu}{Shape parameter in the \code{IG(nu, nu*lambda)} global error variance model. Default: 3.}
 
@@ -92,11 +95,11 @@ bcf(
 
 \item{q}{Quantile used to calibrated \code{lambda} as in Sparapani et al (2021). Default: 0.9.}
 
-\item{sigma2_init}{Starting value of global variance parameter. Calibrated internally as in Sparapani et al (2021) if not set here.}
+\item{sigma2}{Starting value of global variance parameter. Calibrated internally as in Sparapani et al (2021) if not set here.}
 
-\item{num_trees_mu}{Number of trees in the prognostic forest. Default: 100.}
+\item{num_trees_mu}{Number of trees in the prognostic forest. Default: 200.}
 
-\item{num_trees_tau}{Number of trees in the treatment effect forest. Default: 100.}
+\item{num_trees_tau}{Number of trees in the treatment effect forest. Default: 50.}
 
 \item{num_gfr}{Number of "warm-start" iterations run using the grow-from-root algorithm (He and Hahn, 2021). Default: 5.}
 
@@ -111,6 +114,12 @@ bcf(
 \item{sample_sigma_leaf_tau}{Whether or not to update the \code{sigma_leaf_tau} leaf scale variance parameter in the treatment effect forest based on \code{IG(a_leaf_tau, b_leaf_tau)}. Default: T.}
 
 \item{propensity_covariate}{Whether to include the propensity score as a covariate in either or both of the forests. Enter "none" for neither, "mu" for the prognostic forest, "tau" for the treatment forest, and "both" for both forests. If this is not "none" and a propensity score is not provided, it will be estimated from (\code{X_train}, \code{Z_train}) using \code{xgboost}. Default: "mu".}
+
+\item{adaptive_coding}{Whether or not to use an "adaptive coding" scheme in which a binary treatment variable is not coded manually as (0,1) or (-1,1) but learned via parameters \code{b_0} and \code{b_1} that attach to the outcome model \verb{[b_0 (1-Z) + b_1 Z] tau(X)}. This is ignored when Z is not binary. Default: T.}
+
+\item{b_0}{Initial value of the "control" group coding parameter. This is ignored when Z is not binary. Default: -0.5.}
+
+\item{b_1}{Initial value of the "treatment" group coding parameter. This is ignored when Z is not binary. Default: 0.5.}
 
 \item{random_seed}{Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to \code{std::random_device}.}
 }
@@ -139,7 +148,7 @@ tau_x <- tau2(X)
 pi_x <- 0.8*pnorm((3*mu_x/sd(mu_x)) - 0.5*X[,1]) + 0.05 + runif(n)/10
 Z <- rbinom(n,1,pi_x)
 E_XZ <- mu_x + Z*tau_x
-snr <- 2
+snr <- 4
 y <- E_XZ + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
 test_set_pct <- 0.2
 n_test <- round(test_set_pct*n)
@@ -160,8 +169,8 @@ tau_test <- tau_x[test_inds]
 tau_train <- tau_x[train_inds]
 bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
                  X_test = X_test, Z_test = Z_test, pi_test = pi_test)
-plot(rowMeans(bcf_model$mu_hat_test), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")
-abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model$tau_hat_test), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")
-abline(0,1,col="red",lty=3,lwd=3)
+# plot(rowMeans(bcf_model$mu_hat_test), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")
+# abline(0,1,col="red",lty=3,lwd=3)
+# plot(rowMeans(bcf_model$tau_hat_test), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")
+# abline(0,1,col="red",lty=3,lwd=3)
 }
