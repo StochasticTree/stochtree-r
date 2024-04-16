@@ -82,3 +82,6 @@ rsconnect/
 *.out
 *.app
 docs
+
+# Small scripts and notebooks used only in local development
+tools/oneoffs
