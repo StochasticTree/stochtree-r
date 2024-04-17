@@ -1,6 +1,7 @@
 ---
 title: "Causal Machine Learning in StochTree"
 output: rmarkdown::html_vignette
+bibliography: vignettes.bib
 vignette: >
   %\VignetteIndexEntry{Causal-Machine-Learning}
   %\VignetteEngine{knitr::rmarkdown}
@@ -14,489 +15,472 @@ knitr::opts_chunk$set(
 )
 ```
 
-This interface is not necessarily designed for performance or simplicity
---- rather the intent is to provide a "prototype" interface to the C++
-code that doesn't require modifying any C++.
-
-To give one (simplified) example, rather than running 
-`sample_sigma2_one_iteration`, a researcher might prototype an alternative 
-global variance sampler in R and pass the updated global variance 
-parameter back to the forest sampler for another Gibbs iteration.
-
-To begin, load the stochtree package and set a seed for replicability.
+This vignette demonstrates how to use the `bcf()` function for supervised learning.
+To begin, we load the stochtree package.
 
 ```{r setup}
-# Load library
 library(stochtree)
-
-# Set seed
-random_seed = 1234
-set.seed(random_seed)
 ```
 
-Now, we simulate some straightforward data (in this case, a partitioned 
-linear model).
-
-```{r data}
-# Generate the data
-n <- 2000
-p_X <- 10
-p_W <- 1
-X <- matrix(runif(n*p_X), ncol = p_X)
-pi_X <- X[,1]*0.5 + 0.25
-Z <- as.numeric(matrix(rbinom(n, 1, pi_X), ncol = 1))
-mu_X <- (
-    ((0 <= X[,1]) & (0.25 > X[,1])) * (-7.5*X[,p_X]) + 
-    ((0.25 <= X[,1]) & (0.5 > X[,1])) * (-2.5*X[,p_X]) + 
-    ((0.5 <= X[,1]) & (0.75 > X[,1])) * (2.5*X[,p_X]) + 
-    ((0.75 <= X[,1]) & (1 > X[,1])) * (7.5*X[,p_X])
-)
-tau_X <- 0.5*X[,2]
-# tau_X <- rep(0,n)
-f_XX <- mu_X + tau_X*Z
-y <- f_XX + rnorm(n, 0, 1)
-
-# Standardize outcome
-y_bar <- mean(y)
-y_std <- sd(y)
-resid <- (y-y_bar)/y_std
-```
-
-Set some parameters that inform the forest and variance parameter samplers
-
-```{r hyperparameters}
-# Mu forest
-alpha_mu <- 0.95
-beta_mu <- 2.0
-min_samples_leaf_mu <- 1
-num_trees_mu <- 200
-cutpoint_grid_size_mu = 100
-tau_init_mu = 0.5
-leaf_prior_scale_mu = matrix(c(tau_init_mu), ncol = 1)
-a_leaf_mu <- 2.
-b_leaf_mu <- 1/num_trees_mu
-leaf_regression_mu <- F
-
-# Tau forest
-alpha_tau <- 0.75
-beta_tau <- 3.0
-min_samples_leaf_tau <- 10
-num_trees_tau <- 50
-cutpoint_grid_size_tau = 100
-tau_init_tau = 0.5
-leaf_prior_scale_tau = matrix(c(tau_init_tau), ncol = 1)
-a_leaf_tau <- 3.
-b_leaf_tau <- 1/num_trees_tau
-leaf_regression_tau <- T
-
-# Common parameters
-nu <- 4
-lambda <- 0.5
-global_variance_init = 1.
-```
-
-Initialize R-level access to the C++ classes needed to sample our model
-
-```{r external_pointers}
-# Data
-if (leaf_regression_mu) {
-    forest_dataset_mu <- createForestDataset(cbind(X,pi_X), Z)
-    outcome_model_type_mu <- 1
-} else {
-    forest_dataset_mu <- createForestDataset(cbind(X,pi_X))
-    outcome_model_type_mu <- 0
-}
-if (leaf_regression_tau) {
-    forest_dataset_tau <- createForestDataset(X, Z)
-    outcome_model_type_tau <- 1
-} else {
-    forest_dataset_tau <- createForestDataset(X)
-    outcome_model_type_tau <- 0
-}
-outcome <- createOutcome(resid)
-feature_types_mu <- as.integer(c(rep(0, p_X), 0)) # 0 = numeric
-var_weights_mu <- rep(1/(p_X+1), p_X+1)
-feature_types_tau <- as.integer(rep(0, p_X)) # 0 = numeric
-var_weights_tau <- rep(1/p_X, p_X)
-
-# Random number generator (std::mt19937)
-rng <- createRNG(random_seed)
-
-# Sampling data structures
-forest_model_mu <- createForestModel(forest_dataset_mu, feature_types_mu, num_trees_mu, n, alpha_mu, beta_mu, min_samples_leaf_mu)
-forest_model_tau <- createForestModel(forest_dataset_tau, feature_types_tau, num_trees_tau, n, alpha_tau, beta_tau, min_samples_leaf_tau)
-
-# Container of forest samples
-if (leaf_regression_mu) {
-    forest_samples_mu <- createForestContainer(num_trees_mu, 1, F)
-} else {
-    forest_samples_mu <- createForestContainer(num_trees_mu, 1, T)
-}
-if (leaf_regression_tau) {
-    forest_samples_tau <- createForestContainer(num_trees_tau, 1, F)
-} else {
-    forest_samples_tau <- createForestContainer(num_trees_tau, 1, T)
-}
-```
-
-Prepare to run the sampler
-
-```{r sampling_container}
-num_warmstart <- 10
-num_mcmc <- 1000
-num_samples <- num_warmstart + num_mcmc
-global_var_samples <- c(global_variance_init, rep(0, num_samples))
-leaf_scale_samples_mu <- c(tau_init_mu, rep(0, num_samples))
-leaf_scale_samples_tau <- c(tau_init_tau, rep(0, num_samples))
-```
-
-Run the grow-from-root sampler to "warm-start" BART
-
-```{r gfr}
-for (i in 1:num_warmstart) {
-    # Sample the prognostic forest
-    forest_model_mu$sample_one_iteration(forest_dataset_mu, outcome, forest_samples_mu, rng, feature_types_mu, 
-                                         outcome_model_type_mu, leaf_prior_scale_mu, var_weights_mu, 
-                                         global_var_samples[i], cutpoint_grid_size_mu, gfr = T)
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-    leaf_scale_samples_mu[i+1] <- sample_tau_one_iteration(forest_samples_mu, rng, a_leaf_mu, b_leaf_mu, i-1)
-    leaf_prior_scale_mu[1,1] <- leaf_scale_samples_mu[i+1]
-
-    # Sample the treatment forest
-    forest_model_tau$sample_one_iteration(forest_dataset_tau, outcome, forest_samples_tau, rng, feature_types_tau, 
-                                         outcome_model_type_tau, leaf_prior_scale_tau, var_weights_tau, 
-                                         global_var_samples[i], cutpoint_grid_size_tau, gfr = T)
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-    leaf_scale_samples_tau[i+1] <- sample_tau_one_iteration(forest_samples_tau, rng, a_leaf_tau, b_leaf_tau, i-1)
-    leaf_prior_scale_tau[1,1] <- leaf_scale_samples_tau[i+1]
-    
-    # Sample global variance parameter
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-}
-```
-
-Pick up from the last GFR forest (and associated global variance / leaf scale parameters) with an MCMC sampler
-
-```{r mcmc}
-for (i in (num_warmstart+1):num_samples) {
-    # Sample the prognostic forest
-    forest_model_mu$sample_one_iteration(forest_dataset_mu, outcome, forest_samples_mu, rng, feature_types_mu, 
-                                         outcome_model_type_mu, leaf_prior_scale_mu, var_weights_mu, 
-                                         global_var_samples[i], cutpoint_grid_size_mu, gfr = F)
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-    leaf_scale_samples_mu[i+1] <- sample_tau_one_iteration(forest_samples_mu, rng, a_leaf_mu, b_leaf_mu, i-1)
-    leaf_prior_scale_mu[1,1] <- leaf_scale_samples_mu[i+1]
-
-    # Sample the treatment forest
-    forest_model_tau$sample_one_iteration(forest_dataset_tau, outcome, forest_samples_tau, rng, feature_types_tau, 
-                                         outcome_model_type_tau, leaf_prior_scale_tau, var_weights_tau, 
-                                         global_var_samples[i], cutpoint_grid_size_tau, gfr = F)
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-    leaf_scale_samples_tau[i+1] <- sample_tau_one_iteration(forest_samples_tau, rng, a_leaf_tau, b_leaf_tau, i-1)
-    leaf_prior_scale_tau[1,1] <- leaf_scale_samples_tau[i+1]
-    
-    # Sample global variance parameter
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-}
-```
-
-Predict and rescale samples
-
-```{r prediction}
-# Forest predictions
-mu_preds <- forest_samples_mu$predict(forest_dataset_mu)*y_std + y_bar
-tau_preds <- forest_samples_tau$predict_raw(forest_dataset_tau)*y_std
-
-# Global error variance
-sigma_samples <- sqrt(global_var_samples)*y_std
-```
-
-Inspect the XBART results
-
-```{r xbcf_plot}
-plot(sigma_samples[1:num_warmstart], ylab="sigma")
-plot(rowMeans(mu_preds[,1:num_warmstart]), mu_X, pch=16, cex=0.75, xlab = "pred", ylab = "actual", main = "prognostic term");
-abline(0,1,col="red",lty=2,lwd=2.5)
-plot(rowMeans(tau_preds[,1:num_warmstart]), tau_X, pch=16, cex=0.75, xlab = "pred", ylab = "actual", main = "treatment effect term"); abline(0,1,col="red",lty=2,lwd=2.5)
-mean((rowMeans(tau_preds[,1:num_warmstart]) - tau_X)^2)
-```
-
-Inspect the warm start BART results
-
-```{r warm_start_plot}
-plot(sigma_samples[(num_warmstart+1):num_samples], ylab="sigma")
-plot(rowMeans(mu_preds[,(num_warmstart+1):num_samples]), mu_X, pch=16, cex=0.75, xlab = "pred", ylab = "actual", main = "prognostic term");
-abline(0,1,col="red",lty=2,lwd=2.5)
-plot(rowMeans(tau_preds[,(num_warmstart+1):num_samples]), tau_X, pch=16, cex=0.75, xlab = "pred", ylab = "actual", main = "treatment effect term"); abline(0,1,col="red",lty=2,lwd=2.5)
-mean((rowMeans(tau_preds[,(num_warmstart+1):num_samples]) - tau_X)^2)
-```
-
-Initialize R-level access to the C++ classes needed to sample our model
-
-```{r regular_bart_external_pointers}
-# Data
-forest_dataset_bart <- createForestDataset(cbind(X,pi_X))
-outcome_model_type_bart <- 0
-outcome_bart <- createOutcome(resid)
-
-# Random number generator (std::mt19937)
-rng_bart <- createRNG(random_seed)
-
-# Sampling data structures
-forest_model_bart <- createForestModel(forest_dataset_bart, feature_types_mu, num_trees_mu, n, alpha_mu, beta_mu, min_samples_leaf_mu)
-
-# Container of forest samples
-forest_samples_bart <- createForestContainer(num_trees_mu, 1, T)
-```
-
-Prepare to run the sampler
-
-```{r regular_bart_sampling_container}
-global_var_samples_bart <- c(global_variance_init, rep(0, num_samples))
-leaf_scale_samples_bart <- c(tau_init_mu, rep(0, num_samples))
-```
-
-Run the grow-from-root sampler to "warm-start" BART
-
-```{r regular_bart_gfr}
-if (num_warmstart > 0){
-for (i in 1:num_warmstart) {
-    forest_model_bart$sample_one_iteration(forest_dataset_bart, outcome_bart, forest_samples_bart, rng_bart, feature_types_mu, 
-                                      outcome_model_type_bart, leaf_prior_scale_mu, var_weights_mu, 
-                                      global_var_samples_bart[i], cutpoint_grid_size_mu, gfr = T)
-    global_var_samples_bart[i+1] <- sample_sigma2_one_iteration(outcome_bart, rng_bart, nu, lambda)
-    leaf_scale_samples_bart[i+1] <- sample_tau_one_iteration(forest_samples_bart, rng_bart, a_leaf_mu, b_leaf_mu, i-1)
-    leaf_prior_scale_mu[1,1] <- leaf_scale_samples_bart[i+1]
-}   
-}
-```
-
-Pick up from the last GFR forest (and associated global variance / leaf
-scale parameters) with an MCMC sampler
-
-```{r regular_bart_mcmc}
-for (i in (num_warmstart+1):num_samples) {
-    forest_model_bart$sample_one_iteration(forest_dataset_bart, outcome_bart, forest_samples_bart, rng_bart, feature_types_mu, 
-                                      outcome_model_type_bart, leaf_prior_scale_mu, var_weights_mu, 
-                                      global_var_samples_bart[i], cutpoint_grid_size_mu, gfr = F)
-    global_var_samples_bart[i+1] <- sample_sigma2_one_iteration(outcome_bart, rng_bart, nu, lambda)
-    leaf_scale_samples_bart[i+1] <- sample_tau_one_iteration(forest_samples_bart, rng_bart, a_leaf_mu, b_leaf_mu, i-1)
-    leaf_prior_scale_mu[1,1] <- leaf_scale_samples_bart[i+1]
-}
-```
-
-Predict and rescale samples
-
-```{r regular_bart_predict}
-# Forest predictions
-bart_preds <- forest_samples_bart$predict(forest_dataset_bart)*y_std + y_bar
-
-# Global error variance
-sigma_samples_bart <- sqrt(global_var_samples_bart)*y_std
-```
-
-Inspect the BART results
-
-```{r regular_bart_plot}
-plot(sigma_samples_bart[(num_warmstart+1):num_samples], ylab="sigma")
-plot(rowMeans(bart_preds[,(num_warmstart+1):num_samples]), y, pch=16, cex=0.75, xlab = "pred", ylab = "actual", main = "predicted"); abline(0,1,col="red",lty=2,lwd=2.5)
-sqrt(mean((rowMeans(bart_preds[,(num_warmstart+1):num_samples]) - y)^2))
-```
-
-## Can we use this interface to build a more general / flexible version of BCF?
-
-Yes, we can easily do "adaptive coding" described in Section 5.3 of Hahn, Murray and Carvalho (2020).
-
-\begin{equation*}
-\begin{aligned}
-y &= \mu(X) + \tau(X) b_z + \epsilon\\
-\epsilon &\sim N\left(0, \sigma^2\right)\\
-b_0, b_1 &\sim N\left(0, 1/2\right)
-\end{aligned}
-\end{equation*}
-
-Conditioning on the forests $\mu$ and $\tau$ this corresponds to a linear regression 
-of $y - \mu(Z)$ on $\left[(1-Z)\tau(X), Z\tau(X)\right]$ which has a closed form 
-posterior
-
-\begin{equation*}
-\begin{aligned}
-b_0 \mid y, X, \mu,\tau &\sim N\left(\frac{s_{y\tau,0}}{s_{\tau\tau,0} + 2\sigma^2}, \frac{\sigma^2}{s_{\tau\tau,0} + 2\sigma^2}\right)\\
-b_1 \mid y, X, \mu,\tau &\sim N\left(\frac{s_{y\tau,1}}{s_{\tau\tau,1} + 2\sigma^2}, \frac{\sigma^2}{s_{\tau\tau,1} + 2\sigma^2}\right)
-\end{aligned}
-\end{equation*}
-where $s_{y\tau,z} = \sum_{i: Z_i = z} (y_i - \mu(X_i))\tau(X_i)$ and $s_{\tau\tau,z} = \sum_{i: Z_i = z} \tau(X_i)\tau(X_i)$.
-
-Let's re-initialize all of the sampling classes
-
-```{r external_pointers_adaptive}
-# Data
-if (leaf_regression_mu) {
-    forest_dataset_mu <- createForestDataset(cbind(X,pi_X), Z)
-    outcome_model_type_mu <- 1
-} else {
-    forest_dataset_mu <- createForestDataset(cbind(X,pi_X))
-    outcome_model_type_mu <- 0
-}
-if (leaf_regression_tau) {
-    forest_dataset_tau <- createForestDataset(X, Z)
-    outcome_model_type_tau <- 1
-} else {
-    forest_dataset_tau <- createForestDataset(X)
-    outcome_model_type_tau <- 0
-}
-outcome <- createOutcome(resid)
-feature_types_mu <- as.integer(c(rep(0, p_X), 0)) # 0 = numeric
-var_weights_mu <- rep(1/(p_X+1), p_X+1)
-feature_types_tau <- as.integer(rep(0, p_X)) # 0 = numeric
-var_weights_tau <- rep(1/p_X, p_X)
-
-# Random number generator (std::mt19937)
-rng <- createRNG(random_seed)
-
-# Sampling data structures
-forest_model_mu <- createForestModel(forest_dataset_mu, feature_types_mu, num_trees_mu, n, alpha_mu, beta_mu, min_samples_leaf_mu)
-forest_model_tau <- createForestModel(forest_dataset_tau, feature_types_tau, num_trees_tau, n, alpha_tau, beta_tau, min_samples_leaf_tau)
-
-# Container of forest samples
-if (leaf_regression_mu) {
-    forest_samples_mu <- createForestContainer(num_trees_mu, 1, F)
-} else {
-    forest_samples_mu <- createForestContainer(num_trees_mu, 1, T)
-}
-if (leaf_regression_tau) {
-    forest_samples_tau <- createForestContainer(num_trees_tau, 1, F)
-} else {
-    forest_samples_tau <- createForestContainer(num_trees_tau, 1, T)
-}
-```
-
-Prepare to run the sampler (now we must specify initial values for $b_0$ and $b_1$, 
-for which we choose -1/2 and 1/2 instead of 0 and 1).
-
-```{r sampling_container_adaptive}
-global_var_samples <- c(global_variance_init, rep(0, num_samples))
-leaf_scale_samples_mu <- c(tau_init_mu, rep(0, num_samples))
-leaf_scale_samples_tau <- c(tau_init_tau, rep(0, num_samples))
-b_0_init <- -0.5
-b_1_init <- 0.5
-b_0_samples <- c(b_0_init, rep(0, num_samples))
-b_1_samples <- c(b_1_init, rep(0, num_samples))
-tau_basis <- (1-Z)*b_0_init + Z*b_1_init
-forest_dataset_tau$update_basis(tau_basis)
-```
-
-Run the grow-from-root sampler to "warm-start" BART, also updating the adaptive coding parameter $b_0$ and $b_1$
-
-```{r gfr_adaptive}
-for (i in 1:num_warmstart) {
-    # Sample the prognostic forest
-    forest_model_mu$sample_one_iteration(forest_dataset_mu, outcome, forest_samples_mu, rng, feature_types_mu, 
-                                         outcome_model_type_mu, leaf_prior_scale_mu, var_weights_mu, 
-                                         global_var_samples[i], cutpoint_grid_size_mu, gfr = T)
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-    leaf_scale_samples_mu[i+1] <- sample_tau_one_iteration(forest_samples_mu, rng, a_leaf_mu, b_leaf_mu, i-1)
-    leaf_prior_scale_mu[1,1] <- leaf_scale_samples_mu[i+1]
-    mu_x <- forest_samples_mu$predict_raw_single_forest(forest_dataset_mu, i-1)
-
-    # Sample the treatment forest
-    forest_model_tau$sample_one_iteration(forest_dataset_tau, outcome, forest_samples_tau, rng, feature_types_tau, 
-                                          outcome_model_type_tau, leaf_prior_scale_tau, var_weights_tau, 
-                                          global_var_samples[i], cutpoint_grid_size_tau, gfr = T)
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-    leaf_scale_samples_tau[i+1] <- sample_tau_one_iteration(forest_samples_tau, rng, a_leaf_tau, b_leaf_tau, i-1)
-    leaf_prior_scale_tau[1,1] <- leaf_scale_samples_tau[i+1]
-    tau_x <- forest_samples_tau$predict_raw_single_forest(forest_dataset_tau, i-1)
-    s_tt0 <- sum(tau_x*tau_x*(Z==0))
-    s_tt1 <- sum(tau_x*tau_x*(Z==1))
-    partial_resid_mu <- resid - mu_x
-    s_ty0 <- sum(tau_x*partial_resid_mu*(Z==0))
-    s_ty1 <- sum(tau_x*partial_resid_mu*(Z==1))
-    b_0_samples[i+1] <- rnorm(1, (s_ty0/(s_tt0 + 2*global_var_samples[i])), sqrt(global_var_samples[i]/(s_tt0 + 2*global_var_samples[i])))
-    b_1_samples[i+1] <- rnorm(1, (s_ty1/(s_tt1 + 2*global_var_samples[i])), sqrt(global_var_samples[i]/(s_tt1 + 2*global_var_samples[i])))
-    tau_basis <- (1-Z)*b_0_samples[i+1] + Z*b_1_samples[i+1]
-    forest_dataset_tau$update_basis(tau_basis)
-    
-    # Sample global variance parameter
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-}
-```
-
-Pick up from the last GFR forest (and associated global variance / leaf scale parameters) with an MCMC sampler
-
-```{r mcmc_adaptive}
-for (i in (num_warmstart+1):num_samples) {
-    # Sample the prognostic forest
-    forest_model_mu$sample_one_iteration(forest_dataset_mu, outcome, forest_samples_mu, rng, feature_types_mu, 
-                                         outcome_model_type_mu, leaf_prior_scale_mu, var_weights_mu, 
-                                         global_var_samples[i], cutpoint_grid_size_mu, gfr = F)
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-    leaf_scale_samples_mu[i+1] <- sample_tau_one_iteration(forest_samples_mu, rng, a_leaf_mu, b_leaf_mu, i-1)
-    leaf_prior_scale_mu[1,1] <- leaf_scale_samples_mu[i+1]
-    mu_x <- forest_samples_mu$predict_raw_single_forest(forest_dataset_mu, i-1)
-
-    # Sample the treatment forest
-    forest_model_tau$sample_one_iteration(forest_dataset_tau, outcome, forest_samples_tau, rng, feature_types_tau, 
-                                          outcome_model_type_tau, leaf_prior_scale_tau, var_weights_tau, 
-                                          global_var_samples[i], cutpoint_grid_size_tau, gfr = F)
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-    leaf_scale_samples_tau[i+1] <- sample_tau_one_iteration(forest_samples_tau, rng, a_leaf_tau, b_leaf_tau, i-1)
-    leaf_prior_scale_tau[1,1] <- leaf_scale_samples_tau[i+1]
-    tau_x <- forest_samples_tau$predict_raw_single_forest(forest_dataset_tau, i-1)
-    s_tt0 <- sum(tau_x*tau_x*(Z==0))
-    s_tt1 <- sum(tau_x*tau_x*(Z==1))
-    partial_resid_mu <- resid - mu_x
-    s_ty0 <- sum(tau_x*partial_resid_mu*(Z==0))
-    s_ty1 <- sum(tau_x*partial_resid_mu*(Z==1))
-    b_0_samples[i+1] <- rnorm(1, (s_ty0/(s_tt0 + 2*global_var_samples[i])), sqrt(global_var_samples[i]/(s_tt0 + 2*global_var_samples[i])))
-    b_1_samples[i+1] <- rnorm(1, (s_ty1/(s_tt1 + 2*global_var_samples[i])), sqrt(global_var_samples[i]/(s_tt1 + 2*global_var_samples[i])))
-    tau_basis <- (1-Z)*b_0_samples[i+1] + Z*b_1_samples[i+1]
-    forest_dataset_tau$update_basis(tau_basis)
-    
-    # Sample global variance parameter
-    global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome, rng, nu, lambda)
-}
-```
-
-Predict and rescale samples
-
-```{r prediction_adaptive}
-# Forest predictions
-mu_preds <- forest_samples_mu$predict(forest_dataset_mu)*y_std + y_bar
-tau_preds_raw <- forest_samples_tau$predict_raw(forest_dataset_tau)
-sampled_inds <- 2:(num_samples+1)
-tau_preds <- t(t(tau_preds_raw) * (b_1_samples[sampled_inds] - b_0_samples[sampled_inds]))*y_std
-
-# Global error variance
-sigma_samples <- sqrt(global_var_samples)*y_std
-```
-
-Inspect the XBART results
-
-```{r xbcf_plot_adaptive}
-plot(sigma_samples[1:num_warmstart], ylab="sigma")
-plot(rowMeans(mu_preds[,1:num_warmstart]), mu_X, pch=16, cex=0.75, xlab = "pred", ylab = "actual", main = "prognostic term");
-abline(0,1,col="red",lty=2,lwd=2.5)
-plot(rowMeans(tau_preds[,1:num_warmstart]), tau_X, pch=16, cex=0.75, xlab = "pred", ylab = "actual", main = "treatment effect term"); abline(0,1,col="red",lty=2,lwd=2.5)
-mean((rowMeans(tau_preds[,1:num_warmstart]) - tau_X)^2)
-```
-
-Inspect the warm start BART results
-
-```{r warm_start_plot_adaptive}
-plot(sigma_samples[(num_warmstart+1):num_samples], ylab="sigma")
-plot(rowMeans(mu_preds[,(num_warmstart+1):num_samples]), mu_X, pch=16, cex=0.75, xlab = "pred", ylab = "actual", main = "prognostic term");
-abline(0,1,col="red",lty=2,lwd=2.5)
-plot(rowMeans(tau_preds[,(num_warmstart+1):num_samples]), tau_X, pch=16, cex=0.75, xlab = "pred", ylab = "actual", main = "treatment effect term"); abline(0,1,col="red",lty=2,lwd=2.5)
-mean((rowMeans(tau_preds[,(num_warmstart+1):num_samples]) - tau_X)^2)
-```
-
-Inspect the "adaptive coding" parameters $b_0$ and $b_1$.
+We also define several simple functions that configue the data generating processes used in this vignette.
 
 ```{r}
-plot(b_0_samples, col = "blue", ylab = "Coding parameter draws", 
-     ylim = c(min(min(b_0_samples), min(b_1_samples)), max(max(b_0_samples), max(b_1_samples))))
-points(b_1_samples, col = "orange")
-legend("bottomright", legend = c("b_0", "b_1"), col = c("blue", "orange"), pch = c(1,1))
+g <- function(x) {ifelse(x[,5]==1,2,ifelse(x[,5]==2,-1,-4))}
+mu1 <- function(x) {1+g(x)+x[,1]*x[,3]}
+mu2 <- function(x) {1+g(x)+6*abs(x[,3]-1)}
+tau1 <- function(x) {rep(3,nrow(x))}
+tau2 <- function(x) {1+2*x[,2]*x[,4]}
 ```
 
+# Demo 1: Nonlinear Outcome Model, Heterogeneous Treatment Effect
+
+We consider the following data generating process from @hahn2020bayesian:
+
+\begin{equation*}
+\begin{aligned}
+y &= \mu(X) + \tau(X) Z + \epsilon\\
+\epsilon &\sim N\left(0,\sigma^2\right)\\
+\mu(X) &= 1 + g(X) + 6 \lvert X_3 - 1 \rvert\\
+\tau(X) &= 1 + 2 X_2 X_4\\
+g(X) &= \mathbb{I}(X_5=1) \times 2 - \mathbb{I}(X_5=2) \times 1 - \mathbb{I}(X_5=3) \times 4\\
+X_1,X_2,X_3 &\sim N\left(0,1\right)\\
+X_4 &\sim \text{Bernoulli}(1/2)\\
+X_5 &\sim \text{Categorical}(1/3,1/3,1/3)\\
+\end{aligned}
+\end{equation*}
+
+## Simulation
+
+We draw from the DGP defined above
+
+```{r data}
+n <- 500
+snr <- 3
+x1 <- rnorm(n)
+x2 <- rnorm(n)
+x3 <- rnorm(n)
+x4 <- as.numeric(rbinom(n,1,0.5))
+x5 <- as.numeric(sample(1:3,n,replace=T))
+X <- cbind(x1,x2,x3,x4,x5)
+p <- ncol(X)
+mu_x <- mu1(X)
+tau_x <- tau2(X)
+pi_x <- 0.8*pnorm((3*mu_x/sd(mu_x)) - 0.5*X[,1]) + 0.05 + runif(n)/10
+Z <- rbinom(n,1,pi_x)
+E_XZ <- mu_x + Z*tau_x
+y <- E_XZ + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+
+# Split data into test and train sets
+test_set_pct <- 0.2
+n_test <- round(test_set_pct*n)
+n_train <- n - n_test
+test_inds <- sort(sample(1:n, n_test, replace = F))
+train_inds <- (1:n)[!((1:n) %in% test_inds)]
+X_test <- X[test_inds,]
+X_train <- X[train_inds,]
+pi_test <- pi_x[test_inds]
+pi_train <- pi_x[train_inds]
+Z_test <- Z[test_inds]
+Z_train <- Z[train_inds]
+y_test <- y[test_inds]
+y_train <- y[train_inds]
+mu_test <- mu_x[test_inds]
+mu_train <- mu_x[train_inds]
+tau_test <- tau_x[test_inds]
+tau_train <- tau_x[train_inds]
+```
+
+## Sampling and Analysis
+
+### Warmstart
+
+We first simulate from an ensemble model of $y \mid X$ using "warm-start" 
+initialization samples (@krantsevich2023stochastic). This is the default in 
+`stochtree`.
+
+```{r}
+num_gfr <- 10
+num_burnin <- 0
+num_mcmc <- 100
+num_samples <- num_gfr + num_burnin + num_mcmc
+bcf_model_warmstart <- bcf(
+    X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
+    sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
+)
+```
+
+Inspect the initial XBART "warm-start" samples
+
+```{r xbart_plot}
+sample_inds <- 1:num_gfr
+plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+Inspect the BART samples that were initialized with an XBART warm-start
+
+```{r bart_warmstart_plot}
+sample_inds <- (num_gfr+1):num_samples
+plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+### BART MCMC without Warmstart
+
+Next, we simulate from this ensemble model without any warm-start initialization. 
+
+
+```{r}
+num_gfr <- 0
+num_burnin <- 100
+num_mcmc <- 100
+num_samples <- num_gfr + num_burnin + num_mcmc
+bcf_model_root <- bcf(
+    X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
+    sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
+)
+```
+
+Inspect the BART samples after burnin
+
+```{r bart_root_plot}
+sample_inds <- (num_burnin+1):num_samples
+plot(rowMeans(bcf_model_root$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_root$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+# Demo 2: Linear Outcome Model, Heterogeneous Treatment Effect
+
+We consider the following data generating process from @hahn2020bayesian:
+
+\begin{equation*}
+\begin{aligned}
+y &= \mu(X) + \tau(X) Z + \epsilon\\
+\epsilon &\sim N\left(0,\sigma^2\right)\\
+\mu(X) &= 1 + g(X) + 6 X_1 X_3\\
+\tau(X) &= 1 + 2 X_2 X_4\\
+g(X) &= \mathbb{I}(X_5=1) \times 2 - \mathbb{I}(X_5=2) \times 1 - \mathbb{I}(X_5=3) \times 4\\
+X_1,X_2,X_3 &\sim N\left(0,1\right)\\
+X_4 &\sim \text{Bernoulli}(1/2)\\
+X_5 &\sim \text{Categorical}(1/3,1/3,1/3)\\
+\end{aligned}
+\end{equation*}
+
+## Simulation
+
+We draw from the DGP defined above
+
+```{r data_2}
+n <- 500
+snr <- 3
+x1 <- rnorm(n)
+x2 <- rnorm(n)
+x3 <- rnorm(n)
+x4 <- as.numeric(rbinom(n,1,0.5))
+x5 <- as.numeric(sample(1:3,n,replace=T))
+X <- cbind(x1,x2,x3,x4,x5)
+p <- ncol(X)
+mu_x <- mu2(X)
+tau_x <- tau2(X)
+pi_x <- 0.8*pnorm((3*mu_x/sd(mu_x)) - 0.5*X[,1]) + 0.05 + runif(n)/10
+Z <- rbinom(n,1,pi_x)
+E_XZ <- mu_x + Z*tau_x
+y <- E_XZ + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+
+# Split data into test and train sets
+test_set_pct <- 0.2
+n_test <- round(test_set_pct*n)
+n_train <- n - n_test
+test_inds <- sort(sample(1:n, n_test, replace = F))
+train_inds <- (1:n)[!((1:n) %in% test_inds)]
+X_test <- X[test_inds,]
+X_train <- X[train_inds,]
+pi_test <- pi_x[test_inds]
+pi_train <- pi_x[train_inds]
+Z_test <- Z[test_inds]
+Z_train <- Z[train_inds]
+y_test <- y[test_inds]
+y_train <- y[train_inds]
+mu_test <- mu_x[test_inds]
+mu_train <- mu_x[train_inds]
+tau_test <- tau_x[test_inds]
+tau_train <- tau_x[train_inds]
+```
+
+## Sampling and Analysis
+
+### Warmstart
+
+We first simulate from an ensemble model of $y \mid X$ using "warm-start" 
+initialization samples (@krantsevich2023stochastic). This is the default in 
+`stochtree`.
+
+```{r}
+num_gfr <- 10
+num_burnin <- 0
+num_mcmc <- 100
+num_samples <- num_gfr + num_burnin + num_mcmc
+bcf_model_warmstart <- bcf(
+    X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
+    sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
+)
+```
+
+Inspect the initial XBART "warm-start" samples
+
+```{r xbart_plot_2}
+sample_inds <- 1:num_gfr
+plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+Inspect the BART samples that were initialized with an XBART warm-start
+
+```{r bart_warmstart_plot_2}
+sample_inds <- (num_gfr+1):num_samples
+plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+### BART MCMC without Warmstart
+
+Next, we simulate from this ensemble model without any warm-start initialization. 
+
+```{r}
+num_gfr <- 0
+num_burnin <- 100
+num_mcmc <- 100
+num_samples <- num_gfr + num_burnin + num_mcmc
+bcf_model_root <- bcf(
+    X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
+    sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
+)
+```
+
+Inspect the BART samples after burnin
+
+```{r bart_root_plot_2}
+sample_inds <- (num_burnin+1):num_samples
+plot(rowMeans(bcf_model_root$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_root$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+# Demo 3: Linear Outcome Model, Homogeneous Treatment Effect
+
+We consider the following data generating process from @hahn2020bayesian:
+
+\begin{equation*}
+\begin{aligned}
+y &= \mu(X) + \tau(X) Z + \epsilon\\
+\epsilon &\sim N\left(0,\sigma^2\right)\\
+\mu(X) &= 1 + g(X) + 6 X_1 X_3\\
+\tau(X) &= 3\\
+g(X) &= \mathbb{I}(X_5=1) \times 2 - \mathbb{I}(X_5=2) \times 1 - \mathbb{I}(X_5=3) \times 4\\
+X_1,X_2,X_3 &\sim N\left(0,1\right)\\
+X_4 &\sim \text{Bernoulli}(1/2)\\
+X_5 &\sim \text{Categorical}(1/3,1/3,1/3)\\
+\end{aligned}
+\end{equation*}
+
+## Simulation
+
+We draw from the DGP defined above
+
+```{r data_3}
+n <- 500
+snr <- 3
+x1 <- rnorm(n)
+x2 <- rnorm(n)
+x3 <- rnorm(n)
+x4 <- as.numeric(rbinom(n,1,0.5))
+x5 <- as.numeric(sample(1:3,n,replace=T))
+X <- cbind(x1,x2,x3,x4,x5)
+p <- ncol(X)
+mu_x <- mu2(X)
+tau_x <- tau1(X)
+pi_x <- 0.8*pnorm((3*mu_x/sd(mu_x)) - 0.5*X[,1]) + 0.05 + runif(n)/10
+Z <- rbinom(n,1,pi_x)
+E_XZ <- mu_x + Z*tau_x
+y <- E_XZ + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+
+# Split data into test and train sets
+test_set_pct <- 0.2
+n_test <- round(test_set_pct*n)
+n_train <- n - n_test
+test_inds <- sort(sample(1:n, n_test, replace = F))
+train_inds <- (1:n)[!((1:n) %in% test_inds)]
+X_test <- X[test_inds,]
+X_train <- X[train_inds,]
+pi_test <- pi_x[test_inds]
+pi_train <- pi_x[train_inds]
+Z_test <- Z[test_inds]
+Z_train <- Z[train_inds]
+y_test <- y[test_inds]
+y_train <- y[train_inds]
+mu_test <- mu_x[test_inds]
+mu_train <- mu_x[train_inds]
+tau_test <- tau_x[test_inds]
+tau_train <- tau_x[train_inds]
+```
+
+## Sampling and Analysis
+
+### Warmstart
+
+We first simulate from an ensemble model of $y \mid X$ using "warm-start" 
+initialization samples (@krantsevich2023stochastic). This is the default in 
+`stochtree`.
+
+```{r}
+num_gfr <- 10
+num_burnin <- 0
+num_mcmc <- 100
+num_samples <- num_gfr + num_burnin + num_mcmc
+bcf_model_warmstart <- bcf(
+    X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
+    sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
+)
+```
+
+Inspect the initial XBART "warm-start" samples
+
+```{r xbart_plot_3}
+sample_inds <- 1:num_gfr
+plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+Inspect the BART samples that were initialized with an XBART warm-start
+
+```{r bart_warmstart_plot_3}
+sample_inds <- (num_gfr+1):num_samples
+plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+### BART MCMC without Warmstart
+
+Next, we simulate from this ensemble model without any warm-start initialization. 
+
+```{r}
+num_gfr <- 0
+num_burnin <- 100
+num_mcmc <- 100
+num_samples <- num_gfr + num_burnin + num_mcmc
+bcf_model_root <- bcf(
+    X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
+    sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
+)
+```
+
+Inspect the BART samples after burnin
+
+```{r bart_root_plot_3}
+sample_inds <- (num_burnin+1):num_samples
+plot(rowMeans(bcf_model_root$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_root$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+# References
