@@ -99,6 +99,26 @@ ForestSamples <- R6::R6Class(
         }, 
         
         #' @description
+        #' Updates residual based on the predictions of a forest 
+        #' @param dataset `ForestDataset` object storing the covariates and bases for a given forest
+        #' @param outcome `Outcome` object storing the residuals to be updated based on forest predictions
+        #' @param forest_model `ForestModel` object storing tracking structures used in training / sampling
+        #' @param requires_basis Whether or not a forest requires a basis for prediction
+        #' @param forest_num Index of forest used to update residuals
+        #' @param add Whether forest predictions should be added to or subtracted from residuals
+        update_residual = function(dataset, outcome, forest_model, requires_basis, forest_num, add) {
+            stopifnot(!is.null(dataset$data_ptr))
+            stopifnot(!is.null(outcome$data_ptr))
+            stopifnot(!is.null(forest_model$tracker_ptr))
+            stopifnot(!is.null(self$forest_container_ptr))
+            
+            update_residual_forest_container_cpp(
+                dataset$data_ptr, outcome$data_ptr, self$forest_container_ptr, 
+                forest_model$tracker_ptr, requires_basis, forest_num, add
+            )
+        }, 
+        
+        #' @description
         #' Store the trees and metadata of `ForestDataset` class in a json file
         #' @param json_filename Name of output json file (must end in ".json")
         save_json = function(json_filename) {

@@ -21,6 +21,7 @@ Wrapper around a C++ container of tree ensembles
 \item \href{#method-ForestSamples-predict_raw}{\code{ForestSamples$predict_raw()}}
 \item \href{#method-ForestSamples-predict_raw_single_forest}{\code{ForestSamples$predict_raw_single_forest()}}
 \item \href{#method-ForestSamples-set_root_leaves}{\code{ForestSamples$set_root_leaves()}}
+\item \href{#method-ForestSamples-update_residual}{\code{ForestSamples$update_residual()}}
 \item \href{#method-ForestSamples-save_json}{\code{ForestSamples$save_json()}}
 \item \href{#method-ForestSamples-load_json}{\code{ForestSamples$load_json()}}
 \item \href{#method-ForestSamples-num_samples}{\code{ForestSamples$num_samples()}}
@@ -137,6 +138,40 @@ Stops program if any tree is more than a root node.
 \item{\code{forest_num}}{Index of the forest sample within the container.}
 
 \item{\code{leaf_value}}{Constant leaf value(s) to be fixed for each tree in the ensemble indexed by \code{forest_num}. Can be either a single number or a vector, depending on the forest's leaf dimension.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ForestSamples-update_residual"></a>}}
+\if{latex}{\out{\hypertarget{method-ForestSamples-update_residual}{}}}
+\subsection{Method \code{update_residual()}}{
+Updates residual based on the predictions of a forest
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ForestSamples$update_residual(
+  dataset,
+  outcome,
+  forest_model,
+  requires_basis,
+  forest_num,
+  add
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{dataset}}{\code{ForestDataset} object storing the covariates and bases for a given forest}
+
+\item{\code{outcome}}{\code{Outcome} object storing the residuals to be updated based on forest predictions}
+
+\item{\code{forest_model}}{\code{ForestModel} object storing tracking structures used in training / sampling}
+
+\item{\code{requires_basis}}{Whether or not a forest requires a basis for prediction}
+
+\item{\code{forest_num}}{Index of forest used to update residuals}
+
+\item{\code{add}}{Whether forest predictions should be added to or subtracted from residuals}
 }
 \if{html}{\out{</div>}}
 }
