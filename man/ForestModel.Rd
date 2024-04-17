@@ -81,7 +81,8 @@ Run a single iteration of the forest sampling algorithm (MCMC or GFR)
   variable_weights,
   global_scale,
   cutpoint_grid_size = 500,
-  gfr = T
+  gfr = T,
+  pre_initialized = F
 )}\if{html}{\out{</div>}}
 }
 
@@ -109,6 +110,8 @@ Run a single iteration of the forest sampling algorithm (MCMC or GFR)
 \item{\code{cutpoint_grid_size}}{(Optional) Number of unique cutpoints to consider (default: 500, currently only used when \code{GFR = TRUE})}
 
 \item{\code{gfr}}{(Optional) Whether or not the forest should be sampled using the "grow-from-root" (GFR) algorithm}
+
+\item{\code{pre_initialized}}{(Optional) Whether or not the leaves are pre-initialized outside of the sampling loop (before any samples are drawn). In multi-forest implementations like BCF, this is true, though in the single-forest supervised learning implementation, we can let C++ do the initialization. Default: F.}
 }
 \if{html}{\out{</div>}}
 }

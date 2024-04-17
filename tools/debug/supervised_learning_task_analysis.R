@@ -88,12 +88,13 @@ stochtree_analysis <- function(resid_train, resid_test, y_train, y_test,
         leaf_regression <- T
     }
     p_x <- ncol(X_train)
-    tau_init <- 0.1
+    tau_init <- var(y_train) / ntree
+    # tau_init <- 0.1
     param_list <- list(
-        alpha = 0.95, beta = 2, min_samples_leaf = 10, num_trees = ntree, 
-        cutpoint_grid_size = 100, global_variance_init = 1.0, tau_init = 0.1, 
-        leaf_prior_scale = matrix(c(tau_init), ncol = 1), nu = 3, lambda = 0.5, 
-        a_leaf = 2., b_leaf = 0.5/ntree, leaf_regression = leaf_regression, 
+        alpha = 0.95, beta = 2, min_samples_leaf = 1, num_trees = ntree, 
+        cutpoint_grid_size = 100, global_variance_init = 1.0, tau_init = tau_init, 
+        leaf_prior_scale = matrix(c(tau_init), ncol = 1), nu = 16, lambda = 0.25, 
+        a_leaf = 3., b_leaf = 0.5 * tau_init, leaf_regression = leaf_regression, 
         feature_types = as.integer(rep(0, p_x)), var_weights = rep(1/p_x, p_x)
     )
     
@@ -152,8 +153,8 @@ dispatch_stochtree_run <- function(num_gfr, num_burnin, num_mcmc_retained, param
                 global_var_samples[i], param_list$cutpoint_grid_size, gfr = T
             )
             global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome_train, rng, param_list$nu, param_list$lambda)
-            # leaf_scale_samples[i+1] <- sample_tau_one_iteration(forest_samples, rng, param_list$a_leaf, param_list$b_leaf, i-1)
-            # leaf_prior_scale[1,1] <- leaf_scale_samples[i+1]
+            leaf_scale_samples[i+1] <- sample_tau_one_iteration(forest_samples, rng, param_list$a_leaf, param_list$b_leaf, i-1)
+            param_list$leaf_prior_scale[1,1] <- leaf_scale_samples[i+1]
         }
     }
     
@@ -166,7 +167,7 @@ dispatch_stochtree_run <- function(num_gfr, num_burnin, num_mcmc_retained, param
         )
         global_var_samples[i+1] <- sample_sigma2_one_iteration(outcome_train, rng, param_list$nu, param_list$lambda)
         # leaf_scale_samples[i+1] <- sample_tau_one_iteration(forest_samples, rng, param_list$a_leaf, param_list$b_leaf, i-1)
-        # leaf_prior_scale[1,1] <- leaf_scale_samples[i+1]
+        # param_list$leaf_prior_scale[1,1] <- leaf_scale_samples[i+1]
     }
     
     # Forest predictions
@@ -188,6 +189,40 @@ dispatch_stochtree_run <- function(num_gfr, num_burnin, num_mcmc_retained, param
 }
 
 # Performance analysis functions for stochtree
+wrapped_bart_stochtree_analysis <- function(resid_train, resid_test, y_train, y_test, 
+                                            X_train, X_test, y_bar_train, y_bar_test, 
+                                            y_std_train, y_std_test, n, n_train, n_test, 
+                                            num_gfr, num_burnin, num_mcmc_retained, 
+                                            W_train = NULL, W_test = NULL, random_seed = NULL) {
+    # Start timer
+    start_time <- proc.time()
+    
+    # Run BART
+    leaf_model = ifelse(is.null(W_train), 0, 1)
+    bart_model <- stochtree::bart(
+        X_train = X_train, W_train = W_train, y_train = y_train, 
+        X_test = X_test, W_test = W_test, leaf_model = leaf_model, 
+        num_trees = 200, num_gfr = num_gfr, num_burnin = num_burnin, 
+        num_mcmc = num_mcmc_retained, sample_sigma = T, sample_tau = F, 
+        # random_seed = 1234, nu = 16
+        random_seed = 1234
+    )
+    
+    # End timer and measure run time
+    end_time <- proc.time()
+    runtime <- end_time[3] - start_time[3]
+    
+    # RMSEs
+    num_samples <- num_gfr + num_burnin + num_mcmc_retained
+    ypred_mean_train <- rowMeans(bart_model$yhat_train[,(num_gfr+num_burnin+1):num_samples])
+    ypred_mean_test <- rowMeans(bart_model$yhat_test[,(num_gfr+num_burnin+1):num_samples])
+    train_rmse <- sqrt(mean((ypred_mean_train - y_train)^2))
+    test_rmse <- sqrt(mean((ypred_mean_test - y_test)^2))
+    
+    return(c(runtime,train_rmse,test_rmse))
+}
+
+# Performance analysis functions for wbart
 wbart_analysis <- function(resid_train, resid_test, y_train, y_test, X_train, X_test, 
                            y_bar_train, y_bar_test, y_std_train, y_std_test, 
                            n, n_train, n_test, num_burnin, num_mcmc_retained, 
@@ -215,64 +250,193 @@ wbart_analysis <- function(resid_train, resid_test, y_train, y_test, X_train, X_
 }
 
 # Run the code
-# DGP 1
+# DGP 1 - Run 1
 dgp_name <- "partitioned_linear_model"
 plm_data <- generate_data(dgp_name, n = 1000, p_x = 10, p_w = 1, snr = NULL, test_set_pct = 0.2)
 warmstart_stochtree_results <- stochtree_analysis(
+    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
+    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
+    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test,
+    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = plm_data$W_train,
+    W_test = plm_data$W_test, random_seed = NULL
+)
+gc()
+mcmc_stochtree_results <- stochtree_analysis(
+    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
+    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
+    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test,
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = plm_data$W_train,
+    W_test = plm_data$W_test, random_seed = NULL
+)
+gc()
+wrapped_bart_warmstart_stochtree_results <- wrapped_bart_stochtree_analysis(
     plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test, 
     plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test, 
     plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test, 
     num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = plm_data$W_train, 
     W_test = plm_data$W_test, random_seed = NULL
 )
-mcmc_stochtree_results <- stochtree_analysis(
+gc()
+wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
     plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test, 
     plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test, 
     plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test, 
-    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 1000, W_train = plm_data$W_train, 
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = plm_data$W_train, 
     W_test = plm_data$W_test, random_seed = NULL
 )
+gc()
 mcmc_wbart_results <- wbart_analysis(
-    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test, 
-    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test, 
-    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, 
-    plm_data$n_test, num_burnin = 2000, num_mcmc_retained = 1000, 
+    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
+    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
+    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train,
+    plm_data$n_test, num_burnin = 2000, num_mcmc_retained = 2000,
     W_train = plm_data$W_train, W_test = plm_data$W_test, random_seed = NULL
 )
-results_dgp1 <- rbind(warmstart_stochtree_results, mcmc_stochtree_results, mcmc_wbart_results)
-results_dgp1 <- cbind(results_dgp1, plm_data$snr, dgp_name, 
-                      c("stochtree_warm_start", "stochtree_mcmc", "wbart_mcmc"))
+results_dgp1a <- rbind(warmstart_stochtree_results, mcmc_stochtree_results, wrapped_bart_warmstart_stochtree_results, wrapped_bart_mcmc_stochtree_results, mcmc_wbart_results)
+results_dgp1a <- cbind(results_dgp1a, plm_data$snr, dgp_name,
+                      c("stochtree_warm_start", "stochtree_mcmc", "bart_stochtree_warm_start", "bart_stochtree_mcmc", "wbart_mcmc"))
+cat("DGP 1 out of 2 - Run 1 out of 2\n")
 
-# DGP 2
+# DGP 1 - Run 2
+plm_data <- generate_data(dgp_name, n = 1000, p_x = 10, p_w = 1, snr = NULL, test_set_pct = 0.2)
+warmstart_stochtree_results <- stochtree_analysis(
+    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
+    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
+    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test,
+    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = plm_data$W_train,
+    W_test = plm_data$W_test, random_seed = NULL
+)
+gc()
+mcmc_stochtree_results <- stochtree_analysis(
+    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
+    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
+    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test,
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = plm_data$W_train,
+    W_test = plm_data$W_test, random_seed = NULL
+)
+gc()
+wrapped_bart_warmstart_stochtree_results <- wrapped_bart_stochtree_analysis(
+    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
+    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
+    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test,
+    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = plm_data$W_train,
+    W_test = plm_data$W_test, random_seed = NULL
+)
+gc()
+wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
+    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
+    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
+    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train, plm_data$n_test,
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = plm_data$W_train,
+    W_test = plm_data$W_test, random_seed = NULL
+)
+gc()
+mcmc_wbart_results <- wbart_analysis(
+    plm_data$resid_train, plm_data$resid_test, plm_data$y_train, plm_data$y_test,
+    plm_data$X_train, plm_data$X_test, plm_data$y_bar_train, plm_data$y_bar_test,
+    plm_data$y_std_train, plm_data$y_std_test, plm_data$n, plm_data$n_train,
+    plm_data$n_test, num_burnin = 2000, num_mcmc_retained = 2000,
+    W_train = plm_data$W_train, W_test = plm_data$W_test, random_seed = NULL
+)
+results_dgp1b <- rbind(warmstart_stochtree_results, mcmc_stochtree_results, wrapped_bart_warmstart_stochtree_results, wrapped_bart_mcmc_stochtree_results, mcmc_wbart_results)
+results_dgp1b <- cbind(results_dgp1b, plm_data$snr, dgp_name,
+                       c("stochtree_warm_start", "stochtree_mcmc", "bart_stochtree_warm_start", "bart_stochtree_mcmc", "wbart_mcmc"))
+cat("DGP 1 out of 2 - Run 2 out of 2\n")
+
+# DGP 2 - Run 1
 dgp_name <- "step_function"
 stpfn_data <- generate_data(dgp_name, n = 1000, p_x = 10, p_w = NULL, snr = NULL, test_set_pct = 0.2)
 warmstart_stochtree_results <- stochtree_analysis(
-    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test, 
-    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test, 
-    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test, 
-    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = stpfn_data$W_train, 
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = stpfn_data$W_train,
     W_test = stpfn_data$W_test, random_seed = NULL
 )
+gc()
 mcmc_stochtree_results <- stochtree_analysis(
-    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test, 
-    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test, 
-    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test, 
-    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 1000, W_train = stpfn_data$W_train, 
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train,
     W_test = stpfn_data$W_test, random_seed = NULL
 )
+gc()
+wrapped_bart_warmstart_stochtree_results <- wrapped_bart_stochtree_analysis(
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = stpfn_data$W_train,
+    W_test = stpfn_data$W_test, random_seed = NULL
+)
+gc()
+wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train,
+    W_test = stpfn_data$W_test, random_seed = NULL
+)
+gc()
 mcmc_wbart_results <- wbart_analysis(
-    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test, 
-    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test, 
-    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, 
-    stpfn_data$n_test, num_burnin = 2000, num_mcmc_retained = 1000, 
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train,
+    stpfn_data$n_test, num_burnin = 2000, num_mcmc_retained = 2000,
     W_train = stpfn_data$W_train, W_test = stpfn_data$W_test, random_seed = NULL
 )
+results_dgp2a <- rbind(warmstart_stochtree_results, mcmc_stochtree_results, wrapped_bart_warmstart_stochtree_results, wrapped_bart_mcmc_stochtree_results, mcmc_wbart_results)
+results_dgp2a <- cbind(results_dgp2a, stpfn_data$snr, dgp_name,
+                      c("stochtree_warm_start", "stochtree_mcmc", "bart_stochtree_warm_start", "bart_stochtree_mcmc", "wbart_mcmc"))
+cat("DGP 2 out of 2 - Run 1 out of 2\n")
 
-results_dgp2 <- rbind(warmstart_stochtree_results, mcmc_stochtree_results, mcmc_wbart_results)
-results_dgp2 <- cbind(results_dgp2, stpfn_data$snr, dgp_name, 
-                      c("stochtree_warm_start", "stochtree_mcmc", "wbart_mcmc"))
+# DGP 2 - Run 2
+stpfn_data <- generate_data(dgp_name, n = 1000, p_x = 10, p_w = NULL, snr = NULL, test_set_pct = 0.2)
+warmstart_stochtree_results <- stochtree_analysis(
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = stpfn_data$W_train,
+    W_test = stpfn_data$W_test, random_seed = NULL
+)
+gc()
+mcmc_stochtree_results <- stochtree_analysis(
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train,
+    W_test = stpfn_data$W_test, random_seed = NULL
+)
+gc()
+wrapped_bart_warmstart_stochtree_results <- wrapped_bart_stochtree_analysis(
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 10, num_burnin = 0, num_mcmc_retained = 100, W_train = stpfn_data$W_train,
+    W_test = stpfn_data$W_test, random_seed = NULL
+)
+gc()
+wrapped_bart_mcmc_stochtree_results <- wrapped_bart_stochtree_analysis(
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train, stpfn_data$n_test,
+    num_gfr = 0, num_burnin = 2000, num_mcmc_retained = 2000, W_train = stpfn_data$W_train,
+    W_test = stpfn_data$W_test, random_seed = NULL
+)
+gc()
+mcmc_wbart_results <- wbart_analysis(
+    stpfn_data$resid_train, stpfn_data$resid_test, stpfn_data$y_train, stpfn_data$y_test,
+    stpfn_data$X_train, stpfn_data$X_test, stpfn_data$y_bar_train, stpfn_data$y_bar_test,
+    stpfn_data$y_std_train, stpfn_data$y_std_test, stpfn_data$n, stpfn_data$n_train,
+    stpfn_data$n_test, num_burnin = 2000, num_mcmc_retained = 2000,
+    W_train = stpfn_data$W_train, W_test = stpfn_data$W_test, random_seed = NULL
+)
+results_dgp2b <- rbind(warmstart_stochtree_results, mcmc_stochtree_results, wrapped_bart_warmstart_stochtree_results, wrapped_bart_mcmc_stochtree_results, mcmc_wbart_results)
+results_dgp2b <- cbind(results_dgp2b, stpfn_data$snr, dgp_name,
+                      c("stochtree_warm_start", "stochtree_mcmc", "bart_stochtree_warm_start", "bart_stochtree_mcmc", "wbart_mcmc"))
+cat("DGP 2 out of 2 - Run 2 out of 2\n")
 
-results_df <- data.frame(rbind(results_dgp1, results_dgp2))
+results_df <- data.frame(rbind(results_dgp1a, results_dgp1b, results_dgp2a, results_dgp2b))
 colnames(results_df) <- c("runtime", "train_rmse", "test_rmse", "snr", "dgp", "model_type")
 rownames(results_df) <- 1:nrow(results_df)
 results_df <- results_df[,c("dgp", "model_type", "snr", "runtime", "train_rmse", "test_rmse")]

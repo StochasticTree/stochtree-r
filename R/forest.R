@@ -78,6 +78,47 @@ ForestSamples <- R6::R6Class(
         }, 
         
         #' @description
+        #' Set a constant predicted value for every tree in the ensemble. 
+        #' Stops program if any tree is more than a root node. 
+        #' @param forest_num Index of the forest sample within the container.
+        #' @param leaf_value Constant leaf value(s) to be fixed for each tree in the ensemble indexed by `forest_num`. Can be either a single number or a vector, depending on the forest's leaf dimension.
+        set_root_leaves = function(forest_num, leaf_value) {
+            stopifnot(!is.null(self$forest_container_ptr))
+            stopifnot(num_samples_forest_container_cpp(self$forest_container_ptr) == 0)
+            
+            # Set leaf values
+            if (length(leaf_value) == 1) {
+                stopifnot(output_dimension_forest_container_cpp(self$forest_container_ptr) == 1)
+                set_leaf_value_forest_container_cpp(self$forest_container_ptr, leaf_value)
+            } else if (length(leaf_value) > 1) {
+                stopifnot(output_dimension_forest_container_cpp(self$forest_container_ptr) == length(leaf_value))
+                set_leaf_vector_forest_container_cpp(self$forest_container_ptr, leaf_value)
+            } else {
+                stop("leaf_value must be a numeric value or vector of length >= 1")
+            }
+        }, 
+        
+        #' @description
+        #' Updates residual based on the predictions of a forest 
+        #' @param dataset `ForestDataset` object storing the covariates and bases for a given forest
+        #' @param outcome `Outcome` object storing the residuals to be updated based on forest predictions
+        #' @param forest_model `ForestModel` object storing tracking structures used in training / sampling
+        #' @param requires_basis Whether or not a forest requires a basis for prediction
+        #' @param forest_num Index of forest used to update residuals
+        #' @param add Whether forest predictions should be added to or subtracted from residuals
+        update_residual = function(dataset, outcome, forest_model, requires_basis, forest_num, add) {
+            stopifnot(!is.null(dataset$data_ptr))
+            stopifnot(!is.null(outcome$data_ptr))
+            stopifnot(!is.null(forest_model$tracker_ptr))
+            stopifnot(!is.null(self$forest_container_ptr))
+            
+            update_residual_forest_container_cpp(
+                dataset$data_ptr, outcome$data_ptr, self$forest_container_ptr, 
+                forest_model$tracker_ptr, requires_basis, forest_num, add
+            )
+        }, 
+        
+        #' @description
         #' Store the trees and metadata of `ForestDataset` class in a json file
         #' @param json_filename Name of output json file (must end in ".json")
         save_json = function(json_filename) {
@@ -98,6 +139,13 @@ ForestSamples <- R6::R6Class(
         #' @return Sample count
         num_samples = function() {
             return(num_samples_forest_container_cpp(self$forest_container_ptr))
+        }, 
+        
+        #' @description
+        #' Return output dimension of trees in a `ForestContainer` object
+        #' @return Leaf node parameter size
+        output_dimension = function() {
+            return(output_dimension_forest_container_cpp(self$forest_container_ptr))
         }
     )
 )

@@ -3,7 +3,6 @@
 #include <stochtree/container.h>
 #include <memory>
 #include <vector>
-using namespace cpp11;
 
 [[cpp11::register]]
 cpp11::writable::doubles_matrix<> predict_forest_cpp(cpp11::external_pointer<StochTree::ForestContainer> forest_samples, cpp11::external_pointer<StochTree::ForestDataset> dataset) {
