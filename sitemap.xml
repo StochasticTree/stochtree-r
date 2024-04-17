@@ -10,10 +10,13 @@
     <loc>https://stochastictree.github.io/stochtree-r/LICENSE.html</loc>
   </url>
   <url>
+    <loc>https://stochastictree.github.io/stochtree-r/articles/Bayesian-Supervised-Learning.html</loc>
+  </url>
+  <url>
     <loc>https://stochastictree.github.io/stochtree-r/articles/Causal-Inference.html</loc>
   </url>
   <url>
-    <loc>https://stochastictree.github.io/stochtree-r/articles/Supervised-Learning.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/articles/Prototype-Interface.html</loc>
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/articles/index.html</loc>
@@ -23,6 +26,9 @@
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/index.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/BART.html</loc>
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/CppRNG.html</loc>
@@ -38,6 +44,9 @@
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/Outcome.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/bcf.html</loc>
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/createForestContainer.html</loc>
@@ -56,6 +65,12 @@
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/predict.bart.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/predict.bcf.html</loc>
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/sample_sigma2_one_iteration.html</loc>

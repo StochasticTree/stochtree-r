@@ -6,7 +6,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light" data-bs-theme="light"><div class="container">
     
     <a class="navbar-brand me-2" href="../index.html">stochtree</a>
 
@@ -24,8 +24,9 @@
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="../articles/Bayesian-Supervised-Learning.html">Bayesian Supervised Learning in StochTree</a>
     <a class="dropdown-item" href="../articles/Causal-Inference.html">Causal Machine Learning in StochTree</a>
-    <a class="dropdown-item" href="../articles/Supervised-Learning.html">Bayesian Supervised Learning in StochTree</a>
+    <a class="dropdown-item" href="../articles/Prototype-Interface.html">Prototype Interface in StochTree</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -66,9 +67,12 @@
 <li><p><a href="#method-ForestSamples-predict"><code>ForestSamples$predict()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-predict_raw"><code>ForestSamples$predict_raw()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-predict_raw_single_forest"><code>ForestSamples$predict_raw_single_forest()</code></a></p></li>
+<li><p><a href="#method-ForestSamples-set_root_leaves"><code>ForestSamples$set_root_leaves()</code></a></p></li>
+<li><p><a href="#method-ForestSamples-update_residual"><code>ForestSamples$update_residual()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-save_json"><code>ForestSamples$save_json()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-load_json"><code>ForestSamples$load_json()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-num_samples"><code>ForestSamples$num_samples()</code></a></p></li>
+<li><p><a href="#method-ForestSamples-output_dimension"><code>ForestSamples$output_dimension()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-ForestSamples-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a new ForestContainer object.</p><div class="section">
@@ -169,15 +173,79 @@ number of samples).</p>
 and as many columns as samples in the <code>ForestContainer</code></p>
 </div>
 
-</div><p></p><hr><a id="method-ForestSamples-save_json"></a><div class="section">
-<h3 id="method-save-json-">Method <code>save_json()</code><a class="anchor" aria-label="anchor" href="#method-save-json-"></a></h3>
-<p>Store the trees and metadata of <code>ForestDataset</code> class in a json file</p><div class="section">
+</div><p></p><hr><a id="method-ForestSamples-set_root_leaves"></a><div class="section">
+<h3 id="method-set-root-leaves-">Method <code>set_root_leaves()</code><a class="anchor" aria-label="anchor" href="#method-set-root-leaves-"></a></h3>
+<p>Set a constant predicted value for every tree in the ensemble.
+Stops program if any tree is more than a root node.</p><div class="section">
 <h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">save_json</span><span class="op">(</span><span class="va">json_filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">set_root_leaves</span><span class="op">(</span><span class="va">forest_num</span>, <span class="va">leaf_value</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>forest_num</code></dt>
+<dd><p>Index of the forest sample within the container.</p></dd>
+
+
+<dt><code>leaf_value</code></dt>
+<dd><p>Constant leaf value(s) to be fixed for each tree in the ensemble indexed by <code>forest_num</code>. Can be either a single number or a vector, depending on the forest's leaf dimension.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-ForestSamples-update_residual"></a><div class="section">
+<h3 id="method-update-residual-">Method <code>update_residual()</code><a class="anchor" aria-label="anchor" href="#method-update-residual-"></a></h3>
+<p>Updates residual based on the predictions of a forest</p><div class="section">
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">update_residual</span><span class="op">(</span></span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  <span class="va">outcome</span>,</span>
+<span>  <span class="va">forest_model</span>,</span>
+<span>  <span class="va">requires_basis</span>,</span>
+<span>  <span class="va">forest_num</span>,</span>
+<span>  <span class="va">add</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>dataset</code></dt>
+<dd><p><code>ForestDataset</code> object storing the covariates and bases for a given forest</p></dd>
+
+
+<dt><code>outcome</code></dt>
+<dd><p><code>Outcome</code> object storing the residuals to be updated based on forest predictions</p></dd>
+
+
+<dt><code>forest_model</code></dt>
+<dd><p><code>ForestModel</code> object storing tracking structures used in training / sampling</p></dd>
+
+
+<dt><code>requires_basis</code></dt>
+<dd><p>Whether or not a forest requires a basis for prediction</p></dd>
+
+
+<dt><code>forest_num</code></dt>
+<dd><p>Index of forest used to update residuals</p></dd>
+
+
+<dt><code>add</code></dt>
+<dd><p>Whether forest predictions should be added to or subtracted from residuals</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-ForestSamples-save_json"></a><div class="section">
+<h3 id="method-save-json-">Method <code>save_json()</code><a class="anchor" aria-label="anchor" href="#method-save-json-"></a></h3>
+<p>Store the trees and metadata of <code>ForestDataset</code> class in a json file</p><div class="section">
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">save_json</span><span class="op">(</span><span class="va">json_filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>json_filename</code></dt>
 <dd><p>Name of output json file (must end in ".json")</p></dd>
 
@@ -190,12 +258,12 @@ and as many columns as samples in the <code>ForestContainer</code></p>
 <p>Load trees and metadata for an ensemble from a json file. Note that
 any trees and metadata already present in <code>ForestDataset</code> class will
 be overwritten.</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">load_json</span><span class="op">(</span><span class="va">json_filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>json_filename</code></dt>
 <dd><p>Name of model input json file (must end in ".json")</p></dd>
 
@@ -206,13 +274,25 @@ be overwritten.</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-num_samples"></a><div class="section">
 <h3 id="method-num-samples-">Method <code>num_samples()</code><a class="anchor" aria-label="anchor" href="#method-num-samples-"></a></h3>
 <p>Return number of samples in a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">num_samples</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
 <p>Sample count</p>
+</div>
+
+</div><p></p><hr><a id="method-ForestSamples-output_dimension"></a><div class="section">
+<h3 id="method-output-dimension-">Method <code>output_dimension()</code><a class="anchor" aria-label="anchor" href="#method-output-dimension-"></a></h3>
+<p>Return output dimension of trees in a <code>ForestContainer</code> object</p><div class="section">
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">output_dimension</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<p>Leaf node parameter size</p>
 </div>
 
 </div>
@@ -228,7 +308,7 @@ be overwritten.</p><div class="section">
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.8.</p>
 </div>
 
     </footer></div>
