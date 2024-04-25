@@ -148,15 +148,15 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
     }
     
     # Check whether treatment is binary
-    binary_treatment <- length(unique(Z_train)) != 2
+    binary_treatment <- length(unique(Z_train)) == 2
     
     # Adaptive coding will be ignored for continuous / ordered categorical treatments
-    if ((binary_treatment) && (adaptive_coding)) {
+    if ((!binary_treatment) && (adaptive_coding)) {
         adaptive_coding <- F
     }
     
     # Estimate if pre-estimated propensity score is not provided
-    if ((is.null(pi_train)) && (propensity_covariate != "none")) {
+    pif ((is.null(pi_train)) && (propensity_covariate != "none")) {
         # Estimate using xgboost with some elementary hyperparameter tuning
         dtrain <- xgboost::xgb.DMatrix(X_train, label = Z_train)
         if (binary_treatment) {
@@ -175,8 +175,8 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
             best_params <- as.numeric(eval_grid[which.min(evals),])
             param <- list(max_depth = best_params[3], eta = best_params[2], verbose = 0, objective = "binary:logistic", eval_metric = "rmse")
             bst <- xgboost::xgb.train(param, dtrain, nrounds = best_params[1])
-            pi_train <- predict(bst, X_train)
-            if (has_test) pi_test <- predict(bst, X_test)
+            pi_train <- as.matrix(predict(bst, X_train))
+            if (has_test) pi_test <- as.matrix(predict(bst, X_test))
         } else {
             cv <- xgboost::xgb.cv(data = dtrain, nrounds = 100, nfold = 5, metrics = list("rmse"), 
                                   max_depth = 3, eta = 1, objective = "reg:squarederror")
@@ -193,8 +193,8 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
             best_params <- as.numeric(eval_grid[which.min(evals),])
             param <- list(max_depth = best_params[3], eta = best_params[2], verbose = 0, objective = "reg:squarederror", eval_metric = "rmse")
             bst <- xgboost::xgb.train(param, dtrain, nrounds = best_params[1])
-            pi_train <- predict(bst, X_train)
-            if (has_test) pi_test <- predict(bst, X_test)
+            pi_train <- as.matrix(predict(bst, X_train))
+            if (has_test) pi_test <- as.matrix(predict(bst, X_test))
         }
     }
 

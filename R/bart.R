@@ -26,7 +26,7 @@
 #' @param b_leaf Scale parameter in the `IG(a_leaf, b_leaf)` leaf node parameter variance model. Calibrated internally as 0.5/num_trees if not set here.
 #' @param q Quantile used to calibrated `lambda` as in Sparapani et al (2021). Default: 0.9.
 #' @param sigma2_init Starting value of global variance parameter. Calibrated internally as in Sparapani et al (2021) if not set here.
-#' @param num_trees Number of trees in the ensemble. Default: 100.
+#' @param num_trees Number of trees in the ensemble. Default: 200.
 #' @param num_gfr Number of "warm-start" iterations run using the grow-from-root algorithm (He and Hahn, 2021). Default: 5.
 #' @param num_burnin Number of "burn-in" iterations of the MCMC sampler. Default: 0.
 #' @param num_mcmc Number of "retained" iterations of the MCMC sampler. Default: 100.
@@ -67,7 +67,7 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
                  cutpoint_grid_size = 100, tau_init = NULL, alpha = 0.95, 
                  beta = 2.0, min_samples_leaf = 5, leaf_model = 0, 
                  nu = 3, lambda = NULL, a_leaf = 3, b_leaf = NULL, 
-                 q = 0.9, sigma2_init = NULL, num_trees = 100, num_gfr = 5, 
+                 q = 0.9, sigma2_init = NULL, num_trees = 200, num_gfr = 5, 
                  num_burnin = 0, num_mcmc = 100, sample_sigma = T, 
                  sample_tau = T, random_seed = -1){
     # Convert all input data to matrices if not already converted
@@ -136,11 +136,14 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
         is_leaf_constant = T
         leaf_regression = F
     } else if (leaf_model == 1) {
+        stopifnot(has_basis)
+        stopifnot(ncol(W_train) == 1)
         output_dimension = 1
         is_leaf_constant = F
         leaf_regression = T
     } else if (leaf_model == 2) {
-        stopifnot(!is.null(W_train))
+        stopifnot(has_basis)
+        stopifnot(ncol(W_train) > 1)
         output_dimension = ncol(W_train)
         is_leaf_constant = F
         leaf_regression = T
@@ -251,7 +254,14 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
     if (has_test) result[["yhat_test"]] = yhat_test
     if (sample_sigma) result[["sigma2_samples"]] = sigma2_samples
     if (sample_tau) result[["tau_samples"]] = tau_samples
-    class(result) <- "bart"
+    class(result) <- "bartmodel"
+    
+    # Clean up classes with external pointers to C++ data structures
+    rm(forest_model)
+    rm(forest_dataset_train)
+    if (has_test) rm(forest_dataset_test)
+    rm(outcome_train)
+    rm(rng)
     
     return(result)
 }
@@ -291,7 +301,7 @@ bart <- function(X_train, y_train, W_train = NULL, X_test = NULL, W_test = NULL,
 #' yhat_test <- predict(bart_model, X_test)
 #' # plot(rowMeans(yhat_test), y_test, xlab = "predicted", ylab = "actual")
 #' # abline(0,1,col="red",lty=3,lwd=3)
-predict.bart <- function(bart, X_test, W_test = NULL){
+predict.bartmodel <- function(bart, X_test, W_test = NULL){
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(X_test))) && (!is.null(X_test))) {
         X_test <- as.matrix(X_test)

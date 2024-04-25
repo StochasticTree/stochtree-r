@@ -20,6 +20,8 @@ To begin, we load the stochtree package.
 
 ```{r setup}
 library(stochtree)
+library(ggplot2)
+library(latex2exp)
 ```
 
 We also define several simple functions that configue the data generating processes used in this vignette.
@@ -101,7 +103,7 @@ initialization samples (@krantsevich2023stochastic). This is the default in
 ```{r}
 num_gfr <- 10
 num_burnin <- 0
-num_mcmc <- 100
+num_mcmc <- 1000
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_warmstart <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
@@ -109,24 +111,6 @@ bcf_model_warmstart <- bcf(
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
 )
-```
-
-Inspect the initial XBART "warm-start" samples
-
-```{r xbart_plot}
-sample_inds <- 1:num_gfr
-plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
-     xlab = "predicted", ylab = "actual", main = "Prognostic function")
-abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
-     xlab = "predicted", ylab = "actual", main = "Treatment effect")
-abline(0,1,col="red",lty=3,lwd=3)
-sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
-     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
-abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```
 
 Inspect the BART samples that were initialized with an XBART warm-start
@@ -147,15 +131,26 @@ plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds,
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```
 
+Examine test set interval coverage
+
+```{r}
+test_lb <- apply(bcf_model_warmstart$tau_hat_test, 1, quantile, 0.025)
+test_ub <- apply(bcf_model_warmstart$tau_hat_test, 1, quantile, 0.975)
+cover <- (
+    (test_lb <= tau_x[test_inds]) & 
+    (test_ub >= tau_x[test_inds])
+)
+mean(cover)
+```
+
 ### BART MCMC without Warmstart
 
 Next, we simulate from this ensemble model without any warm-start initialization. 
 
-
 ```{r}
 num_gfr <- 0
-num_burnin <- 100
-num_mcmc <- 100
+num_burnin <- 1000
+num_mcmc <- 1000
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_root <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
@@ -181,6 +176,18 @@ plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observe
 plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+Examine test set interval coverage
+
+```{r}
+test_lb <- apply(bcf_model_root$tau_hat_test, 1, quantile, 0.025)
+test_ub <- apply(bcf_model_root$tau_hat_test, 1, quantile, 0.975)
+cover <- (
+    (test_lb <= tau_x[test_inds]) & 
+    (test_ub >= tau_x[test_inds])
+)
+mean(cover)
 ```
 
 # Demo 2: Linear Outcome Model, Heterogeneous Treatment Effect
@@ -262,24 +269,6 @@ bcf_model_warmstart <- bcf(
 )
 ```
 
-Inspect the initial XBART "warm-start" samples
-
-```{r xbart_plot_2}
-sample_inds <- 1:num_gfr
-plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
-     xlab = "predicted", ylab = "actual", main = "Prognostic function")
-abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
-     xlab = "predicted", ylab = "actual", main = "Treatment effect")
-abline(0,1,col="red",lty=3,lwd=3)
-sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
-     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
-abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
-```
-
 Inspect the BART samples that were initialized with an XBART warm-start
 
 ```{r bart_warmstart_plot_2}
@@ -296,6 +285,18 @@ plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_ob
 plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+Examine test set interval coverage
+
+```{r}
+test_lb <- apply(bcf_model_warmstart$tau_hat_test, 1, quantile, 0.025)
+test_ub <- apply(bcf_model_warmstart$tau_hat_test, 1, quantile, 0.975)
+cover <- (
+    (test_lb <= tau_x[test_inds]) & 
+    (test_ub >= tau_x[test_inds])
+)
+mean(cover)
 ```
 
 ### BART MCMC without Warmstart
@@ -331,6 +332,18 @@ plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observe
 plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+Examine test set interval coverage
+
+```{r}
+test_lb <- apply(bcf_model_root$tau_hat_test, 1, quantile, 0.025)
+test_ub <- apply(bcf_model_root$tau_hat_test, 1, quantile, 0.975)
+cover <- (
+    (test_lb <= tau_x[test_inds]) & 
+    (test_ub >= tau_x[test_inds])
+)
+mean(cover)
 ```
 
 # Demo 3: Linear Outcome Model, Homogeneous Treatment Effect
@@ -412,24 +425,6 @@ bcf_model_warmstart <- bcf(
 )
 ```
 
-Inspect the initial XBART "warm-start" samples
-
-```{r xbart_plot_3}
-sample_inds <- 1:num_gfr
-plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
-     xlab = "predicted", ylab = "actual", main = "Prognostic function")
-abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
-     xlab = "predicted", ylab = "actual", main = "Treatment effect")
-abline(0,1,col="red",lty=3,lwd=3)
-sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
-     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
-abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
-```
-
 Inspect the BART samples that were initialized with an XBART warm-start
 
 ```{r bart_warmstart_plot_3}
@@ -446,6 +441,18 @@ plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_ob
 plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+Examine test set interval coverage
+
+```{r}
+test_lb <- apply(bcf_model_warmstart$tau_hat_test, 1, quantile, 0.025)
+test_ub <- apply(bcf_model_warmstart$tau_hat_test, 1, quantile, 0.975)
+cover <- (
+    (test_lb <= tau_x[test_inds]) & 
+    (test_ub >= tau_x[test_inds])
+)
+mean(cover)
 ```
 
 ### BART MCMC without Warmstart
@@ -481,6 +488,178 @@ plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observe
 plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+Examine test set interval coverage
+
+```{r}
+test_lb <- apply(bcf_model_root$tau_hat_test, 1, quantile, 0.025)
+test_ub <- apply(bcf_model_root$tau_hat_test, 1, quantile, 0.975)
+cover <- (
+    (test_lb <= tau_x[test_inds]) & 
+    (test_ub >= tau_x[test_inds])
+)
+mean(cover)
+```
+
+# Demo 4: Nonlinear Outcome Model, Heterogeneous Treatment Effect
+
+We consider the following data generating process:
+
+\begin{equation*}
+\begin{aligned}
+y &= \mu(X) + \tau(X) Z + \epsilon\\
+\epsilon &\sim N\left(0,\sigma^2\right)\\
+\mu(X) &= \begin{cases}
+-1.1 & \text{ if} X_1 > X_2\\
+0.9 & \text{ if} X_1 \leq X_2
+\end{cases}\\
+\tau(X) &= \frac{1}{1+\exp(-X_3)} + \frac{X_2}{10}\\
+\pi(X) &= \Phi\left(\mu(X)\right)\\
+Z &\sim \text{Bernoulli}\left(\pi(X)\right)\\
+X_1,X_2,X_3 &\sim N\left(0,1\right)\\
+X_4 &\sim N\left(X_2,1\right)\\
+\end{aligned}
+\end{equation*}
+
+## Simulation
+
+We draw from the DGP defined above
+
+```{r data_4}
+n <- 1000
+x1 <- rnorm(n)
+x2 <- rnorm(n)
+x3 <- rnorm(n)
+x4 <- rnorm(n,x2,1)
+X <- cbind(x1,x2,x3,x4)
+p <- ncol(X)
+mu <- function(x) {-1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2])) - 0.1}
+tau <- function(x) {1/(1 + exp(-x[,3])) + x[,2]/10}
+mu_x <- mu(X)
+tau_x <- tau(X)
+pi_x <- pnorm(mu_x)
+Z <- rbinom(n,1,pi_x)
+E_XZ <- mu_x + Z*tau_x
+sigma <- diff(range(mu_x + tau_x*pi))/8
+y <- E_XZ + sigma*rnorm(n)
+
+# Split data into test and train sets
+test_set_pct <- 0.2
+n_test <- round(test_set_pct*n)
+n_train <- n - n_test
+test_inds <- sort(sample(1:n, n_test, replace = F))
+train_inds <- (1:n)[!((1:n) %in% test_inds)]
+X_test <- X[test_inds,]
+X_train <- X[train_inds,]
+pi_test <- pi_x[test_inds]
+pi_train <- pi_x[train_inds]
+Z_test <- Z[test_inds]
+Z_train <- Z[train_inds]
+y_test <- y[test_inds]
+y_train <- y[train_inds]
+mu_test <- mu_x[test_inds]
+mu_train <- mu_x[train_inds]
+tau_test <- tau_x[test_inds]
+tau_train <- tau_x[train_inds]
+```
+
+## Sampling and Analysis
+
+### Warmstart
+
+We first simulate from an ensemble model of $y \mid X$ using "warm-start" 
+initialization samples (@krantsevich2023stochastic). This is the default in 
+`stochtree`.
+
+```{r}
+num_gfr <- 10
+num_burnin <- 0
+num_mcmc <- 100
+num_samples <- num_gfr + num_burnin + num_mcmc
+bcf_model_warmstart <- bcf(
+    X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
+    sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
+)
+```
+
+Inspect the BART samples that were initialized with an XBART warm-start
+
+```{r bart_warmstart_plot_4}
+sample_inds <- (num_gfr+1):num_samples
+plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+Examine test set interval coverage
+
+```{r}
+test_lb <- apply(bcf_model_warmstart$tau_hat_test, 1, quantile, 0.025)
+test_ub <- apply(bcf_model_warmstart$tau_hat_test, 1, quantile, 0.975)
+cover <- (
+    (test_lb <= tau_x[test_inds]) & 
+    (test_ub >= tau_x[test_inds])
+)
+mean(cover)
+```
+
+### BART MCMC without Warmstart
+
+Next, we simulate from this ensemble model without any warm-start initialization. 
+
+```{r}
+num_gfr <- 0
+num_burnin <- 100
+num_mcmc <- 100
+num_samples <- num_gfr + num_burnin + num_mcmc
+bcf_model_root <- bcf(
+    X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
+    sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
+)
+```
+
+Inspect the BART samples after burnin
+
+```{r bart_root_plot_4}
+sample_inds <- (num_burnin+1):num_samples
+plot(rowMeans(bcf_model_root$mu_hat_test[,sample_inds]), mu_test, 
+     xlab = "predicted", ylab = "actual", main = "Prognostic function")
+abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_root$tau_hat_test[,sample_inds]), tau_test, 
+     xlab = "predicted", ylab = "actual", main = "Treatment effect")
+abline(0,1,col="red",lty=3,lwd=3)
+sigma_observed <- var(y-E_XZ)
+plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)), 
+                 max(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)))
+plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
+     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
+abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
+```
+
+Examine test set interval coverage
+
+```{r}
+test_lb <- apply(bcf_model_root$tau_hat_test, 1, quantile, 0.025)
+test_ub <- apply(bcf_model_root$tau_hat_test, 1, quantile, 0.975)
+cover <- (
+    (test_lb <= tau_x[test_inds]) & 
+    (test_ub >= tau_x[test_inds])
+)
+mean(cover)
 ```
 
 # References

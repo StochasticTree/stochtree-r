@@ -24,7 +24,7 @@ bart(
   b_leaf = NULL,
   q = 0.9,
   sigma2_init = NULL,
-  num_trees = 100,
+  num_trees = 200,
   num_gfr = 5,
   num_burnin = 0,
   num_mcmc = 100,
@@ -79,7 +79,7 @@ variable for sampling purposes. Default: \code{rep(1/ncol(X_train),ncol(X_train)
 
 \item{sigma2_init}{Starting value of global variance parameter. Calibrated internally as in Sparapani et al (2021) if not set here.}
 
-\item{num_trees}{Number of trees in the ensemble. Default: 100.}
+\item{num_trees}{Number of trees in the ensemble. Default: 200.}
 
 \item{num_gfr}{Number of "warm-start" iterations run using the grow-from-root algorithm (He and Hahn, 2021). Default: 5.}
 
