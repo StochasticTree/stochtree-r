@@ -156,7 +156,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
     }
     
     # Estimate if pre-estimated propensity score is not provided
-    pif ((is.null(pi_train)) && (propensity_covariate != "none")) {
+    if ((is.null(pi_train)) && (propensity_covariate != "none")) {
         # Estimate using xgboost with some elementary hyperparameter tuning
         dtrain <- xgboost::xgb.DMatrix(X_train, label = Z_train)
         if (binary_treatment) {
