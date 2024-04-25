@@ -22,6 +22,5 @@ Suggests:
 VignetteBuilder: knitr
 Imports: 
     R6,
-    xgboost, 
-    ggplot2
+    xgboost
 URL: https://stochastictree.github.io/stochtree-r/
