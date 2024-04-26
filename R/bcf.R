@@ -284,6 +284,9 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
         current_b_1 <- b_1
         tau_basis_train <- (1-Z_train)*current_b_0 + Z_train*current_b_1
         if (has_test) tau_basis_test <- (1-Z_test)*current_b_0 + Z_test*current_b_1
+    } else {
+        tau_basis_train <- Z_train
+        if (has_test) tau_basis_test <- Z_test
     }
     
     # Data
