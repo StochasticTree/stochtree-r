@@ -4,6 +4,7 @@ CPP_PKGROOT=stochtree-cpp
 PKG_CPPFLAGS= -I$(CPP_PKGROOT)/include -I$(CPP_PKGROOT)/dependencies/boost_math/include -I$(CPP_PKGROOT)/dependencies/eigen
 
 OBJECTS = \
+    bcf.o \
     data.o \
     predictor.o \
     sampler.o \
