@@ -253,7 +253,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
     
     # Calibrate priors for global sigma^2 and sigma_leaf_mu / sigma_leaf_tau
     reg_basis <- X_train
-    sigma2hat <- (sigma(lm(resid_train~reg_basis)))^2
+    sigma2hat <- mean(resid(lm(y~reg_basis))^2)
     quantile_cutoff <- 0.9
     if (is.null(lambda)) {
         lambda <- (sigma2hat*qgamma(1-quantile_cutoff,nu))/nu
