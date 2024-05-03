@@ -145,15 +145,23 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
     }
     
     # Fill in rfx basis as a vector of 1s (random intercept) if a basis not provided 
+    has_basis_rfx <- F
+    num_basis_rfx <- 0
     if (has_rfx) {
         if (is.null(rfx_basis_train)) {
             rfx_basis_train <- matrix(rep(1,nrow(X_train)), nrow = nrow(X_train), ncol = 1)
+        } else {
+            has_basis_rfx <- T
+            num_basis_rfx <- ncol(rfx_basis_train)
         }
         num_rfx_groups <- length(unique(group_ids_train))
         num_rfx_components <- ncol(rfx_basis_train)
     }
     if (has_rfx_test) {
         if (is.null(rfx_basis_test)) {
+            if (!is.null(rfx_basis_train)) {
+                stop("Random effects basis provided for training set, must also be provided for the test set")
+            }
             rfx_basis_test <- matrix(rep(1,nrow(X_test)), nrow = nrow(X_test), ncol = 1)
         }
     }
@@ -347,7 +355,11 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
         "requires_basis" = requires_basis, 
         "num_covariates" = ncol(X_train), 
         "num_basis" = ifelse(is.null(W_train),0,ncol(W_train)), 
-        "num_samples" = num_samples
+        "num_samples" = num_samples, 
+        "has_basis" = !is.null(W_train), 
+        "has_rfx" = has_rfx, 
+        "has_basis_rfx" = has_basis_rfx, 
+        "num_basis_rfx" = num_basis_rfx
     )
     result <- list(
         "forests" = forest_samples, 
@@ -360,6 +372,7 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
     if (has_rfx) {
         result[["rfx_samples"]] = rfx_samples
         result[["rfx_preds_train"]] = rfx_preds_train
+        result[["rfx_unique_group_ids"]] = levels(group_ids_factor)
     }
     if ((has_rfx_test) && (has_test)) result[["rfx_preds_test"]] = rfx_preds_test
     class(result) <- "bartmodel"
@@ -381,8 +394,13 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
 #' @param bart Object of type `bart` containing draws of a regression forest and associated sampling outputs.
 #' @param X_test Covariates used to determine tree leaf predictions for each observation.
 #' @param W_test (Optional) Bases used for prediction (by e.g. dot product with leaf values). Default: `NULL`.
+#' @param group_ids_test (Optional) Test set group labels used for an additive random effects model. 
+#' We do not currently support (but plan to in the near future), test set evaluation for group labels
+#' that were not in the training set.
+#' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
 #'
-#' @return Matrix of predictions with `nrow(X_test)` rows and `bart$num_samples` columns
+#' @return List of prediction matrices. If model does not have random effects, the list has one element -- the predictions from the forest. 
+#' If the model does have random effects, the list has three elements -- forest predictions, random effects predictions, and their sum (`y_hat`).
 #' @export
 #'
 #' @examples
@@ -410,13 +428,16 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
 #' yhat_test <- predict(bart_model, X_test)
 #' # plot(rowMeans(yhat_test), y_test, xlab = "predicted", ylab = "actual")
 #' # abline(0,1,col="red",lty=3,lwd=3)
-predict.bartmodel <- function(bart, X_test, W_test = NULL){
+predict.bartmodel <- function(bart, X_test, W_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL){
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(X_test))) && (!is.null(X_test))) {
         X_test <- as.matrix(X_test)
     }
     if ((is.null(dim(W_test))) && (!is.null(W_test))) {
         W_test <- as.matrix(W_test)
+    }
+    if ((is.null(dim(rfx_basis_test))) && (!is.null(rfx_basis_test))) {
+        rfx_basis_test <- as.matrix(rfx_basis_test)
     }
     
     # Data checks
@@ -429,14 +450,44 @@ predict.bartmodel <- function(bart, X_test, W_test = NULL){
     if (bart$model_params$num_covariates != ncol(X_test)) {
         stop("X_test and W_test must have the same number of rows")
     }
+    if ((bart$model_params$has_rfx) && (is.null(group_ids_test))) {
+        stop("Random effect group labels (group_ids_test) must be provided for this model")
+    }
+    if ((bart$model_params$has_rfx_basis) && (is.null(rfx_basis_test))) {
+        stop("Random effects basis (rfx_basis_test) must be provided for this model")
+    }
+    if ((bart$model_params$num_rfx_basis > 0) && (ncol(rfx_basis_test) != bart$model_params$num_rfx_basis)) {
+        stop("Random effects basis has a different dimension than the basis used to train this model")
+    }
+    
+    # Produce basis for the "intercept-only" random effects case
+    if ((bart$model_params$has_rfx) && (is.null(rfx_basis_test))) {
+        rfx_basis_test <- matrix(rep(1, nrow(X_test)), ncol = 1)
+    }
     
     # Create prediction dataset
     if (!is.null(W_test)) prediction_dataset <- createForestDataset(X_test, W_test)
     else prediction_dataset <- createForestDataset(X_test)
     
-    # Compute and return predictions
+    # Compute forest predictions
     y_std <- bart$model_params$outcome_scale
     y_bar <- bart$model_params$outcome_mean
-    result <- bart$forests$predict(prediction_dataset)*y_std + y_bar
-    return(result)
+    forest_predictions <- bart$forests$predict(prediction_dataset)*y_std + y_bar
+    
+    # Compute rfx predictions (if requested)
+    if (bart$model_params$has_rfx) {
+        rfx_predictions <- bart$rfx_samples$predict(group_ids_test, rfx_basis_test)*y_std
+    }
+    
+    if (bart$model_params$has_rfx) {
+        y_hat <- forest_predictions + rfx_predictions
+        result <- list(
+            "forest_predictions" = forest_predictions, 
+            "rfx_predictions" = rfx_predictions, 
+            "y_hat" = y_hat, 
+        )
+        return(result)
+    } else {
+        return(list("y_hat" = forest_predictions))
+    }
 }
