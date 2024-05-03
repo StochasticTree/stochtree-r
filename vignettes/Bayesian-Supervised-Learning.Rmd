@@ -298,6 +298,7 @@ Inspect the initial XBART "warm-start" samples
 
 ```{r xbart_plot_plm_rfx}
 plot(bart_model_warmstart$sigma2_samples[1:num_gfr], ylab="sigma^2")
+abline(h=noise_sd^2,col="red",lty=2,lwd=2.5)
 plot(rowMeans(bart_model_warmstart$yhat_test[,1:num_gfr]), y_test, pch=16, 
      cex=0.75, xlab = "pred", ylab = "actual")
 abline(0,1,col="red",lty=2,lwd=2.5)
@@ -307,6 +308,7 @@ Inspect the BART samples that were initialized with an XBART warm-start
 
 ```{r bart_warmstart_plot_plm_rfx}
 plot(bart_model_warmstart$sigma2_samples[(num_gfr + 1):num_samples], ylab="sigma^2")
+abline(h=noise_sd^2,col="red",lty=2,lwd=2.5)
 plot(rowMeans(bart_model_warmstart$yhat_test[,(num_gfr + 1):num_samples]), y_test, 
      pch=16, cex=0.75, xlab = "pred", ylab = "actual")
 abline(0,1,col="red",lty=2,lwd=2.5)
@@ -335,6 +337,7 @@ Inspect the BART samples after burnin.
 
 ```{r bart_root_plot_plm_rfx}
 plot(bart_model_root$sigma2_samples[(num_burnin + 1):num_samples], ylab="sigma^2")
+abline(h=noise_sd^2,col="red",lty=2,lwd=2.5)
 plot(rowMeans(bart_model_root$yhat_test[,(num_burnin + 1):num_samples]), y_test, 
      pch=16, cex=0.75, xlab = "pred", ylab = "actual")
 abline(0,1,col="red",lty=2,lwd=2.5)
