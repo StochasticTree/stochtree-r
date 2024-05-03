@@ -21,6 +21,5 @@ Suggests:
     rmarkdown
 VignetteBuilder: knitr
 Imports: 
-    R6,
-    xgboost
+    R6
 URL: https://stochastictree.github.io/stochtree-r/

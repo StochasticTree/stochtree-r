@@ -157,45 +157,10 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
     
     # Estimate if pre-estimated propensity score is not provided
     if ((is.null(pi_train)) && (propensity_covariate != "none")) {
-        # Estimate using xgboost with some elementary hyperparameter tuning
-        dtrain <- xgboost::xgb.DMatrix(X_train, label = Z_train)
-        if (binary_treatment) {
-            cv <- xgboost::xgb.cv(data = dtrain, nrounds = 100, nfold = 5, metrics = list("rmse","auc"), 
-                                  max_depth = 3, eta = 1, objective = "binary:logistic")
-            num_trees = c(20, 50, 100)
-            etas <- c(0.01, 0.05, 0.1, 0.5)
-            max_depth <- c(3, 6)
-            eval_grid <- expand.grid(num_trees, etas, max_depth)
-            evals <- rep(NA, nrow(eval_grid))
-            for (i in 1:nrow(eval_grid)) {
-                cv <- xgboost::xgb.cv(data = dtrain, nrounds = 100, nfold = 5, metrics = list("rmse","auc"), 
-                                      max_depth = 3, eta = 0.1, objective = "binary:logistic", verbose = 0)
-                evals[i] <- cv$evaluation_log[length(cv$evaluation_log),"test_auc_mean"]$test_auc_mean
-            }
-            best_params <- as.numeric(eval_grid[which.min(evals),])
-            param <- list(max_depth = best_params[3], eta = best_params[2], verbose = 0, objective = "binary:logistic", eval_metric = "rmse")
-            bst <- xgboost::xgb.train(param, dtrain, nrounds = best_params[1])
-            pi_train <- as.matrix(predict(bst, X_train))
-            if (has_test) pi_test <- as.matrix(predict(bst, X_test))
-        } else {
-            cv <- xgboost::xgb.cv(data = dtrain, nrounds = 100, nfold = 5, metrics = list("rmse"), 
-                                  max_depth = 3, eta = 1, objective = "reg:squarederror")
-            num_trees = c(20, 50, 100)
-            etas <- c(0.01, 0.05, 0.1, 0.5)
-            max_depth <- c(3, 6)
-            eval_grid <- expand.grid(num_trees, etas, max_depth)
-            evals <- rep(NA, nrow(eval_grid))
-            for (i in 1:nrow(eval_grid)) {
-                cv <- xgboost::xgb.cv(data = dtrain, nrounds = 100, nfold = 5, metrics = list("rmse","auc"), 
-                                      max_depth = 3, eta = 0.1, objective = "reg:squarederror", verbose = 0)
-                evals[i] <- cv$evaluation_log[length(cv$evaluation_log),"test_rmse_mean"]$test_rmse_mean
-            }
-            best_params <- as.numeric(eval_grid[which.min(evals),])
-            param <- list(max_depth = best_params[3], eta = best_params[2], verbose = 0, objective = "reg:squarederror", eval_metric = "rmse")
-            bst <- xgboost::xgb.train(param, dtrain, nrounds = best_params[1])
-            pi_train <- as.matrix(predict(bst, X_train))
-            if (has_test) pi_test <- as.matrix(predict(bst, X_test))
-        }
+        # Estimate using the last of several iterations of GFR BART
+        bart_model_propensity <- bart(X_train = X_train, y_train = as.numeric(Z_train), X_test = X_test, leaf_model = 0, feature_types = feature_types, num_gfr = 5, num_burnin = 0, num_mcmc = 0)
+        pi_train <- as.numeric(bart_model_propensity$yhat_train[,5])
+        if (has_test) pi_test <- as.numeric(bart_model_propensity$yhat_test[,5])
     }
 
     if (has_test) {
