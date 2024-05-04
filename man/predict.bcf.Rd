@@ -13,10 +13,16 @@
 
 \item{Z_test}{Treatments used for prediction.}
 
-\item{pi_test}{(Optional) Propensities used for prediction. Default: \code{NULL}.}
+\item{pi_test}{(Optional) Propensities used for prediction.}
+
+\item{group_ids_test}{(Optional) Test set group labels used for an additive random effects model.
+We do not currently support (but plan to in the near future), test set evaluation for group labels
+that were not in the training set.}
+
+\item{rfx_basis_test}{(Optional) Test set basis for "random-slope" regression in additive random effects model.}
 }
 \value{
-List of three \code{nrow(X_test)} by \code{bcf$num_samples} matrices: prognostic function estimates, treatment effect estimates and outcome predictions.
+List of three (or four) \code{nrow(X_test)} by \code{bcf$num_samples} matrices: prognostic function estimates, treatment effect estimates, (possibly) random effects predictions, and outcome predictions.
 }
 \description{
 Predict from a sampled BCF model on new data

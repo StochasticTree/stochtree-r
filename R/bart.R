@@ -474,7 +474,7 @@ predict.bartmodel <- function(bart, X_test, W_test = NULL, group_ids_test = NULL
     y_bar <- bart$model_params$outcome_mean
     forest_predictions <- bart$forests$predict(prediction_dataset)*y_std + y_bar
     
-    # Compute rfx predictions (if requested)
+    # Compute rfx predictions (if needed)
     if (bart$model_params$has_rfx) {
         rfx_predictions <- bart$rfx_samples$predict(group_ids_test, rfx_basis_test)*y_std
     }
