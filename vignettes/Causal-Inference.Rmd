@@ -686,7 +686,7 @@ pi_x <- 0.8*pnorm((3*mu_x/sd(mu_x)) - 0.5*X[,1]) + 0.05 + runif(n)/10
 Z <- rbinom(n,1,pi_x)
 E_XZ <- mu_x + Z*tau_x
 group_ids <- rep(c(1,2), n %/% 2)
-rfx_coefs <- matrix(c(-5, -3, 5, 3),nrow=2,byrow=T)
+rfx_coefs <- matrix(c(-1, -1, 1, 1),nrow=2,byrow=T)
 rfx_basis <- cbind(1, runif(n, -1, 1))
 rfx_term <- rowSums(rfx_coefs[group_ids,] * rfx_basis)
 y <- E_XZ + rfx_term + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
@@ -713,20 +713,20 @@ group_ids_test <- group_ids[test_inds]
 group_ids_train <- group_ids[train_inds]
 rfx_basis_test <- rfx_basis[test_inds,]
 rfx_basis_train <- rfx_basis[train_inds,]
+rfx_term_test <- rfx_term[test_inds]
+rfx_term_train <- rfx_term[train_inds]
 ```
 
 ## Sampling and Analysis
 
 ### Warmstart
 
-We first simulate from an ensemble model of $y \mid X$ using "warm-start" 
-initialization samples (@krantsevich2023stochastic). This is the default in 
-`stochtree`.
+Here we simulate only from the "warm-start" model (running root-MCMC BART with random effects is simply a matter of modifying the below code snippet by setting `num_gfr <- 0` and `num_mcmc` > 0).
 
 ```{r}
-num_gfr <- 10
+num_gfr <- 100
 num_burnin <- 0
-num_mcmc <- 1000
+num_mcmc <- 500
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_warmstart <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
@@ -751,6 +751,9 @@ abline(0,1,col="red",lty=3,lwd=3)
 plot(rowMeans(bcf_model_warmstart$y_hat_test[,sample_inds]), y_test, 
      xlab = "predicted", ylab = "actual", main = "Outcome")
 abline(0,1,col="red",lty=3,lwd=3)
+plot(rowMeans(bcf_model_warmstart$rfx_preds_test[,sample_inds]), rfx_term_test, 
+     xlab = "predicted", ylab = "actual", main = "Random effects terms")
+abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ-rfx_term)
 plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
                  max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
@@ -764,58 +767,6 @@ Examine test set interval coverage
 ```{r}
 test_lb <- apply(bcf_model_warmstart$tau_hat_test, 1, quantile, 0.025)
 test_ub <- apply(bcf_model_warmstart$tau_hat_test, 1, quantile, 0.975)
-cover <- (
-    (test_lb <= tau_x[test_inds]) & 
-    (test_ub >= tau_x[test_inds])
-)
-mean(cover)
-```
-
-### BART MCMC without Warmstart
-
-Next, we simulate from this ensemble model without any warm-start initialization. 
-
-```{r}
-num_gfr <- 0
-num_burnin <- 1000
-num_mcmc <- 1000
-num_samples <- num_gfr + num_burnin + num_mcmc
-bcf_model_root <- bcf(
-    X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-    rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
-    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
-    sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F
-)
-```
-
-Inspect the BART samples after burnin
-
-```{r bart_root_plot_rfx}
-sample_inds <- (num_burnin+1):num_samples
-plot(rowMeans(bcf_model_root$mu_hat_test[,sample_inds]), mu_test, 
-     xlab = "predicted", ylab = "actual", main = "Prognostic function")
-abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_root$tau_hat_test[,sample_inds]), tau_test, 
-     xlab = "predicted", ylab = "actual", main = "Treatment effect")
-abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_root$y_hat_test[,sample_inds]), y_test, 
-     xlab = "predicted", ylab = "actual", main = "Outcome")
-abline(0,1,col="red",lty=3,lwd=3)
-sigma_observed <- var(y-E_XZ-rfx_term)
-plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
-     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
-abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
-```
-
-Examine test set interval coverage
-
-```{r}
-test_lb <- apply(bcf_model_root$tau_hat_test, 1, quantile, 0.025)
-test_ub <- apply(bcf_model_root$tau_hat_test, 1, quantile, 0.975)
 cover <- (
     (test_lb <= tau_x[test_inds]) & 
     (test_ub >= tau_x[test_inds])
