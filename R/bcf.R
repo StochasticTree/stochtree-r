@@ -624,7 +624,6 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' We do not currently support (but plan to in the near future), test set evaluation for group labels
 #' that were not in the training set.
 #' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
-
 #'
 #' @return List of three (or four) `nrow(X_test)` by `bcf$num_samples` matrices: prognostic function estimates, treatment effect estimates, (possibly) random effects predictions, and outcome predictions.
 #' @export
