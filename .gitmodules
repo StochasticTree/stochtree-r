@@ -1,3 +1,0 @@
-[submodule "src/stochtree-cpp"]
-	path = src/stochtree-cpp
-	url = https://github.com/StochasticTree/stochtree-cpp
