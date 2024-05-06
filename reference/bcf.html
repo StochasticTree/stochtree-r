@@ -55,9 +55,13 @@
 <span>  <span class="va">Z_train</span>,</span>
 <span>  <span class="va">y_train</span>,</span>
 <span>  pi_train <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  group_ids_train <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  rfx_basis_train <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  X_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  Z_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  pi_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  group_ids_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  rfx_basis_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  feature_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_train</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  cutpoint_grid_size <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  sigma_leaf_mu <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -110,6 +114,16 @@
 <dd><p>(Optional) Vector of propensity scores. If not provided, this will be estimated from the data.</p></dd>
 
 
+<dt>group_ids_train</dt>
+<dd><p>(Optional) Group labels used for an additive random effects model.</p></dd>
+
+
+<dt>rfx_basis_train</dt>
+<dd><p>(Optional) Basis for "random-slope" regression in an additive random effects model.
+If <code>group_ids_train</code> is provided with a regression basis, an intercept-only random effects model
+will be estimated.</p></dd>
+
+
 <dt>X_test</dt>
 <dd><p>(Optional) Test set of covariates used to define "out of sample" evaluation data.</p></dd>
 
@@ -120,6 +134,16 @@
 
 <dt>pi_test</dt>
 <dd><p>(Optional) Vector of propensity scores. If not provided, this will be estimated from the data.</p></dd>
+
+
+<dt>group_ids_test</dt>
+<dd><p>(Optional) Test set group labels used for an additive random effects model.
+We do not currently support (but plan to in the near future), test set evaluation for group labels
+that were not in the training set.</p></dd>
+
+
+<dt>rfx_basis_test</dt>
+<dd><p>(Optional) Test set basis for "random-slope" regression in additive random effects model.</p></dd>
 
 
 <dt>feature_types</dt>

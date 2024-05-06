@@ -51,7 +51,13 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for bartmodel</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">bart</span>, <span class="va">X_test</span>, W_test <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span></span>
+<span>  <span class="va">bart</span>,</span>
+<span>  <span class="va">X_test</span>,</span>
+<span>  W_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  group_ids_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  rfx_basis_test <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -67,12 +73,23 @@
 <dt>W_test</dt>
 <dd><p>(Optional) Bases used for prediction (by e.g. dot product with leaf values). Default: <code>NULL</code>.</p></dd>
 
+
+<dt>group_ids_test</dt>
+<dd><p>(Optional) Test set group labels used for an additive random effects model.
+We do not currently support (but plan to in the near future), test set evaluation for group labels
+that were not in the training set.</p></dd>
+
+
+<dt>rfx_basis_test</dt>
+<dd><p>(Optional) Test set basis for "random-slope" regression in additive random effects model.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>Matrix of predictions with <code>nrow(X_test)</code> rows and <code>bart$num_samples</code> columns</p>
+<p>List of prediction matrices. If model does not have random effects, the list has one element -- the predictions from the forest.
+If the model does have random effects, the list has three elements -- forest predictions, random effects predictions, and their sum (<code>y_hat</code>).</p>
     </div>
 
     <div class="section level2">
@@ -99,6 +116,7 @@
 <span class="r-in"><span><span class="va">y_train</span> <span class="op">&lt;-</span> <span class="va">y</span><span class="op">[</span><span class="va">train_inds</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">bart_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="BART.html">bart</a></span><span class="op">(</span>X_train <span class="op">=</span> <span class="va">X_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, leaf_model <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">yhat_test</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">bart_model</span>, <span class="va">X_test</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in (bart$model_params$has_rfx_basis) &amp;&amp; (is.null(rfx_basis_test)):</span> invalid 'x' type in 'x &amp;&amp; y'</span>
 <span class="r-in"><span><span class="co"># plot(rowMeans(yhat_test), y_test, xlab = "predicted", ylab = "actual")</span></span></span>
 <span class="r-in"><span><span class="co"># abline(0,1,col="red",lty=3,lwd=3)</span></span></span>
 </code></pre></div>

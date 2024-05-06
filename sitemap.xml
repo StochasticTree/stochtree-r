@@ -46,6 +46,18 @@
     <loc>https://stochastictree.github.io/stochtree-r/reference/Outcome.html</loc>
   </url>
   <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/RandomEffectSamples.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/RandomEffectsDataset.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/RandomEffectsModel.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/RandomEffectsTracker.html</loc>
+  </url>
+  <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/bcf.html</loc>
   </url>
   <url>
@@ -62,6 +74,27 @@
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/createRNG.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createRandomEffectSamples.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createRandomEffectsDataset.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createRandomEffectsModel.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createRandomEffectsTracker.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/getRandomEffectSamples.bartmodel.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/getRandomEffectSamples.bcf.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/getRandomEffectSamples.html</loc>
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/index.html</loc>

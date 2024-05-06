@@ -51,7 +51,14 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for bcf</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">bcf</span>, <span class="va">X_test</span>, <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span></span>
+<span>  <span class="va">bcf</span>,</span>
+<span>  <span class="va">X_test</span>,</span>
+<span>  <span class="va">Z_test</span>,</span>
+<span>  pi_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  group_ids_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  rfx_basis_test <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,14 +76,24 @@
 
 
 <dt>pi_test</dt>
-<dd><p>(Optional) Propensities used for prediction. Default: <code>NULL</code>.</p></dd>
+<dd><p>(Optional) Propensities used for prediction.</p></dd>
+
+
+<dt>group_ids_test</dt>
+<dd><p>(Optional) Test set group labels used for an additive random effects model.
+We do not currently support (but plan to in the near future), test set evaluation for group labels
+that were not in the training set.</p></dd>
+
+
+<dt>rfx_basis_test</dt>
+<dd><p>(Optional) Test set basis for "random-slope" regression in additive random effects model.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>List of three <code>nrow(X_test)</code> by <code>bcf$num_samples</code> matrices: prognostic function estimates, treatment effect estimates and outcome predictions.</p>
+<p>List of three (or four) <code>nrow(X_test)</code> by <code>bcf$num_samples</code> matrices: prognostic function estimates, treatment effect estimates, (possibly) random effects predictions, and outcome predictions.</p>
     </div>
 
     <div class="section level2">
@@ -120,6 +137,7 @@
 <span class="r-in"><span><span class="va">tau_train</span> <span class="op">&lt;-</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">train_inds</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">bcf_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="bcf.html">bcf</a></span><span class="op">(</span>X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">preds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">bcf_model</span>, <span class="va">X_test</span>, <span class="va">Z_test</span>, <span class="va">pi_test</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in (bcf$model_params$has_rfx_basis) &amp;&amp; (is.null(rfx_basis_test)):</span> invalid 'x' type in 'x &amp;&amp; y'</span>
 <span class="r-in"><span><span class="co"># plot(rowMeans(preds$mu_hat), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")</span></span></span>
 <span class="r-in"><span><span class="co"># abline(0,1,col="red",lty=3,lwd=3)</span></span></span>
 <span class="r-in"><span><span class="co"># plot(rowMeans(preds$tau_hat), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")</span></span></span>
