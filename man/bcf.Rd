@@ -9,9 +9,13 @@ bcf(
   Z_train,
   y_train,
   pi_train = NULL,
+  group_ids_train = NULL,
+  rfx_basis_train = NULL,
   X_test = NULL,
   Z_test = NULL,
   pi_test = NULL,
+  group_ids_test = NULL,
+  rfx_basis_test = NULL,
   feature_types = rep(0, ncol(X_train)),
   cutpoint_grid_size = 100,
   sigma_leaf_mu = NULL,
@@ -54,11 +58,23 @@ bcf(
 
 \item{pi_train}{(Optional) Vector of propensity scores. If not provided, this will be estimated from the data.}
 
+\item{group_ids_train}{(Optional) Group labels used for an additive random effects model.}
+
+\item{rfx_basis_train}{(Optional) Basis for "random-slope" regression in an additive random effects model.
+If \code{group_ids_train} is provided with a regression basis, an intercept-only random effects model
+will be estimated.}
+
 \item{X_test}{(Optional) Test set of covariates used to define "out of sample" evaluation data.}
 
 \item{Z_test}{(Optional) Test set of (continuous or binary) treatment assignments.}
 
 \item{pi_test}{(Optional) Vector of propensity scores. If not provided, this will be estimated from the data.}
+
+\item{group_ids_test}{(Optional) Test set group labels used for an additive random effects model.
+We do not currently support (but plan to in the near future), test set evaluation for group labels
+that were not in the training set.}
+
+\item{rfx_basis_test}{(Optional) Test set basis for "random-slope" regression in additive random effects model.}
 
 \item{feature_types}{Vector of length \code{ncol(X_train)} indicating the "type" of each covariates
 (0 = numeric, 1 = ordered categorical, 2 = unordered categorical). Default: \code{rep(0,ncol(X_train))}.}

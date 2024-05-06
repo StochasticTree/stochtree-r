@@ -6,6 +6,7 @@ PKG_CPPFLAGS= -I$(CPP_PKGROOT)/include -I$(CPP_PKGROOT)/dependencies/boost_math/
 OBJECTS = \
     data.o \
     predictor.o \
+    random_effects.o \
     sampler.o \
     cpp11.o \
 	$(CPP_PKGROOT)/src/container.o \

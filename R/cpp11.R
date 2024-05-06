@@ -44,6 +44,38 @@ create_column_vector_cpp <- function(outcome) {
   .Call(`_stochtree_create_column_vector_cpp`, outcome)
 }
 
+create_rfx_dataset_cpp <- function() {
+  .Call(`_stochtree_create_rfx_dataset_cpp`)
+}
+
+rfx_dataset_num_rows_cpp <- function(dataset) {
+  .Call(`_stochtree_rfx_dataset_num_rows_cpp`, dataset)
+}
+
+rfx_dataset_has_group_labels_cpp <- function(dataset) {
+  .Call(`_stochtree_rfx_dataset_has_group_labels_cpp`, dataset)
+}
+
+rfx_dataset_has_basis_cpp <- function(dataset) {
+  .Call(`_stochtree_rfx_dataset_has_basis_cpp`, dataset)
+}
+
+rfx_dataset_has_variance_weights_cpp <- function(dataset) {
+  .Call(`_stochtree_rfx_dataset_has_variance_weights_cpp`, dataset)
+}
+
+rfx_dataset_add_group_labels_cpp <- function(dataset_ptr, group_labels) {
+  invisible(.Call(`_stochtree_rfx_dataset_add_group_labels_cpp`, dataset_ptr, group_labels))
+}
+
+rfx_dataset_add_basis_cpp <- function(dataset_ptr, basis) {
+  invisible(.Call(`_stochtree_rfx_dataset_add_basis_cpp`, dataset_ptr, basis))
+}
+
+rfx_dataset_add_weights_cpp <- function(dataset_ptr, weights) {
+  invisible(.Call(`_stochtree_rfx_dataset_add_weights_cpp`, dataset_ptr, weights))
+}
+
 predict_forest_cpp <- function(forest_samples, dataset) {
   .Call(`_stochtree_predict_forest_cpp`, forest_samples, dataset)
 }
@@ -54,6 +86,90 @@ predict_forest_raw_cpp <- function(forest_samples, dataset) {
 
 predict_forest_raw_single_forest_cpp <- function(forest_samples, dataset, forest_num) {
   .Call(`_stochtree_predict_forest_raw_single_forest_cpp`, forest_samples, dataset, forest_num)
+}
+
+rfx_container_cpp <- function(num_components, num_groups) {
+  .Call(`_stochtree_rfx_container_cpp`, num_components, num_groups)
+}
+
+rfx_model_cpp <- function(num_components, num_groups) {
+  .Call(`_stochtree_rfx_model_cpp`, num_components, num_groups)
+}
+
+rfx_tracker_cpp <- function(group_labels) {
+  .Call(`_stochtree_rfx_tracker_cpp`, group_labels)
+}
+
+rfx_label_mapper_cpp <- function(rfx_tracker) {
+  .Call(`_stochtree_rfx_label_mapper_cpp`, rfx_tracker)
+}
+
+rfx_model_sample_random_effects_cpp <- function(rfx_model, rfx_dataset, residual, rfx_tracker, rfx_container, global_variance, rng) {
+  invisible(.Call(`_stochtree_rfx_model_sample_random_effects_cpp`, rfx_model, rfx_dataset, residual, rfx_tracker, rfx_container, global_variance, rng))
+}
+
+rfx_container_predict_cpp <- function(rfx_container, rfx_dataset, label_mapper) {
+  .Call(`_stochtree_rfx_container_predict_cpp`, rfx_container, rfx_dataset, label_mapper)
+}
+
+rfx_container_num_samples_cpp <- function(rfx_container) {
+  .Call(`_stochtree_rfx_container_num_samples_cpp`, rfx_container)
+}
+
+rfx_container_num_components_cpp <- function(rfx_container) {
+  .Call(`_stochtree_rfx_container_num_components_cpp`, rfx_container)
+}
+
+rfx_container_num_groups_cpp <- function(rfx_container) {
+  .Call(`_stochtree_rfx_container_num_groups_cpp`, rfx_container)
+}
+
+rfx_model_set_working_parameter_cpp <- function(rfx_model, working_param_init) {
+  invisible(.Call(`_stochtree_rfx_model_set_working_parameter_cpp`, rfx_model, working_param_init))
+}
+
+rfx_model_set_group_parameters_cpp <- function(rfx_model, group_params_init) {
+  invisible(.Call(`_stochtree_rfx_model_set_group_parameters_cpp`, rfx_model, group_params_init))
+}
+
+rfx_model_set_working_parameter_covariance_cpp <- function(rfx_model, working_param_cov_init) {
+  invisible(.Call(`_stochtree_rfx_model_set_working_parameter_covariance_cpp`, rfx_model, working_param_cov_init))
+}
+
+rfx_model_set_group_parameter_covariance_cpp <- function(rfx_model, group_param_cov_init) {
+  invisible(.Call(`_stochtree_rfx_model_set_group_parameter_covariance_cpp`, rfx_model, group_param_cov_init))
+}
+
+rfx_model_set_variance_prior_shape_cpp <- function(rfx_model, shape) {
+  invisible(.Call(`_stochtree_rfx_model_set_variance_prior_shape_cpp`, rfx_model, shape))
+}
+
+rfx_model_set_variance_prior_scale_cpp <- function(rfx_model, scale) {
+  invisible(.Call(`_stochtree_rfx_model_set_variance_prior_scale_cpp`, rfx_model, scale))
+}
+
+rfx_tracker_get_unique_group_ids_cpp <- function(rfx_tracker) {
+  .Call(`_stochtree_rfx_tracker_get_unique_group_ids_cpp`, rfx_tracker)
+}
+
+rfx_container_get_beta_cpp <- function(rfx_container_ptr) {
+  .Call(`_stochtree_rfx_container_get_beta_cpp`, rfx_container_ptr)
+}
+
+rfx_container_get_alpha_cpp <- function(rfx_container_ptr) {
+  .Call(`_stochtree_rfx_container_get_alpha_cpp`, rfx_container_ptr)
+}
+
+rfx_container_get_xi_cpp <- function(rfx_container_ptr) {
+  .Call(`_stochtree_rfx_container_get_xi_cpp`, rfx_container_ptr)
+}
+
+rfx_container_get_sigma_cpp <- function(rfx_container_ptr) {
+  .Call(`_stochtree_rfx_container_get_sigma_cpp`, rfx_container_ptr)
+}
+
+rfx_label_mapper_to_list_cpp <- function(label_mapper_ptr) {
+  .Call(`_stochtree_rfx_label_mapper_to_list_cpp`, label_mapper_ptr)
 }
 
 sample_gfr_one_iteration_cpp <- function(data, residual, forest_samples, tracker, split_prior, rng, feature_types, cutpoint_grid_size, leaf_model_scale_input, variable_weights, global_variance, leaf_model_int, pre_initialized) {

@@ -4,9 +4,17 @@
 #' @param Z_train Vector of (continuous or binary) treatment assignments.
 #' @param y_train Outcome to be modeled by the ensemble.
 #' @param pi_train (Optional) Vector of propensity scores. If not provided, this will be estimated from the data.
+#' @param group_ids_train (Optional) Group labels used for an additive random effects model.
+#' @param rfx_basis_train (Optional) Basis for "random-slope" regression in an additive random effects model.
+#' If `group_ids_train` is provided with a regression basis, an intercept-only random effects model 
+#' will be estimated.
 #' @param X_test (Optional) Test set of covariates used to define "out of sample" evaluation data.
 #' @param Z_test (Optional) Test set of (continuous or binary) treatment assignments.
 #' @param pi_test (Optional) Vector of propensity scores. If not provided, this will be estimated from the data.
+#' @param group_ids_test (Optional) Test set group labels used for an additive random effects model. 
+#' We do not currently support (but plan to in the near future), test set evaluation for group labels
+#' that were not in the training set.
+#' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
 #' @param feature_types Vector of length `ncol(X_train)` indicating the "type" of each covariates 
 #' (0 = numeric, 1 = ordered categorical, 2 = unordered categorical). Default: `rep(0,ncol(X_train))`.
 #' @param cutpoint_grid_size Maximum size of the "grid" of potential cutpoints to consider. Default: 100.
@@ -87,7 +95,9 @@
 #' # abline(0,1,col="red",lty=3,lwd=3)
 #' # plot(rowMeans(bcf_model$tau_hat_test), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")
 #' # abline(0,1,col="red",lty=3,lwd=3)
-bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_test = NULL, pi_test = NULL, 
+bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NULL, 
+                rfx_basis_train = NULL, X_test = NULL, Z_test = NULL, pi_test = NULL, 
+                group_ids_test = NULL, rfx_basis_test = NULL, 
                 feature_types = rep(0, ncol(X_train)), cutpoint_grid_size = 100, 
                 sigma_leaf_mu = NULL, sigma_leaf_tau = NULL, alpha_mu = 0.95, alpha_tau = 0.25, 
                 beta_mu = 2.0, beta_tau = 3.0, min_samples_leaf_mu = 5, min_samples_leaf_tau = 5, 
@@ -115,6 +125,29 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
     if ((is.null(dim(pi_test))) && (!is.null(pi_test))) {
         pi_test <- as.matrix(pi_test)
     }
+    if ((is.null(dim(rfx_basis_train))) && (!is.null(rfx_basis_train))) {
+        rfx_basis_train <- as.matrix(rfx_basis_train)
+    }
+    if ((is.null(dim(rfx_basis_test))) && (!is.null(rfx_basis_test))) {
+        rfx_basis_test <- as.matrix(rfx_basis_test)
+    }
+    
+    # Recode group IDs to integer vector (if passed as, for example, a vector of county names, etc...)
+    has_rfx <- F
+    has_rfx_test <- F
+    if (!is.null(group_ids_train)) {
+        group_ids_factor <- factor(group_ids_train)
+        group_ids_train <- as.integer(group_ids_factor)
+        has_rfx <- T
+        if (!is.null(group_ids_test)) {
+            group_ids_factor_test <- factor(group_ids_test, levels = levels(group_ids_factor))
+            if (sum(is.na(group_ids_factor_test)) > 0) {
+                stop("All random effect group labels provided in group_ids_test must be present in group_ids_train")
+            }
+            group_ids_test <- as.integer(group_ids_factor_test)
+            has_rfx_test <- T
+        }
+    }
     
     # Data consistency checks
     if ((!is.null(X_test)) && (ncol(X_test) != ncol(X_train))) {
@@ -138,6 +171,39 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
     if (nrow(X_train) != length(y_train)) {
         stop("X_train and y_train must have the same number of observations")
     }
+    if ((!is.null(rfx_basis_test)) && (ncol(rfx_basis_test) != ncol(rfx_basis_train))) {
+        stop("rfx_basis_train and rfx_basis_test must have the same number of columns")
+    }
+    if (!is.null(group_ids_train)) {
+        if (!is.null(group_ids_test)) {
+            if ((!is.null(rfx_basis_train)) && (is.null(rfx_basis_test))) {
+                stop("rfx_basis_train is provided but rfx_basis_test is not provided")
+            }
+        }
+    }
+    
+    # Fill in rfx basis as a vector of 1s (random intercept) if a basis not provided 
+    has_basis_rfx <- F
+    num_basis_rfx <- 0
+    if (has_rfx) {
+        if (is.null(rfx_basis_train)) {
+            rfx_basis_train <- matrix(rep(1,nrow(X_train)), nrow = nrow(X_train), ncol = 1)
+        } else {
+            has_basis_rfx <- T
+            num_basis_rfx <- ncol(rfx_basis_train)
+        }
+        num_rfx_groups <- length(unique(group_ids_train))
+        num_rfx_components <- ncol(rfx_basis_train)
+        if (num_rfx_groups == 1) warning("Only one group was provided for random effect sampling, so the 'redundant parameterization' is likely overkill")
+    }
+    if (has_rfx_test) {
+        if (is.null(rfx_basis_test)) {
+            if (!is.null(rfx_basis_train)) {
+                stop("Random effects basis provided for training set, must also be provided for the test set")
+            }
+            rfx_basis_test <- matrix(rep(1,nrow(X_test)), nrow = nrow(X_test), ncol = 1)
+        }
+    }
 
     # Determine whether a test set is provided
     has_test = !is.null(X_test)
@@ -157,45 +223,10 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
     
     # Estimate if pre-estimated propensity score is not provided
     if ((is.null(pi_train)) && (propensity_covariate != "none")) {
-        # Estimate using xgboost with some elementary hyperparameter tuning
-        dtrain <- xgboost::xgb.DMatrix(X_train, label = Z_train)
-        if (binary_treatment) {
-            cv <- xgboost::xgb.cv(data = dtrain, nrounds = 100, nfold = 5, metrics = list("rmse","auc"), 
-                                  max_depth = 3, eta = 1, objective = "binary:logistic")
-            num_trees = c(20, 50, 100)
-            etas <- c(0.01, 0.05, 0.1, 0.5)
-            max_depth <- c(3, 6)
-            eval_grid <- expand.grid(num_trees, etas, max_depth)
-            evals <- rep(NA, nrow(eval_grid))
-            for (i in 1:nrow(eval_grid)) {
-                cv <- xgboost::xgb.cv(data = dtrain, nrounds = 100, nfold = 5, metrics = list("rmse","auc"), 
-                                      max_depth = 3, eta = 0.1, objective = "binary:logistic", verbose = 0)
-                evals[i] <- cv$evaluation_log[length(cv$evaluation_log),"test_auc_mean"]$test_auc_mean
-            }
-            best_params <- as.numeric(eval_grid[which.min(evals),])
-            param <- list(max_depth = best_params[3], eta = best_params[2], verbose = 0, objective = "binary:logistic", eval_metric = "rmse")
-            bst <- xgboost::xgb.train(param, dtrain, nrounds = best_params[1])
-            pi_train <- as.matrix(predict(bst, X_train))
-            if (has_test) pi_test <- as.matrix(predict(bst, X_test))
-        } else {
-            cv <- xgboost::xgb.cv(data = dtrain, nrounds = 100, nfold = 5, metrics = list("rmse"), 
-                                  max_depth = 3, eta = 1, objective = "reg:squarederror")
-            num_trees = c(20, 50, 100)
-            etas <- c(0.01, 0.05, 0.1, 0.5)
-            max_depth <- c(3, 6)
-            eval_grid <- expand.grid(num_trees, etas, max_depth)
-            evals <- rep(NA, nrow(eval_grid))
-            for (i in 1:nrow(eval_grid)) {
-                cv <- xgboost::xgb.cv(data = dtrain, nrounds = 100, nfold = 5, metrics = list("rmse","auc"), 
-                                      max_depth = 3, eta = 0.1, objective = "reg:squarederror", verbose = 0)
-                evals[i] <- cv$evaluation_log[length(cv$evaluation_log),"test_rmse_mean"]$test_rmse_mean
-            }
-            best_params <- as.numeric(eval_grid[which.min(evals),])
-            param <- list(max_depth = best_params[3], eta = best_params[2], verbose = 0, objective = "reg:squarederror", eval_metric = "rmse")
-            bst <- xgboost::xgb.train(param, dtrain, nrounds = best_params[1])
-            pi_train <- as.matrix(predict(bst, X_train))
-            if (has_test) pi_test <- as.matrix(predict(bst, X_test))
-        }
+        # Estimate using the last of several iterations of GFR BART
+        bart_model_propensity <- bart(X_train = X_train, y_train = as.numeric(Z_train), X_test = X_test, leaf_model = 0, feature_types = feature_types, num_gfr = 5, num_burnin = 0, num_mcmc = 0)
+        pi_train <- as.numeric(bart_model_propensity$y_hat_train[,5])
+        if (has_test) pi_test <- as.numeric(bart_model_propensity$y_hat_test[,5])
     }
 
     if (has_test) {
@@ -253,7 +284,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
     
     # Calibrate priors for global sigma^2 and sigma_leaf_mu / sigma_leaf_tau
     reg_basis <- X_train
-    sigma2hat <- (sigma(lm(resid_train~reg_basis)))^2
+    sigma2hat <- mean(resid(lm(resid_train~reg_basis))^2)
     quantile_cutoff <- 0.9
     if (is.null(lambda)) {
         lambda <- (sigma2hat*qgamma(1-quantile_cutoff,nu))/nu
@@ -266,6 +297,36 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
     current_sigma2 <- sigma2
     current_leaf_scale_mu <- as.matrix(sigma_leaf_mu)
     current_leaf_scale_tau <- as.matrix(sigma_leaf_tau)
+    
+    # Random effects prior parameters
+    if (has_rfx) {
+        if (num_rfx_components == 1) {
+            alpha_init <- c(1)
+        } else if (num_rfx_components > 1) {
+            alpha_init <- c(1,rep(0,num_rfx_components-1))
+        } else {
+            stop("There must be at least 1 random effect component")
+        }
+        xi_init <- matrix(rep(alpha_init, num_rfx_groups),num_rfx_components,num_rfx_groups)
+        sigma_alpha_init <- diag(1,num_rfx_components,num_rfx_components)
+        sigma_xi_init <- diag(1,num_rfx_components,num_rfx_components)
+        sigma_xi_shape <- 1
+        sigma_xi_scale <- 1
+    }
+    
+    # Random effects data structure and storage container
+    if (has_rfx) {
+        rfx_dataset_train <- createRandomEffectsDataset(group_ids_train, rfx_basis_train)
+        rfx_tracker_train <- createRandomEffectsTracker(group_ids_train)
+        rfx_model <- createRandomEffectsModel(num_rfx_components, num_rfx_groups)
+        rfx_model$set_working_parameter(alpha_init)
+        rfx_model$set_group_parameters(xi_init)
+        rfx_model$set_working_parameter_cov(sigma_alpha_init)
+        rfx_model$set_group_parameter_cov(sigma_xi_init)
+        rfx_model$set_variance_prior_shape(sigma_xi_shape)
+        rfx_model$set_variance_prior_scale(sigma_xi_scale)
+        rfx_samples <- createRandomEffectSamples(num_rfx_components, num_rfx_groups, rfx_tracker_train)
+    }
     
     # Container of variance parameter samples
     num_samples <- num_gfr + num_burnin + num_mcmc
@@ -349,15 +410,22 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
             
             # Sample coding parameters (if requested)
             if (adaptive_coding) {
+                # Estimate mu(X) and tau(X) and compute y - mu(X)
                 mu_x_raw_train <- forest_samples_mu$predict_raw_single_forest(forest_dataset_mu_train, i-1)
                 tau_x_raw_train <- forest_samples_tau$predict_raw_single_forest(forest_dataset_tau_train, i-1)
+                partial_resid_mu_train <- resid_train - mu_x_raw_train
+                
+                # Compute sufficient statistics for regression of y - mu(X) on [tau(X)(1-Z), tau(X)Z]
                 s_tt0 <- sum(tau_x_raw_train*tau_x_raw_train*(Z_train==0))
                 s_tt1 <- sum(tau_x_raw_train*tau_x_raw_train*(Z_train==1))
-                partial_resid_mu_train <- resid_train - mu_x_raw_train
                 s_ty0 <- sum(tau_x_raw_train*partial_resid_mu_train*(Z_train==0))
                 s_ty1 <- sum(tau_x_raw_train*partial_resid_mu_train*(Z_train==1))
+                
+                # Sample b0 (coefficient on tau(X)(1-Z)) and b1 (coefficient on tau(X)Z)
                 current_b_0 <- rnorm(1, (s_ty0/(s_tt0 + 2*current_sigma2)), sqrt(current_sigma2/(s_tt0 + 2*current_sigma2)))
                 current_b_1 <- rnorm(1, (s_ty1/(s_tt1 + 2*current_sigma2)), sqrt(current_sigma2/(s_tt1 + 2*current_sigma2)))
+                
+                # Update basis for the leaf regression
                 tau_basis_train <- (1-Z_train)*current_b_0 + Z_train*current_b_1
                 forest_dataset_tau_train$update_basis(tau_basis_train)
                 b_0_samples[i] <- current_b_0
@@ -366,6 +434,8 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
                     tau_basis_test <- (1-Z_test)*current_b_0 + Z_test*current_b_1
                     forest_dataset_tau_test$update_basis(tau_basis_test)
                 }
+                
+                # TODO Update leaf predictions and residual
             }
             
             # Sample variance parameters (if requested)
@@ -376,6 +446,11 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
             if (sample_sigma_leaf_tau) {
                 leaf_scale_tau_samples[i] <- sample_tau_one_iteration(forest_samples_tau, rng, a_leaf_tau, b_leaf_tau, i-1)
                 current_leaf_scale_tau <- as.matrix(leaf_scale_tau_samples[i])
+            }
+            
+            # Sample random effects parameters (if requested)
+            if (has_rfx) {
+                rfx_model$sample_random_effect(rfx_dataset_train, outcome_train, rfx_tracker_train, rfx_samples, current_sigma2, rng)
             }
         }
     }
@@ -437,12 +512,16 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
                 leaf_scale_tau_samples[i] <- sample_tau_one_iteration(forest_samples_tau, rng, a_leaf_tau, b_leaf_tau, i-1)
                 current_leaf_scale_tau <- as.matrix(leaf_scale_tau_samples[i])
             }
+            
+            # Sample random effects parameters (if requested)
+            if (has_rfx) {
+                rfx_model$sample_random_effect(rfx_dataset_train, outcome_train, rfx_tracker_train, rfx_samples, current_sigma2, rng)
+            }
         }
     }
     
     # Forest predictions
     mu_hat_train <- forest_samples_mu$predict(forest_dataset_mu_train)*y_std_train + y_bar_train
-    # tau_hat_train <- forest_samples_tau$predict_raw(forest_dataset_tau_train)*y_std_train
     if (adaptive_coding) {
         tau_hat_train_raw <- forest_samples_tau$predict_raw(forest_dataset_tau_train)
         tau_hat_train <- t(t(tau_hat_train_raw) * (b_1_samples - b_0_samples))*y_std_train
@@ -452,7 +531,6 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
     y_hat_train <- mu_hat_train + tau_hat_train * as.numeric(Z_train)
     if (has_test) {
         mu_hat_test <- forest_samples_mu$predict(forest_dataset_mu_test)*y_std_train + y_bar_train
-        # tau_hat_test <- forest_samples_tau$predict(forest_dataset_tau_test)*y_std_train
         if (adaptive_coding) {
             tau_hat_test_raw <- forest_samples_tau$predict_raw(forest_dataset_tau_test)
             tau_hat_test <- t(t(tau_hat_test_raw) * (b_1_samples - b_0_samples))*y_std_train
@@ -460,6 +538,16 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
             tau_hat_test <- forest_samples_tau$predict_raw(forest_dataset_tau_test)*y_std_train
         }
         y_hat_test <- mu_hat_test + tau_hat_test * as.numeric(Z_test)
+    }
+    
+    # Random effects predictions
+    if (has_rfx) {
+        rfx_preds_train <- rfx_samples$predict(group_ids_train, rfx_basis_train)*y_std_train
+        y_hat_train <- y_hat_train + rfx_preds_train
+    }
+    if ((has_rfx_test) && (has_test)) {
+        rfx_preds_test <- rfx_samples$predict(group_ids_test, rfx_basis_test)*y_std_train
+        y_hat_test <- y_hat_test + rfx_preds_test
     }
     
     # Global error variance
@@ -493,7 +581,10 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
         "propensity_covariate" = propensity_covariate, 
         "binary_treatment" = binary_treatment, 
         "adaptive_coding" = adaptive_coding, 
-        "num_samples" = num_samples
+        "num_samples" = num_samples, 
+        "has_rfx" = has_rfx, 
+        "has_basis_rfx" = has_basis_rfx, 
+        "num_basis_rfx" = num_basis_rfx
     )
     result <- list(
         "forests_mu" = forest_samples_mu, 
@@ -513,6 +604,12 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
         result[["b_0_samples"]] = b_0_samples
         result[["b_1_samples"]] = b_1_samples
     }
+    if (has_rfx) {
+        result[["rfx_samples"]] = rfx_samples
+        result[["rfx_preds_train"]] = rfx_preds_train
+        result[["rfx_unique_group_ids"]] = levels(group_ids_factor)
+    }
+    if ((has_rfx_test) && (has_test)) result[["rfx_preds_test"]] = rfx_preds_test
     class(result) <- "bcf"
     
     return(result)
@@ -523,9 +620,13 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
 #' @param bcf Object of type `bcf` containing draws of a Bayesian causal forest model and associated sampling outputs.
 #' @param X_test Covariates used to determine tree leaf predictions for each observation.
 #' @param Z_test Treatments used for prediction.
-#' @param pi_test (Optional) Propensities used for prediction. Default: `NULL`.
+#' @param pi_test (Optional) Propensities used for prediction.
+#' @param group_ids_test (Optional) Test set group labels used for an additive random effects model. 
+#' We do not currently support (but plan to in the near future), test set evaluation for group labels
+#' that were not in the training set.
+#' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
 #'
-#' @return List of three `nrow(X_test)` by `bcf$num_samples` matrices: prognostic function estimates, treatment effect estimates and outcome predictions.
+#' @return List of three (or four) `nrow(X_test)` by `bcf$num_samples` matrices: prognostic function estimates, treatment effect estimates, (possibly) random effects predictions, and outcome predictions.
 #' @export
 #'
 #' @examples
@@ -572,7 +673,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, X_test = NULL, Z_tes
 #' # abline(0,1,col="red",lty=3,lwd=3)
 #' # plot(rowMeans(preds$tau_hat), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")
 #' # abline(0,1,col="red",lty=3,lwd=3)
-predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL){
+predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL){
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(X_test))) && (!is.null(X_test))) {
         X_test <- as.matrix(X_test)
@@ -582,6 +683,9 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL){
     }
     if ((is.null(dim(pi_test))) && (!is.null(pi_test))) {
         pi_test <- as.matrix(pi_test)
+    }
+    if ((is.null(dim(rfx_basis_test))) && (!is.null(rfx_basis_test))) {
+        rfx_basis_test <- as.matrix(rfx_basis_test)
     }
     
     # Data checks
@@ -593,6 +697,20 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL){
     }
     if (bcf$model_params$num_covariates != ncol(X_test)) {
         stop("X_test and must have the same number of columns as the covariates used to train the model")
+    }
+    if ((bcf$model_params$has_rfx) && (is.null(group_ids_test))) {
+        stop("Random effect group labels (group_ids_test) must be provided for this model")
+    }
+    if ((bcf$model_params$has_rfx_basis) && (is.null(rfx_basis_test))) {
+        stop("Random effects basis (rfx_basis_test) must be provided for this model")
+    }
+    if ((bcf$model_params$num_rfx_basis > 0) && (ncol(rfx_basis_test) != bcf$model_params$num_rfx_basis)) {
+        stop("Random effects basis has a different dimension than the basis used to train this model")
+    }
+    
+    # Produce basis for the "intercept-only" random effects case
+    if ((bart$model_params$has_rfx) && (is.null(rfx_basis_test))) {
+        rfx_basis_test <- matrix(rep(1, nrow(X_test)), ncol = 1)
     }
     
     # Add propensities to any covariate set
@@ -611,7 +729,7 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL){
     prediction_dataset_mu <- createForestDataset(X_test_mu)
     prediction_dataset_tau <- createForestDataset(X_test_tau, Z_test)
 
-    # Compute and return predictions
+    # Compute forest predictions
     y_std <- bcf$model_params$outcome_scale
     y_bar <- bcf$model_params$outcome_mean
     mu_hat_test <- bcf$forests_mu$predict(prediction_dataset_mu)*y_std + y_bar
@@ -621,12 +739,112 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL){
     } else {
         tau_hat_test <- bcf$forests_tau$predict_raw(forest_dataset_tau_test)*y_std
     }
-    y_hat_test <- mu_hat_test + tau_hat_test * as.numeric(Z_test)
     
-    result <- list(
-        "mu_hat" = mu_hat_test, 
-        "tau_hat" = tau_hat_test, 
-        "y_hat" = y_hat_test
-    )
+    # Compute rfx predictions (if needed)
+    if (bcf$model_params$has_rfx) {
+        rfx_predictions <- bcf$rfx_samples$predict(group_ids_test, rfx_basis_test)*y_std
+    }
+    
+    # Compute overall "y_hat" predictions
+    y_hat_test <- mu_hat_test + tau_hat_test * as.numeric(Z_test)
+    if (bcf$model_params$has_rfx) y_hat_test <- y_hat_test + rfx_predictions
+    
+    if (bcf$model_params$has_rfx) {
+        result <- list(
+            "mu_hat" = mu_hat_test, 
+            "tau_hat" = tau_hat_test, 
+            "rfx_predictions" = rfx_predictions, 
+            "y_hat" = y_hat_test
+        )
+    } else {
+        result <- list(
+            "mu_hat" = mu_hat_test, 
+            "tau_hat" = tau_hat_test, 
+            "y_hat" = y_hat_test
+        )
+    }
+    return(result)
+}
+
+#' Extract raw sample values for each of the random effect parameter terms.
+#'
+#' @param object Object of type `bcf` containing draws of a Bayesian causal forest model and associated sampling outputs.
+#'
+#' @return List of arrays. The alpha array has dimension (`num_components`, `num_samples`) and is simply a vector if `num_components = 1`.
+#' The xi and beta arrays have dimension (`num_components`, `num_groups`, `num_samples`) and is simply a matrix if `num_components = 1`.
+#' The sigma array has dimension (`num_components`, `num_samples`) and is simply a vector if `num_components = 1`.
+#' @export
+#'
+#' @examples
+#' n <- 500
+#' x1 <- rnorm(n)
+#' x2 <- rnorm(n)
+#' x3 <- rnorm(n)
+#' x4 <- as.numeric(rbinom(n,1,0.5))
+#' x5 <- as.numeric(sample(1:3,n,replace=T))
+#' X <- cbind(x1,x2,x3,x4,x5)
+#' p <- ncol(X)
+#' g <- function(x) {ifelse(x[,5]==1,2,ifelse(x[,5]==2,-1,4))}
+#' mu1 <- function(x) {1+g(x)+x[,1]*x[,3]}
+#' mu2 <- function(x) {1+g(x)+6*abs(x[,3]-1)}
+#' tau1 <- function(x) {rep(3,nrow(x))}
+#' tau2 <- function(x) {1+2*x[,2]*x[,4]}
+#' mu_x <- mu1(X)
+#' tau_x <- tau2(X)
+#' pi_x <- 0.8*pnorm((3*mu_x/sd(mu_x)) - 0.5*X[,1]) + 0.05 + runif(n)/10
+#' Z <- rbinom(n,1,pi_x)
+#' E_XZ <- mu_x + Z*tau_x
+#' snr <- 3
+#' group_ids <- rep(c(1,2), n %/% 2)
+#' rfx_coefs <- matrix(c(-1, -1, 1, 1),nrow=2,byrow=T)
+#' rfx_basis <- cbind(1, runif(n, -1, 1))
+#' rfx_term <- rowSums(rfx_coefs[group_ids,] * rfx_basis)
+#' y <- E_XZ + rfx_term + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+#' test_set_pct <- 0.2
+#' n_test <- round(test_set_pct*n)
+#' n_train <- n - n_test
+#' test_inds <- sort(sample(1:n, n_test, replace = F))
+#' train_inds <- (1:n)[!((1:n) %in% test_inds)]
+#' X_test <- X[test_inds,]
+#' X_train <- X[train_inds,]
+#' pi_test <- pi_x[test_inds]
+#' pi_train <- pi_x[train_inds]
+#' Z_test <- Z[test_inds]
+#' Z_train <- Z[train_inds]
+#' y_test <- y[test_inds]
+#' y_train <- y[train_inds]
+#' mu_test <- mu_x[test_inds]
+#' mu_train <- mu_x[train_inds]
+#' tau_test <- tau_x[test_inds]
+#' tau_train <- tau_x[train_inds]
+#' group_ids_test <- group_ids[test_inds]
+#' group_ids_train <- group_ids[train_inds]
+#' rfx_basis_test <- rfx_basis[test_inds,]
+#' rfx_basis_train <- rfx_basis[train_inds,]
+#' rfx_term_test <- rfx_term[test_inds]
+#' rfx_term_train <- rfx_term[train_inds]
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+#'                  group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
+#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+#'                  rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
+#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+#' rfx_samples <- getRandomEffectSamples(bcf_model)
+getRandomEffectSamples.bcf <- function(object, ...){
+    result = list()
+    
+    if (!object$model_params$has_rfx) {
+        warning("This model has no RFX terms, returning an empty list")
+        return(result)
+    }
+    
+    # Extract the samples
+    result <- object$rfx_samples$extract_parameter_samples()
+    
+    # Scale by sd(y_train)
+    result$beta_samples <- result$beta_samples*object$model_params$outcome_scale
+    result$xi_samples <- result$xi_samples*object$model_params$outcome_scale
+    result$alpha_samples <- result$alpha_samples*object$model_params$outcome_scale
+    result$sigma_samples <- result$sigma_samples*(object$model_params$outcome_scale^2)
+    
     return(result)
 }

@@ -103,6 +103,65 @@ Outcome <- R6::R6Class(
     )
 )
 
+#' Dataset used to sample a random effects model
+#'
+#' @description
+#' A dataset consists of three matrices / vectors: group labels, 
+#' bases, and variance weights. Variance weights are optional.
+
+RandomEffectsDataset <- R6::R6Class(
+    classname = "RandomEffectsDataset",
+    cloneable = FALSE,
+    public = list(
+        
+        #' @field data_ptr External pointer to a C++ RandomEffectsDataset class
+        data_ptr = NULL,
+        
+        #' @description
+        #' Create a new RandomEffectsDataset object.
+        #' @param group_labels Vector of group labels
+        #' @param basis Matrix of bases used to define the random effects regression (for an intercept-only model, pass an array of ones)
+        #' @param variance_weights (Optional) Vector of observation-specific variance weights
+        #' @return A new `RandomEffectsDataset` object.
+        initialize = function(group_labels, basis, variance_weights=NULL) {
+            self$data_ptr <- create_rfx_dataset_cpp()
+            rfx_dataset_add_group_labels_cpp(self$data_ptr, group_labels)
+            rfx_dataset_add_basis_cpp(self$data_ptr, basis)
+            if (!is.null(variance_weights)) {
+                rfx_dataset_add_weights_cpp(self$data_ptr, variance_weights)
+            }
+        }, 
+        
+        #' @description
+        #' Return number of observations in a `RandomEffectsDataset` object
+        #' @return Observation count
+        num_observations = function() {
+            return(rfx_dataset_num_rows_cpp(self$data_ptr))
+        }, 
+        
+        #' @description
+        #' Whether or not a dataset has group label indices
+        #' @return True if group label vector is loaded, false otherwise
+        has_group_labels = function() {
+            return(rfx_dataset_has_group_labels_cpp(self$data_ptr))
+        }, 
+        
+        #' @description
+        #' Whether or not a dataset has a basis matrix
+        #' @return True if basis matrix is loaded, false otherwise
+        has_basis = function() {
+            return(rfx_dataset_has_basis_cpp(self$data_ptr))
+        }, 
+        
+        #' @description
+        #' Whether or not a dataset has variance weights
+        #' @return True if variance weights are loaded, false otherwise
+        has_variance_weights = function() {
+            return(rfx_dataset_has_variance_weights_cpp(self$data_ptr))
+        }
+    )
+)
+
 #' Create a forest dataset object
 #'
 #' @param covariates Matrix of covariates
@@ -126,5 +185,19 @@ createForestDataset <- function(covariates, basis=NULL, variance_weights=NULL){
 createOutcome <- function(outcome){
     return(invisible((
         Outcome$new(outcome)
+    )))
+}
+
+#' Create a random effects dataset object
+#'
+#' @param group_labels Vector of group labels
+#' @param basis Matrix of bases used to define the random effects regression (for an intercept-only model, pass an array of ones)
+#' @param variance_weights (Optional) Vector of observation-specific variance weights
+#'
+#' @return `RandomEffectsDataset` object
+#' @export
+createRandomEffectsDataset <- function(group_labels, basis, variance_weights=NULL){
+    return(invisible((
+        RandomEffectsDataset$new(group_labels, basis, variance_weights)
     )))
 }
