@@ -4,7 +4,14 @@
 \alias{predict.bcf}
 \title{Predict from a sampled BCF model on new data}
 \usage{
-\method{predict}{bcf}(bcf, X_test, Z_test, pi_test = NULL)
+\method{predict}{bcf}(
+  bcf,
+  X_test,
+  Z_test,
+  pi_test = NULL,
+  group_ids_test = NULL,
+  rfx_basis_test = NULL
+)
 }
 \arguments{
 \item{bcf}{Object of type \code{bcf} containing draws of a Bayesian causal forest model and associated sampling outputs.}

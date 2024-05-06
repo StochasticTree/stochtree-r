@@ -141,3 +141,23 @@ cpp11::writable::integers rfx_tracker_get_unique_group_ids_cpp(cpp11::external_p
     std::vector<int32_t> output = rfx_tracker->GetUniqueGroupIds();
     return output;
 }
+
+[[cpp11::register]]
+cpp11::writable::doubles rfx_container_get_beta_cpp(cpp11::external_pointer<StochTree::RandomEffectsContainer> rfx_container_ptr) {
+    return rfx_container_ptr->GetBeta();
+}
+
+[[cpp11::register]]
+cpp11::writable::doubles rfx_container_get_alpha_cpp(cpp11::external_pointer<StochTree::RandomEffectsContainer> rfx_container_ptr) {
+    return rfx_container_ptr->GetAlpha();
+}
+
+[[cpp11::register]]
+cpp11::writable::doubles rfx_container_get_xi_cpp(cpp11::external_pointer<StochTree::RandomEffectsContainer> rfx_container_ptr) {
+    return rfx_container_ptr->GetXi();
+}
+
+[[cpp11::register]]
+cpp11::writable::doubles rfx_container_get_sigma_cpp(cpp11::external_pointer<StochTree::RandomEffectsContainer> rfx_container_ptr) {
+    return rfx_container_ptr->GetSigma();
+}

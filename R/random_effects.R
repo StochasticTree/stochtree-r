@@ -36,10 +36,11 @@ RandomEffectSamples <- R6::R6Class(
         }, 
         
         #' @description
-        #' Predict for each sample on .
+        #' Predict random effects for each observation implied by `rfx_group_ids` and `rfx_basis`. 
+        #' If a random effects model is "intercept-only" the `rfx_basis` will be a vector of ones of size `length(rfx_group_ids)`.
         #' @param rfx_group_ids Indices of random effects groups in a prediction set
         #' @param rfx_basis Basis used for random effects prediction
-        #' @return Matrix with as many rows as observations in the 
+        #' @return Matrix with as many rows as observations provided and as many columns as samples drawn of the model.
         predict = function(rfx_group_ids, rfx_basis) {
             num_observations = length(rfx_group_ids)
             num_samples = rfx_container_num_samples_cpp(self$rfx_container_ptr)
@@ -50,6 +51,42 @@ RandomEffectSamples <- R6::R6Class(
             rfx_dataset <- createRandomEffectsDataset(rfx_group_ids, rfx_basis)
             output <- rfx_container_predict_cpp(self$rfx_container_ptr, rfx_dataset$data_ptr, self$label_mapper_ptr)
             dim(output) <- c(num_observations, num_samples)
+            return(output)
+        }, 
+        
+        #' @description
+        #' Extract the random effects parameters sampled. With the "redundant parameterization" 
+        #' of Gelman et al (2008), this includes four parameters: alpha (the "working parameter" 
+        #' shared across every group), xi (the "group parameter" sampled separately for each group), 
+        #' beta (the product of alpha and xi, which corresponds to the overall group-level random effects), 
+        #' and sigma (group-independent prior variance for each component of xi).
+        #' @return List of arrays. The alpha array has dimension (`num_components`, `num_samples`) and is simply a vector if `num_components = 1`.
+        #' The xi and beta arrays have dimension (`num_components`, `num_groups`, `num_samples`) and is simply a matrix if `num_components = 1`.
+        #' The sigma array has dimension (`num_components`, `num_samples`) and is simply a vector if `num_components = 1`.
+        extract_parameter_samples = function() {
+            num_samples = rfx_container_num_samples_cpp(self$rfx_container_ptr)
+            num_components = rfx_container_num_components_cpp(self$rfx_container_ptr)
+            num_groups = rfx_container_num_groups_cpp(self$rfx_container_ptr)
+            beta_samples <- rfx_container_get_beta_cpp(self$rfx_container_ptr)
+            xi_samples <- rfx_container_get_xi_cpp(self$rfx_container_ptr)
+            alpha_samples <- rfx_container_get_alpha_cpp(self$rfx_container_ptr)
+            sigma_samples <- rfx_container_get_sigma_cpp(self$rfx_container_ptr)
+            if (num_components == 1) {
+                dim(beta_samples) <- c(num_groups, num_samples)
+                dim(xi_samples) <- c(num_groups, num_samples)
+            } else if (num_components > 1) {
+                dim(beta_samples) <- c(num_components, num_groups, num_samples)
+                dim(xi_samples) <- c(num_components, num_groups, num_samples)
+                dim(alpha_samples) <- c(num_components, num_samples)
+                dim(sigma_samples) <- c(num_components, num_samples)
+            } else stop("Invalid random effects sample container, num_components is less than 1")
+            
+            output = list(
+                "beta_samples" = beta_samples, 
+                "xi_samples" = xi_samples, 
+                "alpha_samples" = alpha_samples, 
+                "sigma_samples" = sigma_samples
+            )
             return(output)
         }
     )

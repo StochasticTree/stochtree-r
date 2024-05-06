@@ -27,6 +27,7 @@ needed for prediction / serialization
 \itemize{
 \item \href{#method-RandomEffectSamples-new}{\code{RandomEffectSamples$new()}}
 \item \href{#method-RandomEffectSamples-predict}{\code{RandomEffectSamples$predict()}}
+\item \href{#method-RandomEffectSamples-extract_parameter_samples}{\code{RandomEffectSamples$extract_parameter_samples()}}
 }
 }
 \if{html}{\out{<hr>}}
@@ -57,7 +58,8 @@ A new \code{RandomEffectSamples} object.
 \if{html}{\out{<a id="method-RandomEffectSamples-predict"></a>}}
 \if{latex}{\out{\hypertarget{method-RandomEffectSamples-predict}{}}}
 \subsection{Method \code{predict()}}{
-Predict for each sample on .
+Predict random effects for each observation implied by \code{rfx_group_ids} and \code{rfx_basis}.
+If a random effects model is "intercept-only" the \code{rfx_basis} will be a vector of ones of size \code{length(rfx_group_ids)}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{RandomEffectSamples$predict(rfx_group_ids, rfx_basis)}\if{html}{\out{</div>}}
 }
@@ -72,7 +74,26 @@ Predict for each sample on .
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Matrix with as many rows as observations in the
+Matrix with as many rows as observations provided and as many columns as samples drawn of the model.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-RandomEffectSamples-extract_parameter_samples"></a>}}
+\if{latex}{\out{\hypertarget{method-RandomEffectSamples-extract_parameter_samples}{}}}
+\subsection{Method \code{extract_parameter_samples()}}{
+Extract the random effects parameters sampled. With the "redundant parameterization"
+of Gelman et al (2008), this includes four parameters: alpha (the "working parameter"
+shared across every group), xi (the "group parameter" sampled separately for each group),
+beta (the product of alpha and xi, which corresponds to the overall group-level random effects),
+and sigma (group-independent prior variance for each component of xi).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{RandomEffectSamples$extract_parameter_samples()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+List of arrays. The alpha array has dimension (\code{num_components}, \code{num_samples}) and is simply a vector if \code{num_components = 1}.
+The xi and beta arrays have dimension (\code{num_components}, \code{num_groups}, \code{num_samples}) and is simply a matrix if \code{num_components = 1}.
+The sigma array has dimension (\code{num_components}, \code{num_samples}) and is simply a vector if \code{num_components = 1}.
 }
 }
 }
