@@ -28,6 +28,7 @@ needed for prediction / serialization
 \item \href{#method-RandomEffectSamples-new}{\code{RandomEffectSamples$new()}}
 \item \href{#method-RandomEffectSamples-predict}{\code{RandomEffectSamples$predict()}}
 \item \href{#method-RandomEffectSamples-extract_parameter_samples}{\code{RandomEffectSamples$extract_parameter_samples()}}
+\item \href{#method-RandomEffectSamples-extract_label_mapping}{\code{RandomEffectSamples$extract_label_mapping()}}
 }
 }
 \if{html}{\out{<hr>}}
@@ -94,6 +95,19 @@ and sigma (group-independent prior variance for each component of xi).
 List of arrays. The alpha array has dimension (\code{num_components}, \code{num_samples}) and is simply a vector if \code{num_components = 1}.
 The xi and beta arrays have dimension (\code{num_components}, \code{num_groups}, \code{num_samples}) and is simply a matrix if \code{num_components = 1}.
 The sigma array has dimension (\code{num_components}, \code{num_samples}) and is simply a vector if \code{num_components = 1}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-RandomEffectSamples-extract_label_mapping"></a>}}
+\if{latex}{\out{\hypertarget{method-RandomEffectSamples-extract_label_mapping}{}}}
+\subsection{Method \code{extract_label_mapping()}}{
+Convert the mapping of group IDs to random effect components indices from C++ to R native format
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{RandomEffectSamples$extract_label_mapping()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+List mapping group ID to random effect components.
 }
 }
 }

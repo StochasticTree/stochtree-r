@@ -168,6 +168,10 @@ rfx_container_get_sigma_cpp <- function(rfx_container_ptr) {
   .Call(`_stochtree_rfx_container_get_sigma_cpp`, rfx_container_ptr)
 }
 
+rfx_label_mapper_to_list_cpp <- function(label_mapper_ptr) {
+  .Call(`_stochtree_rfx_label_mapper_to_list_cpp`, label_mapper_ptr)
+}
+
 sample_gfr_one_iteration_cpp <- function(data, residual, forest_samples, tracker, split_prior, rng, feature_types, cutpoint_grid_size, leaf_model_scale_input, variable_weights, global_variance, leaf_model_int, pre_initialized) {
   invisible(.Call(`_stochtree_sample_gfr_one_iteration_cpp`, data, residual, forest_samples, tracker, split_prior, rng, feature_types, cutpoint_grid_size, leaf_model_scale_input, variable_weights, global_variance, leaf_model_int, pre_initialized))
 }

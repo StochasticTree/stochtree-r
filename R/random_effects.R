@@ -88,6 +88,16 @@ RandomEffectSamples <- R6::R6Class(
                 "sigma_samples" = sigma_samples
             )
             return(output)
+        }, 
+        
+        #' @description
+        #' Convert the mapping of group IDs to random effect components indices from C++ to R native format
+        #' @return List mapping group ID to random effect components.
+        extract_label_mapping = function() {
+            keys_and_vals <- rfx_label_mapper_to_list_cpp(self$label_mapper_ptr)
+            result <- as.list(keys_and_vals[[2]] + 1)
+            setNames(result, keys_and_vals[[1]])
+            return(result)
         }
     )
 )

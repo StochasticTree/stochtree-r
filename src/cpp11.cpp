@@ -313,6 +313,13 @@ extern "C" SEXP _stochtree_rfx_container_get_sigma_cpp(SEXP rfx_container_ptr) {
     return cpp11::as_sexp(rfx_container_get_sigma_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<StochTree::RandomEffectsContainer>>>(rfx_container_ptr)));
   END_CPP11
 }
+// random_effects.cpp
+cpp11::list rfx_label_mapper_to_list_cpp(cpp11::external_pointer<StochTree::LabelMapper> label_mapper_ptr);
+extern "C" SEXP _stochtree_rfx_label_mapper_to_list_cpp(SEXP label_mapper_ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(rfx_label_mapper_to_list_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<StochTree::LabelMapper>>>(label_mapper_ptr)));
+  END_CPP11
+}
 // sampler.cpp
 void sample_gfr_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestDataset> data, cpp11::external_pointer<StochTree::ColumnVector> residual, cpp11::external_pointer<StochTree::ForestContainer> forest_samples, cpp11::external_pointer<StochTree::ForestTracker> tracker, cpp11::external_pointer<StochTree::TreePrior> split_prior, cpp11::external_pointer<std::mt19937> rng, cpp11::integers feature_types, int cutpoint_grid_size, cpp11::doubles_matrix<> leaf_model_scale_input, cpp11::doubles variable_weights, double global_variance, int leaf_model_int, bool pre_initialized);
 extern "C" SEXP _stochtree_sample_gfr_one_iteration_cpp(SEXP data, SEXP residual, SEXP forest_samples, SEXP tracker, SEXP split_prior, SEXP rng, SEXP feature_types, SEXP cutpoint_grid_size, SEXP leaf_model_scale_input, SEXP variable_weights, SEXP global_variance, SEXP leaf_model_int, SEXP pre_initialized) {
@@ -491,6 +498,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stochtree_rfx_dataset_has_variance_weights_cpp",           (DL_FUNC) &_stochtree_rfx_dataset_has_variance_weights_cpp,            1},
     {"_stochtree_rfx_dataset_num_rows_cpp",                       (DL_FUNC) &_stochtree_rfx_dataset_num_rows_cpp,                        1},
     {"_stochtree_rfx_label_mapper_cpp",                           (DL_FUNC) &_stochtree_rfx_label_mapper_cpp,                            1},
+    {"_stochtree_rfx_label_mapper_to_list_cpp",                   (DL_FUNC) &_stochtree_rfx_label_mapper_to_list_cpp,                    1},
     {"_stochtree_rfx_model_cpp",                                  (DL_FUNC) &_stochtree_rfx_model_cpp,                                   2},
     {"_stochtree_rfx_model_sample_random_effects_cpp",            (DL_FUNC) &_stochtree_rfx_model_sample_random_effects_cpp,             7},
     {"_stochtree_rfx_model_set_group_parameter_covariance_cpp",   (DL_FUNC) &_stochtree_rfx_model_set_group_parameter_covariance_cpp,    2},

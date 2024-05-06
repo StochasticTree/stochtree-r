@@ -161,3 +161,19 @@ cpp11::writable::doubles rfx_container_get_xi_cpp(cpp11::external_pointer<StochT
 cpp11::writable::doubles rfx_container_get_sigma_cpp(cpp11::external_pointer<StochTree::RandomEffectsContainer> rfx_container_ptr) {
     return rfx_container_ptr->GetSigma();
 }
+
+[[cpp11::register]]
+cpp11::list rfx_label_mapper_to_list_cpp(cpp11::external_pointer<StochTree::LabelMapper> label_mapper_ptr) {
+    cpp11::writable::integers keys;
+    cpp11::writable::integers values;
+    std::map<int32_t, int32_t> label_map = label_mapper_ptr->Map();
+    for (const auto& [key, value] : label_map) {
+        keys.push_back(key);
+        values.push_back(value);
+    }
+    
+    cpp11::writable::list output;
+    output.push_back(keys);
+    output.push_back(values);
+    return output;
+}
