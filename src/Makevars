@@ -11,6 +11,7 @@ OBJECTS = \
     predictor.o \
     random_effects.o \
     sampler.o \
+    serialization.o \
     cpp11.o \
 	$(CPP_PKGROOT)/src/container.o \
     $(CPP_PKGROOT)/src/cutpoint_candidates.o \
