@@ -423,6 +423,13 @@ extern "C" SEXP _stochtree_num_samples_forest_container_cpp(SEXP forest_samples)
   END_CPP11
 }
 // sampler.cpp
+int num_trees_forest_container_cpp(cpp11::external_pointer<StochTree::ForestContainer> forest_samples);
+extern "C" SEXP _stochtree_num_trees_forest_container_cpp(SEXP forest_samples) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(num_trees_forest_container_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<StochTree::ForestContainer>>>(forest_samples)));
+  END_CPP11
+}
+// sampler.cpp
 void json_save_forest_container_cpp(cpp11::external_pointer<StochTree::ForestContainer> forest_samples, std::string json_filename);
 extern "C" SEXP _stochtree_json_save_forest_container_cpp(SEXP forest_samples, SEXP json_filename) {
   BEGIN_CPP11
@@ -535,6 +542,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stochtree_json_load_forest_container_cpp",                    (DL_FUNC) &_stochtree_json_load_forest_container_cpp,                     2},
     {"_stochtree_json_save_forest_container_cpp",                    (DL_FUNC) &_stochtree_json_save_forest_container_cpp,                     2},
     {"_stochtree_num_samples_forest_container_cpp",                  (DL_FUNC) &_stochtree_num_samples_forest_container_cpp,                   1},
+    {"_stochtree_num_trees_forest_container_cpp",                    (DL_FUNC) &_stochtree_num_trees_forest_container_cpp,                     1},
     {"_stochtree_output_dimension_forest_container_cpp",             (DL_FUNC) &_stochtree_output_dimension_forest_container_cpp,              1},
     {"_stochtree_predict_forest_cpp",                                (DL_FUNC) &_stochtree_predict_forest_cpp,                                 2},
     {"_stochtree_predict_forest_raw_cpp",                            (DL_FUNC) &_stochtree_predict_forest_raw_cpp,                             2},

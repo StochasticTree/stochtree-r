@@ -187,6 +187,11 @@ int num_samples_forest_container_cpp(cpp11::external_pointer<StochTree::ForestCo
 }
 
 [[cpp11::register]]
+int num_trees_forest_container_cpp(cpp11::external_pointer<StochTree::ForestContainer> forest_samples) {
+    return forest_samples->NumTrees();
+}
+
+[[cpp11::register]]
 void json_save_forest_container_cpp(cpp11::external_pointer<StochTree::ForestContainer> forest_samples, std::string json_filename) {
     forest_samples->SaveToJsonFile(json_filename);
 }

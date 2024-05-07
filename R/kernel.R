@@ -39,7 +39,7 @@ ForestKernel <- R6::R6Class(
                 covariates_test <- as.matrix(covariates_test)
             }
             
-            # Run the code
+            # Compute the leaf indices
             result = list()
             if (is.null(covariates_test)) {
                 forest_kernel_compute_leaf_indices_train_cpp(
@@ -81,7 +81,8 @@ ForestKernel <- R6::R6Class(
                 covariates_test <- as.matrix(covariates_test)
             }
             
-            # Run the code
+            # Compute the kernels
+            num_trees <- forest_container$num_trees()
             n_train = nrow(covariates_train)
             kernel_train = matrix(0., nrow = n_train, ncol = n_train)
             inverse_kernel_train = matrix(0., nrow = n_train, ncol = n_train)
@@ -101,6 +102,10 @@ ForestKernel <- R6::R6Class(
                 )
                 names(result) <- c("kernel_train", "kernel_test_train", "kernel_test")
             }
+            
+            # Divide each matrix by num_trees
+            for (i in 1:length(result)) {result[[i]] <- result[[i]] / num_trees}
+            
             return(result)
         }
     )
@@ -137,7 +142,7 @@ createForestKernel <- function() {
 #' `W_test %*% t(W_train)` and `W_test %*% t(W_test)`.
 #' @export
 computeForestKernels <- function(bart_model, X_train, X_test=NULL, forest_num=NULL) {
-    stopifnot(typeof(bart_model)=="bartmodel")
+    stopifnot(class(bart_model)=="bartmodel")
     forest_kernel <- createForestKernel()
     num_samples <- bart_model$model_params$num_samples
     stopifnot(forest_num <= num_samples)
@@ -178,7 +183,7 @@ computeForestKernels <- function(bart_model, X_train, X_test=NULL, forest_num=NU
 #' the list contains another vector of length `n_test * num_trees`.
 #' @export
 computeForestLeafIndices <- function(bart_model, X_train, X_test=NULL, forest_num=NULL) {
-    stopifnot(typeof(bart_model)=="bartmodel")
+    stopifnot(class(bart_model)=="bartmodel")
     forest_kernel <- createForestKernel()
     num_samples <- bart_model$model_params$num_samples
     stopifnot(forest_num <= num_samples)

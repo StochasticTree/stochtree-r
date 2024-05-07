@@ -90,24 +90,27 @@ sqrt(mean((model_gp$ZZ.mean - y_test)^2))
 ## BART-based Gaussian process
 
 ```{r}
+# Run BART on the data
 num_trees <- 200
+sigma_leaf <- 1/num_trees
 bart_model <- bart(X_train=X_train, y_train=y_train, X_test=X_test, num_trees=num_trees)
-num_samples <- bart_model$model_params$num_samples
-sigma_leaf <- bart_model$tau_samples[num_samples]
-forest_kernel <- createForestKernel()
-result_kernels <- forest_kernel$compute_kernel(
-    covariates_train = X_train, covariates_test = X_test,
-    forest_container = bart_model$forests,
-    forest_num = num_samples - 1
-)
-Sigma_11 <- result_kernels$kernel_test / num_trees
-Sigma_12 <- result_kernels$kernel_test_train / num_trees
-Sigma_22 <- result_kernels$kernel_train / num_trees
+
+# Extract kernels needed for kriging
+result_kernels <- computeForestKernels(bart_model=bart_model, X_train=X_train, X_test=X_test)
+Sigma_11 <- result_kernels$kernel_test
+Sigma_12 <- result_kernels$kernel_test_train
+Sigma_22 <- result_kernels$kernel_train
 Sigma_22_inv <- ginv(Sigma_22)
-Sigma_21 <- t(result_kernels$kernel_test_train / num_trees)
+Sigma_21 <- t(Sigma_12)
+
+# Compute mean and covariance for the test set posterior
 mu_tilde <- Sigma_12 %*% Sigma_22_inv %*% y_train
 Sigma_tilde <- (sigma_leaf)*(Sigma_11 - Sigma_12 %*% Sigma_22_inv %*% Sigma_21)
+
+# Sample from f(X_test) | X_test, X_train, f(X_train)
 gp_samples <- mvtnorm::rmvnorm(1000, mean = mu_tilde, sigma = Sigma_tilde)
+
+# Compute posterior mean predictions for f(X_test)
 yhat_mean_test <- colMeans(gp_samples)
 plot(yhat_mean_test, y_test, xlab = "predicted", ylab = "actual", main = "BART Gaussian process")
 abline(0,1,lwd=2.5,lty=3,col="red")
@@ -128,7 +131,7 @@ We proceed to the simulated "Friedman" dataset, as implemented in `tgp`.
 We can use the `tgp` package to model this data with a classical Gaussian Process.
 
 ```{r, results='hide'}
-# Generate the data, add many "noise variables" on the same scale as X and XX
+# Generate the data, add many "noise variables"
 n <- 100
 friedman.df <- friedman.1.data(n=n)
 train_inds <- sort(sample(1:n, floor(0.8*n), replace = F))
@@ -156,24 +159,27 @@ sqrt(mean((model_gp$ZZ.mean - y_test)^2))
 ## BART-based Gaussian process
 
 ```{r}
+# Run BART on the data
 num_trees <- 200
-bart_model <- bart(X_train=X_train, y_train=y_train, X_test=X_test, num_trees = num_trees, num_gfr = 10, num_burnin = 0, num_mcmc = 0)
-num_samples <- bart_model$model_params$num_samples
-sigma_leaf <- bart_model$tau_samples[num_samples]
-forest_kernel <- createForestKernel()
-result_kernels <- forest_kernel$compute_kernel(
-    covariates_train = X_train, covariates_test = X_test,
-    forest_container = bart_model$forests,
-    forest_num = num_samples - 1
-)
-Sigma_11 <- result_kernels$kernel_test / num_trees
-Sigma_12 <- result_kernels$kernel_test_train / num_trees
-Sigma_22 <- result_kernels$kernel_train / num_trees
+sigma_leaf <- 1/num_trees
+bart_model <- bart(X_train=X_train, y_train=y_train, X_test=X_test, num_trees=num_trees)
+
+# Extract kernels needed for kriging
+result_kernels <- computeForestKernels(bart_model=bart_model, X_train=X_train, X_test=X_test)
+Sigma_11 <- result_kernels$kernel_test
+Sigma_12 <- result_kernels$kernel_test_train
+Sigma_22 <- result_kernels$kernel_train
 Sigma_22_inv <- ginv(Sigma_22)
-Sigma_21 <- t(result_kernels$kernel_test_train / num_trees)
-mu_tilde <- as.numeric(Sigma_12 %*% Sigma_22_inv %*% y_train)
+Sigma_21 <- t(Sigma_12)
+
+# Compute mean and covariance for the test set posterior
+mu_tilde <- Sigma_12 %*% Sigma_22_inv %*% y_train
 Sigma_tilde <- (sigma_leaf)*(Sigma_11 - Sigma_12 %*% Sigma_22_inv %*% Sigma_21)
+
+# Sample from f(X_test) | X_test, X_train, f(X_train)
 gp_samples <- mvtnorm::rmvnorm(1000, mean = mu_tilde, sigma = Sigma_tilde)
+
+# Compute posterior mean predictions for f(X_test)
 yhat_mean_test <- colMeans(gp_samples)
 plot(yhat_mean_test, y_test, xlab = "predicted", ylab = "actual", main = "BART Gaussian process")
 abline(0,1,lwd=2.5,lty=3,col="red")

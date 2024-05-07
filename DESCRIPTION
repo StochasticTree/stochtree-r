@@ -18,7 +18,11 @@ LinkingTo:
     cpp11
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown, 
+    Matrix, 
+    tgp, 
+    MASS, 
+    mvtnorm
 VignetteBuilder: knitr
 Imports: 
     R6

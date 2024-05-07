@@ -228,6 +228,10 @@ num_samples_forest_container_cpp <- function(forest_samples) {
   .Call(`_stochtree_num_samples_forest_container_cpp`, forest_samples)
 }
 
+num_trees_forest_container_cpp <- function(forest_samples) {
+  .Call(`_stochtree_num_trees_forest_container_cpp`, forest_samples)
+}
+
 json_save_forest_container_cpp <- function(forest_samples, json_filename) {
   invisible(.Call(`_stochtree_json_save_forest_container_cpp`, forest_samples, json_filename))
 }
