@@ -2,11 +2,11 @@ pandoc: 3.1.11
 pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
-  Bayesian-Supervised-Learning: Bayesian-Supervised-Learning.html
-  Causal-Inference: Causal-Inference.html
-  Ensemble-Kernel: Ensemble-Kernel.html
-  Prototype-Interface: Prototype-Interface.html
-last_built: 2024-05-07T04:25Z
+  BayesianSupervisedLearning: BayesianSupervisedLearning.html
+  CausalInference: CausalInference.html
+  CustomSamplingRoutine: CustomSamplingRoutine.html
+  EnsembleKernel: EnsembleKernel.html
+last_built: 2024-05-07T04:58Z
 urls:
   reference: https://stochastictree.github.io/stochtree-r/reference
   article: https://stochastictree.github.io/stochtree-r/articles
