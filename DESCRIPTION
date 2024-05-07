@@ -22,7 +22,9 @@ Suggests:
     Matrix, 
     tgp, 
     MASS, 
-    mvtnorm
+    mvtnorm, 
+    ggplot2, 
+    latex2exp
 VignetteBuilder: knitr
 Imports: 
     R6
