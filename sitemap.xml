@@ -34,6 +34,9 @@
     <loc>https://stochastictree.github.io/stochtree-r/reference/BART.html</loc>
   </url>
   <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/CppJson.html</loc>
+  </url>
+  <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/CppRNG.html</loc>
   </url>
   <url>
@@ -71,6 +74,9 @@
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/computeForestLeafIndices.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createCppJson.html</loc>
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/createForestContainer.html</loc>
