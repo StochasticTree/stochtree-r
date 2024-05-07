@@ -25,6 +25,7 @@ Wrapper around a C++ container of tree ensembles
 \item \href{#method-ForestSamples-save_json}{\code{ForestSamples$save_json()}}
 \item \href{#method-ForestSamples-load_json}{\code{ForestSamples$load_json()}}
 \item \href{#method-ForestSamples-num_samples}{\code{ForestSamples$num_samples()}}
+\item \href{#method-ForestSamples-num_trees}{\code{ForestSamples$num_trees()}}
 \item \href{#method-ForestSamples-output_dimension}{\code{ForestSamples$output_dimension()}}
 }
 }
@@ -223,6 +224,19 @@ Return number of samples in a \code{ForestContainer} object
 
 \subsection{Returns}{
 Sample count
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ForestSamples-num_trees"></a>}}
+\if{latex}{\out{\hypertarget{method-ForestSamples-num_trees}{}}}
+\subsection{Method \code{num_trees()}}{
+Return number of trees in each ensemble of a \code{ForestContainer} object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ForestSamples$num_trees()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Tree count
 }
 }
 \if{html}{\out{<hr>}}

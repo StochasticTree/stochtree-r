@@ -18,7 +18,13 @@ LinkingTo:
     cpp11
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown, 
+    Matrix, 
+    tgp, 
+    MASS, 
+    mvtnorm, 
+    ggplot2, 
+    latex2exp
 VignetteBuilder: knitr
 SystemRequirements: C++17
 Imports: 

@@ -142,6 +142,13 @@ ForestSamples <- R6::R6Class(
         }, 
         
         #' @description
+        #' Return number of trees in each ensemble of a `ForestContainer` object
+        #' @return Tree count
+        num_trees = function() {
+            return(num_trees_forest_container_cpp(self$forest_container_ptr))
+        }, 
+        
+        #' @description
         #' Return output dimension of trees in a `ForestContainer` object
         #' @return Leaf node parameter size
         output_dimension = function() {

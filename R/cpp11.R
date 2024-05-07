@@ -76,6 +76,34 @@ rfx_dataset_add_weights_cpp <- function(dataset_ptr, weights) {
   invisible(.Call(`_stochtree_rfx_dataset_add_weights_cpp`, dataset_ptr, weights))
 }
 
+forest_kernel_cpp <- function() {
+  .Call(`_stochtree_forest_kernel_cpp`)
+}
+
+forest_kernel_compute_leaf_indices_train_cpp <- function(forest_kernel, covariates_train, forest_container, forest_num) {
+  invisible(.Call(`_stochtree_forest_kernel_compute_leaf_indices_train_cpp`, forest_kernel, covariates_train, forest_container, forest_num))
+}
+
+forest_kernel_compute_leaf_indices_train_test_cpp <- function(forest_kernel, covariates_train, covariates_test, forest_container, forest_num) {
+  invisible(.Call(`_stochtree_forest_kernel_compute_leaf_indices_train_test_cpp`, forest_kernel, covariates_train, covariates_test, forest_container, forest_num))
+}
+
+forest_kernel_get_train_leaf_indices_cpp <- function(forest_kernel) {
+  .Call(`_stochtree_forest_kernel_get_train_leaf_indices_cpp`, forest_kernel)
+}
+
+forest_kernel_get_test_leaf_indices_cpp <- function(forest_kernel) {
+  .Call(`_stochtree_forest_kernel_get_test_leaf_indices_cpp`, forest_kernel)
+}
+
+forest_kernel_compute_kernel_train_cpp <- function(forest_kernel, covariates_train, forest_container, forest_num) {
+  .Call(`_stochtree_forest_kernel_compute_kernel_train_cpp`, forest_kernel, covariates_train, forest_container, forest_num)
+}
+
+forest_kernel_compute_kernel_train_test_cpp <- function(forest_kernel, covariates_train, covariates_test, forest_container, forest_num) {
+  .Call(`_stochtree_forest_kernel_compute_kernel_train_test_cpp`, forest_kernel, covariates_train, covariates_test, forest_container, forest_num)
+}
+
 predict_forest_cpp <- function(forest_samples, dataset) {
   .Call(`_stochtree_predict_forest_cpp`, forest_samples, dataset)
 }
@@ -198,6 +226,10 @@ forest_container_cpp <- function(num_trees, output_dimension, is_leaf_constant) 
 
 num_samples_forest_container_cpp <- function(forest_samples) {
   .Call(`_stochtree_num_samples_forest_container_cpp`, forest_samples)
+}
+
+num_trees_forest_container_cpp <- function(forest_samples) {
+  .Call(`_stochtree_num_trees_forest_container_cpp`, forest_samples)
 }
 
 json_save_forest_container_cpp <- function(forest_samples, json_filename) {
