@@ -3,6 +3,8 @@ CPP_PKGROOT=stochtree-cpp
 
 PKG_CPPFLAGS= -I$(CPP_PKGROOT)/include -I$(CPP_PKGROOT)/dependencies/boost_math/include -I$(CPP_PKGROOT)/dependencies/eigen
 
+CXX_STD=CXX17
+
 OBJECTS = \
     data.o \
     predictor.o \
