@@ -4,8 +4,9 @@ pkgdown_sha: ~
 articles:
   Bayesian-Supervised-Learning: Bayesian-Supervised-Learning.html
   Causal-Inference: Causal-Inference.html
+  Ensemble-Kernel: Ensemble-Kernel.html
   Prototype-Interface: Prototype-Interface.html
-last_built: 2024-05-07T03:07Z
+last_built: 2024-05-07T04:12Z
 urls:
   reference: https://stochastictree.github.io/stochtree-r/reference
   article: https://stochastictree.github.io/stochtree-r/articles

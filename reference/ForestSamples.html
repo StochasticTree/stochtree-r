@@ -26,6 +26,7 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/Bayesian-Supervised-Learning.html">Bayesian Supervised Learning in StochTree</a>
     <a class="dropdown-item" href="../articles/Causal-Inference.html">Causal Machine Learning in StochTree</a>
+    <a class="dropdown-item" href="../articles/Ensemble-Kernel.html">Kernel Methods from Tree Ensembles in StochTree</a>
     <a class="dropdown-item" href="../articles/Prototype-Interface.html">Prototype Interface in StochTree</a>
   </div>
 </li>
@@ -72,6 +73,7 @@
 <li><p><a href="#method-ForestSamples-save_json"><code>ForestSamples$save_json()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-load_json"><code>ForestSamples$load_json()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-num_samples"><code>ForestSamples$num_samples()</code></a></p></li>
+<li><p><a href="#method-ForestSamples-num_trees"><code>ForestSamples$num_trees()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-output_dimension"><code>ForestSamples$output_dimension()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-ForestSamples-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
@@ -283,15 +285,27 @@ be overwritten.</p><div class="section">
 <p>Sample count</p>
 </div>
 
-</div><p></p><hr><a id="method-ForestSamples-output_dimension"></a><div class="section">
-<h3 id="method-output-dimension-">Method <code>output_dimension()</code><a class="anchor" aria-label="anchor" href="#method-output-dimension-"></a></h3>
-<p>Return output dimension of trees in a <code>ForestContainer</code> object</p><div class="section">
+</div><p></p><hr><a id="method-ForestSamples-num_trees"></a><div class="section">
+<h3 id="method-num-trees-">Method <code>num_trees()</code><a class="anchor" aria-label="anchor" href="#method-num-trees-"></a></h3>
+<p>Return number of trees in each ensemble of a <code>ForestContainer</code> object</p><div class="section">
 <h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">output_dimension</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">num_trees</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<p>Tree count</p>
+</div>
+
+</div><p></p><hr><a id="method-ForestSamples-output_dimension"></a><div class="section">
+<h3 id="method-output-dimension-">Method <code>output_dimension()</code><a class="anchor" aria-label="anchor" href="#method-output-dimension-"></a></h3>
+<p>Return output dimension of trees in a <code>ForestContainer</code> object</p><div class="section">
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">output_dimension</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
 <p>Leaf node parameter size</p>
 </div>
 
