@@ -512,6 +512,37 @@ extern "C" SEXP _stochtree_forest_tracker_cpp(SEXP data, SEXP feature_types, SEX
     return cpp11::as_sexp(forest_tracker_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<StochTree::ForestDataset>>>(data), cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(feature_types), cpp11::as_cpp<cpp11::decay_t<int>>(num_trees), cpp11::as_cpp<cpp11::decay_t<StochTree::data_size_t>>(n)));
   END_CPP11
 }
+// serialization.cpp
+cpp11::external_pointer<nlohmann::json> init_json_cpp();
+extern "C" SEXP _stochtree_init_json_cpp() {
+  BEGIN_CPP11
+    return cpp11::as_sexp(init_json_cpp());
+  END_CPP11
+}
+// serialization.cpp
+void json_add_forest_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, cpp11::external_pointer<StochTree::ForestContainer> forest_samples);
+extern "C" SEXP _stochtree_json_add_forest_cpp(SEXP json_ptr, SEXP forest_samples) {
+  BEGIN_CPP11
+    json_add_forest_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<nlohmann::json>>>(json_ptr), cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<StochTree::ForestContainer>>>(forest_samples));
+    return R_NilValue;
+  END_CPP11
+}
+// serialization.cpp
+void json_add_rfx_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, cpp11::external_pointer<StochTree::RandomEffectsContainer> rfx_samples);
+extern "C" SEXP _stochtree_json_add_rfx_cpp(SEXP json_ptr, SEXP rfx_samples) {
+  BEGIN_CPP11
+    json_add_rfx_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<nlohmann::json>>>(json_ptr), cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<StochTree::RandomEffectsContainer>>>(rfx_samples));
+    return R_NilValue;
+  END_CPP11
+}
+// serialization.cpp
+void json_save_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string filename);
+extern "C" SEXP _stochtree_json_save_cpp(SEXP json_ptr, SEXP filename) {
+  BEGIN_CPP11
+    json_save_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<nlohmann::json>>>(json_ptr), cpp11::as_cpp<cpp11::decay_t<std::string>>(filename));
+    return R_NilValue;
+  END_CPP11
+}
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
@@ -538,8 +569,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stochtree_forest_kernel_get_test_leaf_indices_cpp",           (DL_FUNC) &_stochtree_forest_kernel_get_test_leaf_indices_cpp,            1},
     {"_stochtree_forest_kernel_get_train_leaf_indices_cpp",          (DL_FUNC) &_stochtree_forest_kernel_get_train_leaf_indices_cpp,           1},
     {"_stochtree_forest_tracker_cpp",                                (DL_FUNC) &_stochtree_forest_tracker_cpp,                                 4},
+    {"_stochtree_init_json_cpp",                                     (DL_FUNC) &_stochtree_init_json_cpp,                                      0},
     {"_stochtree_is_leaf_constant_forest_container_cpp",             (DL_FUNC) &_stochtree_is_leaf_constant_forest_container_cpp,              1},
+    {"_stochtree_json_add_forest_cpp",                               (DL_FUNC) &_stochtree_json_add_forest_cpp,                                2},
+    {"_stochtree_json_add_rfx_cpp",                                  (DL_FUNC) &_stochtree_json_add_rfx_cpp,                                   2},
     {"_stochtree_json_load_forest_container_cpp",                    (DL_FUNC) &_stochtree_json_load_forest_container_cpp,                     2},
+    {"_stochtree_json_save_cpp",                                     (DL_FUNC) &_stochtree_json_save_cpp,                                      2},
     {"_stochtree_json_save_forest_container_cpp",                    (DL_FUNC) &_stochtree_json_save_forest_container_cpp,                     2},
     {"_stochtree_num_samples_forest_container_cpp",                  (DL_FUNC) &_stochtree_num_samples_forest_container_cpp,                   1},
     {"_stochtree_num_trees_forest_container_cpp",                    (DL_FUNC) &_stochtree_num_trees_forest_container_cpp,                     1},

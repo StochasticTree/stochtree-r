@@ -19,6 +19,13 @@ reference:
 
 - title: Low-level functionality
 
+- subtitle: Serialization
+  desc: >
+    Classes and functions for converting sampling artifacts to JSON and saving to disk
+  contents:
+  - CppJson
+  - createCppJson
+
 - subtitle: Data
   desc: >
     Classes and functions for preparing data for sampling algorithms

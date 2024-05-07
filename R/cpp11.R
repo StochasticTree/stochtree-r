@@ -275,3 +275,19 @@ tree_prior_cpp <- function(alpha, beta, min_samples_leaf) {
 forest_tracker_cpp <- function(data, feature_types, num_trees, n) {
   .Call(`_stochtree_forest_tracker_cpp`, data, feature_types, num_trees, n)
 }
+
+init_json_cpp <- function() {
+  .Call(`_stochtree_init_json_cpp`)
+}
+
+json_add_forest_cpp <- function(json_ptr, forest_samples) {
+  invisible(.Call(`_stochtree_json_add_forest_cpp`, json_ptr, forest_samples))
+}
+
+json_add_rfx_cpp <- function(json_ptr, rfx_samples) {
+  invisible(.Call(`_stochtree_json_add_rfx_cpp`, json_ptr, rfx_samples))
+}
+
+json_save_cpp <- function(json_ptr, filename) {
+  invisible(.Call(`_stochtree_json_save_cpp`, json_ptr, filename))
+}
