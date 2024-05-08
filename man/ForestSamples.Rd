@@ -17,6 +17,7 @@ Wrapper around a C++ container of tree ensembles
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-ForestSamples-new}{\code{ForestSamples$new()}}
+\item \href{#method-ForestSamples-load_from_json}{\code{ForestSamples$load_from_json()}}
 \item \href{#method-ForestSamples-predict}{\code{ForestSamples$predict()}}
 \item \href{#method-ForestSamples-predict_raw}{\code{ForestSamples$predict_raw()}}
 \item \href{#method-ForestSamples-predict_raw_single_forest}{\code{ForestSamples$predict_raw_single_forest()}}
@@ -46,6 +47,28 @@ Create a new ForestContainer object.
 \item{\code{output_dimension}}{Dimensionality of the outcome model}
 
 \item{\code{is_leaf_constant}}{Whether leaf is constant}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A new \code{ForestContainer} object.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ForestSamples-load_from_json"></a>}}
+\if{latex}{\out{\hypertarget{method-ForestSamples-load_from_json}{}}}
+\subsection{Method \code{load_from_json()}}{
+Create a new ForestContainer object from a json object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ForestSamples$load_from_json(json_object, json_forest_label)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{json_object}}{Object of class \code{CppJson}}
+
+\item{\code{json_forest_label}}{Label referring to a particular forest (i.e. "forest_0") in the overall json hierarchy}
 }
 \if{html}{\out{</div>}}
 }

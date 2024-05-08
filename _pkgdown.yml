@@ -25,6 +25,8 @@ reference:
   contents:
   - CppJson
   - createCppJson
+  - loadForestContainerJson
+  - loadRandomEffectSamplesJson
 
 - subtitle: Data
   desc: >

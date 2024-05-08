@@ -26,6 +26,8 @@ needed for prediction / serialization
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-RandomEffectSamples-new}{\code{RandomEffectSamples$new()}}
+\item \href{#method-RandomEffectSamples-load_in_session}{\code{RandomEffectSamples$load_in_session()}}
+\item \href{#method-RandomEffectSamples-load_from_json}{\code{RandomEffectSamples$load_from_json()}}
 \item \href{#method-RandomEffectSamples-predict}{\code{RandomEffectSamples$predict()}}
 \item \href{#method-RandomEffectSamples-extract_parameter_samples}{\code{RandomEffectSamples$extract_parameter_samples()}}
 \item \href{#method-RandomEffectSamples-extract_label_mapping}{\code{RandomEffectSamples$extract_label_mapping()}}
@@ -37,7 +39,24 @@ needed for prediction / serialization
 \subsection{Method \code{new()}}{
 Create a new RandomEffectSamples object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{RandomEffectSamples$new(num_components, num_groups, random_effects_tracker)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{RandomEffectSamples$new()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A new \code{RandomEffectSamples} object.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-RandomEffectSamples-load_in_session"></a>}}
+\if{latex}{\out{\hypertarget{method-RandomEffectSamples-load_in_session}{}}}
+\subsection{Method \code{load_in_session()}}{
+Construct RandomEffectSamples object from other "in-session" R objects
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{RandomEffectSamples$load_in_session(
+  num_components,
+  num_groups,
+  random_effects_tracker
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -52,6 +71,37 @@ Create a new RandomEffectSamples object.
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-RandomEffectSamples-load_from_json"></a>}}
+\if{latex}{\out{\hypertarget{method-RandomEffectSamples-load_from_json}{}}}
+\subsection{Method \code{load_from_json()}}{
+Construct RandomEffectSamples object from a json object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{RandomEffectSamples$load_from_json(
+  json_object,
+  json_rfx_container_label,
+  json_rfx_mapper_label,
+  json_rfx_groupids_label
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{json_object}}{Object of class \code{CppJson}}
+
+\item{\code{json_rfx_container_label}}{Label referring to a particular rfx sample container (i.e. "random_effect_container_0") in the overall json hierarchy}
+
+\item{\code{json_rfx_mapper_label}}{Label referring to a particular rfx label mapper (i.e. "random_effect_label_mapper_0") in the overall json hierarchy}
+
+\item{\code{json_rfx_groupids_label}}{Label referring to a particular set of rfx group IDs (i.e. "random_effect_groupids_0") in the overall json hierarchy}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
 A new \code{RandomEffectSamples} object.
 }
 }
@@ -62,7 +112,7 @@ A new \code{RandomEffectSamples} object.
 Predict random effects for each observation implied by \code{rfx_group_ids} and \code{rfx_basis}.
 If a random effects model is "intercept-only" the \code{rfx_basis} will be a vector of ones of size \code{length(rfx_group_ids)}.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{RandomEffectSamples$predict(rfx_group_ids, rfx_basis)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{RandomEffectSamples$predict(rfx_group_ids, rfx_basis = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -70,7 +120,7 @@ If a random effects model is "intercept-only" the \code{rfx_basis} will be a vec
 \describe{
 \item{\code{rfx_group_ids}}{Indices of random effects groups in a prediction set}
 
-\item{\code{rfx_basis}}{Basis used for random effects prediction}
+\item{\code{rfx_basis}}{(Optional ) Basis used for random effects prediction}
 }
 \if{html}{\out{</div>}}
 }
