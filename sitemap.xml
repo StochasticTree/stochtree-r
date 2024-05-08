@@ -121,6 +121,12 @@
     <loc>https://stochastictree.github.io/stochtree-r/reference/index.html</loc>
   </url>
   <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/loadForestContainerJson.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/loadRandomEffectSamplesJson.html</loc>
+  </url>
+  <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/predict.bartmodel.html</loc>
   </url>
   <url>

@@ -68,6 +68,7 @@
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
 
 <ul><li><p><a href="#method-ForestSamples-new"><code>ForestSamples$new()</code></a></p></li>
+<li><p><a href="#method-ForestSamples-load_from_json"><code>ForestSamples$load_from_json()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-predict"><code>ForestSamples$predict()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-predict_raw"><code>ForestSamples$predict_raw()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-predict_raw_single_forest"><code>ForestSamples$predict_raw_single_forest()</code></a></p></li>
@@ -106,32 +107,35 @@
 <p>A new <code>ForestContainer</code> object.</p>
 </div>
 
-</div><p></p><hr><a id="method-ForestSamples-predict"></a><div class="section">
-<h3 id="method-predict-">Method <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code><a class="anchor" aria-label="anchor" href="#method-predict-"></a></h3>
-<p>Predict every tree ensemble on every sample in <code>forest_dataset</code></p><div class="section">
+</div><p></p><hr><a id="method-ForestSamples-load_from_json"></a><div class="section">
+<h3 id="method-load-from-json-">Method <code>load_from_json()</code><a class="anchor" aria-label="anchor" href="#method-load-from-json-"></a></h3>
+<p>Create a new ForestContainer object from a json object</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">predict</span><span class="op">(</span><span class="va">forest_dataset</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">load_from_json</span><span class="op">(</span><span class="va">json_object</span>, <span class="va">json_forest_label</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>forest_dataset</code></dt>
-<dd><p><code>ForestDataset</code> R class</p></dd>
+<p></p><div class="arguments"><dl><dt><code>json_object</code></dt>
+<dd><p>Object of class <code>CppJson</code></p></dd>
+
+
+<dt><code>json_forest_label</code></dt>
+<dd><p>Label referring to a particular forest (i.e. "forest_0") in the overall json hierarchy</p></dd>
 
 
 </dl><p></p></div>
 </div>
 <div class="section">
 <h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
-<p>matrix of predictions with as many rows as in forest_dataset
-and as many columns as samples in the <code>ForestContainer</code></p>
+<p>A new <code>ForestContainer</code> object.</p>
 </div>
 
-</div><p></p><hr><a id="method-ForestSamples-predict_raw"></a><div class="section">
-<h3 id="method-predict-raw-">Method <code>predict_raw()</code><a class="anchor" aria-label="anchor" href="#method-predict-raw-"></a></h3>
-<p>Predict "raw" leaf values (without being multiplied by basis) for every tree ensemble on every sample in <code>forest_dataset</code></p><div class="section">
+</div><p></p><hr><a id="method-ForestSamples-predict"></a><div class="section">
+<h3 id="method-predict-">Method <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code><a class="anchor" aria-label="anchor" href="#method-predict-"></a></h3>
+<p>Predict every tree ensemble on every sample in <code>forest_dataset</code></p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">predict_raw</span><span class="op">(</span><span class="va">forest_dataset</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">predict</span><span class="op">(</span><span class="va">forest_dataset</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -144,6 +148,27 @@ and as many columns as samples in the <code>ForestContainer</code></p>
 </div>
 <div class="section">
 <h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<p>matrix of predictions with as many rows as in forest_dataset
+and as many columns as samples in the <code>ForestContainer</code></p>
+</div>
+
+</div><p></p><hr><a id="method-ForestSamples-predict_raw"></a><div class="section">
+<h3 id="method-predict-raw-">Method <code>predict_raw()</code><a class="anchor" aria-label="anchor" href="#method-predict-raw-"></a></h3>
+<p>Predict "raw" leaf values (without being multiplied by basis) for every tree ensemble on every sample in <code>forest_dataset</code></p><div class="section">
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">predict_raw</span><span class="op">(</span><span class="va">forest_dataset</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>forest_dataset</code></dt>
+<dd><p><code>ForestDataset</code> R class</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
 <p>Array of predictions for each observation in <code>forest_dataset</code> and
 each sample in the <code>ForestSamples</code> class with each prediction having the
 dimensionality of the forests' leaf model. In the case of a constant leaf model
@@ -156,12 +181,12 @@ number of samples).</p>
 </div><p></p><hr><a id="method-ForestSamples-predict_raw_single_forest"></a><div class="section">
 <h3 id="method-predict-raw-single-forest-">Method <code>predict_raw_single_forest()</code><a class="anchor" aria-label="anchor" href="#method-predict-raw-single-forest-"></a></h3>
 <p>Predict "raw" leaf values (without being multiplied by basis) for a specific forest on every sample in <code>forest_dataset</code></p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">predict_raw_single_forest</span><span class="op">(</span><span class="va">forest_dataset</span>, <span class="va">forest_num</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>forest_dataset</code></dt>
 <dd><p><code>ForestDataset</code> R class</p></dd>
 
@@ -173,7 +198,7 @@ number of samples).</p>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
 <p>matrix of predictions with as many rows as in forest_dataset
 and as many columns as samples in the <code>ForestContainer</code></p>
 </div>
@@ -182,12 +207,12 @@ and as many columns as samples in the <code>ForestContainer</code></p>
 <h3 id="method-set-root-leaves-">Method <code>set_root_leaves()</code><a class="anchor" aria-label="anchor" href="#method-set-root-leaves-"></a></h3>
 <p>Set a constant predicted value for every tree in the ensemble.
 Stops program if any tree is more than a root node.</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">set_root_leaves</span><span class="op">(</span><span class="va">forest_num</span>, <span class="va">leaf_value</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>forest_num</code></dt>
 <dd><p>Index of the forest sample within the container.</p></dd>
 
@@ -202,7 +227,7 @@ Stops program if any tree is more than a root node.</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-update_residual"></a><div class="section">
 <h3 id="method-update-residual-">Method <code>update_residual()</code><a class="anchor" aria-label="anchor" href="#method-update-residual-"></a></h3>
 <p>Updates residual based on the predictions of a forest</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">update_residual</span><span class="op">(</span></span>
 <span>  <span class="va">dataset</span>,</span>
 <span>  <span class="va">outcome</span>,</span>
@@ -214,7 +239,7 @@ Stops program if any tree is more than a root node.</p><div class="section">
 </div>
 
 <div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>dataset</code></dt>
 <dd><p><code>ForestDataset</code> object storing the covariates and bases for a given forest</p></dd>
 
@@ -245,12 +270,12 @@ Stops program if any tree is more than a root node.</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-save_json"></a><div class="section">
 <h3 id="method-save-json-">Method <code>save_json()</code><a class="anchor" aria-label="anchor" href="#method-save-json-"></a></h3>
 <p>Store the trees and metadata of <code>ForestDataset</code> class in a json file</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">save_json</span><span class="op">(</span><span class="va">json_filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>json_filename</code></dt>
 <dd><p>Name of output json file (must end in ".json")</p></dd>
 
@@ -263,12 +288,12 @@ Stops program if any tree is more than a root node.</p><div class="section">
 <p>Load trees and metadata for an ensemble from a json file. Note that
 any trees and metadata already present in <code>ForestDataset</code> class will
 be overwritten.</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">load_json</span><span class="op">(</span><span class="va">json_filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>json_filename</code></dt>
 <dd><p>Name of model input json file (must end in ".json")</p></dd>
 
@@ -279,36 +304,36 @@ be overwritten.</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-num_samples"></a><div class="section">
 <h3 id="method-num-samples-">Method <code>num_samples()</code><a class="anchor" aria-label="anchor" href="#method-num-samples-"></a></h3>
 <p>Return number of samples in a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">num_samples</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
 <p>Sample count</p>
 </div>
 
 </div><p></p><hr><a id="method-ForestSamples-num_trees"></a><div class="section">
 <h3 id="method-num-trees-">Method <code>num_trees()</code><a class="anchor" aria-label="anchor" href="#method-num-trees-"></a></h3>
 <p>Return number of trees in each ensemble of a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">num_trees</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
 <p>Tree count</p>
 </div>
 
 </div><p></p><hr><a id="method-ForestSamples-output_dimension"></a><div class="section">
 <h3 id="method-output-dimension-">Method <code>output_dimension()</code><a class="anchor" aria-label="anchor" href="#method-output-dimension-"></a></h3>
 <p>Return output dimension of trees in a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">output_dimension</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
+<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
 <p>Leaf node parameter size</p>
 </div>
 

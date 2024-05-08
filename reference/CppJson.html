@@ -59,6 +59,30 @@
 <dd><p>External pointer to a C++ nlohmann::json object</p></dd>
 
 
+<dt><code>num_forests</code></dt>
+<dd><p>Number of forests in the nlohmann::json object</p></dd>
+
+
+<dt><code>forest_labels</code></dt>
+<dd><p>Names of forest objects in the overall nlohmann::json object</p></dd>
+
+
+<dt><code>num_rfx</code></dt>
+<dd><p>Number of random effects terms in the nlohman::json object</p></dd>
+
+
+<dt><code>rfx_container_labels</code></dt>
+<dd><p>Names of rfx container objects in the overall nlohmann::json object</p></dd>
+
+
+<dt><code>rfx_mapper_labels</code></dt>
+<dd><p>Names of rfx label mapper objects in the overall nlohmann::json object</p></dd>
+
+
+<dt><code>rfx_groupid_labels</code></dt>
+<dd><p>Names of rfx group id objects in the overall nlohmann::json object</p></dd>
+
+
 </dl><p></p></div>
     </div>
     <div class="section level2">
@@ -70,6 +94,10 @@
 <ul><li><p><a href="#method-CppJson-new"><code>CppJson$new()</code></a></p></li>
 <li><p><a href="#method-CppJson-add_forest"><code>CppJson$add_forest()</code></a></p></li>
 <li><p><a href="#method-CppJson-add_random_effects"><code>CppJson$add_random_effects()</code></a></p></li>
+<li><p><a href="#method-CppJson-add_scalar"><code>CppJson$add_scalar()</code></a></p></li>
+<li><p><a href="#method-CppJson-add_vector"><code>CppJson$add_vector()</code></a></p></li>
+<li><p><a href="#method-CppJson-get_scalar"><code>CppJson$get_scalar()</code></a></p></li>
+<li><p><a href="#method-CppJson-get_vector"><code>CppJson$get_vector()</code></a></p></li>
 <li><p><a href="#method-CppJson-save_file"><code>CppJson$save_file()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-CppJson-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
@@ -123,15 +151,119 @@
 <p>NULL</p>
 </div>
 
-</div><p></p><hr><a id="method-CppJson-save_file"></a><div class="section">
-<h3 id="method-save-file-">Method <code>save_file()</code><a class="anchor" aria-label="anchor" href="#method-save-file-"></a></h3>
-<p>Save a json object to file</p><div class="section">
+</div><p></p><hr><a id="method-CppJson-add_scalar"></a><div class="section">
+<h3 id="method-add-scalar-">Method <code>add_scalar()</code><a class="anchor" aria-label="anchor" href="#method-add-scalar-"></a></h3>
+<p>Add a scalar to the json object under the name "field_name" (with optional subfolder "subfolder_name")</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CppJson</span><span class="op">$</span><span class="fu">save_file</span><span class="op">(</span><span class="va">filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CppJson</span><span class="op">$</span><span class="fu">add_scalar</span><span class="op">(</span><span class="va">field_name</span>, <span class="va">field_value</span>, subfolder_name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>field_name</code></dt>
+<dd><p>The name of the field to be added to json</p></dd>
+
+
+<dt><code>field_value</code></dt>
+<dd><p>Numeric value of the field to be added to json</p></dd>
+
+
+<dt><code>subfolder_name</code></dt>
+<dd><p>(Optional) Name of the subfolder / hierarchy under which to place the value</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<p>NULL</p>
+</div>
+
+</div><p></p><hr><a id="method-CppJson-add_vector"></a><div class="section">
+<h3 id="method-add-vector-">Method <code>add_vector()</code><a class="anchor" aria-label="anchor" href="#method-add-vector-"></a></h3>
+<p>Add an array to the json object under the name "field_name" (with optional subfolder "subfolder_name")</p><div class="section">
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CppJson</span><span class="op">$</span><span class="fu">add_vector</span><span class="op">(</span><span class="va">field_name</span>, <span class="va">field_vector</span>, subfolder_name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>field_name</code></dt>
+<dd><p>The name of the field to be added to json</p></dd>
+
+
+<dt><code>field_vector</code></dt>
+<dd><p>Vector to be stored in json</p></dd>
+
+
+<dt><code>subfolder_name</code></dt>
+<dd><p>(Optional) Name of the subfolder / hierarchy under which to place the value</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<p>NULL</p>
+</div>
+
+</div><p></p><hr><a id="method-CppJson-get_scalar"></a><div class="section">
+<h3 id="method-get-scalar-">Method <code>get_scalar()</code><a class="anchor" aria-label="anchor" href="#method-get-scalar-"></a></h3>
+<p>Retrieve a scalar value from the json object under the name "field_name" (with optional subfolder "subfolder_name")</p><div class="section">
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CppJson</span><span class="op">$</span><span class="fu">get_scalar</span><span class="op">(</span><span class="va">field_name</span>, subfolder_name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>field_name</code></dt>
+<dd><p>The name of the field to be accessed from json</p></dd>
+
+
+<dt><code>subfolder_name</code></dt>
+<dd><p>(Optional) Name of the subfolder / hierarchy under which the field is stored</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<p>NULL</p>
+</div>
+
+</div><p></p><hr><a id="method-CppJson-get_vector"></a><div class="section">
+<h3 id="method-get-vector-">Method <code>get_vector()</code><a class="anchor" aria-label="anchor" href="#method-get-vector-"></a></h3>
+<p>Retrieve a vector from the json object under the name "field_name" (with optional subfolder "subfolder_name")</p><div class="section">
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CppJson</span><span class="op">$</span><span class="fu">get_vector</span><span class="op">(</span><span class="va">field_name</span>, subfolder_name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>field_name</code></dt>
+<dd><p>The name of the field to be accessed from json</p></dd>
+
+
+<dt><code>subfolder_name</code></dt>
+<dd><p>(Optional) Name of the subfolder / hierarchy under which the field is stored</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
+<p>NULL</p>
+</div>
+
+</div><p></p><hr><a id="method-CppJson-save_file"></a><div class="section">
+<h3 id="method-save-file-">Method <code>save_file()</code><a class="anchor" aria-label="anchor" href="#method-save-file-"></a></h3>
+<p>Save a json object to file</p><div class="section">
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CppJson</span><span class="op">$</span><span class="fu">save_file</span><span class="op">(</span><span class="va">filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>filename</code></dt>
 <dd><p>String of filepath, must end in ".json"</p></dd>
 
@@ -139,7 +271,7 @@
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
 <p>NULL</p>
 </div>
 

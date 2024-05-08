@@ -6,7 +6,7 @@ articles:
   CausalInference: CausalInference.html
   CustomSamplingRoutine: CustomSamplingRoutine.html
   EnsembleKernel: EnsembleKernel.html
-last_built: 2024-05-07T07:20Z
+last_built: 2024-05-08T22:38Z
 urls:
   reference: https://stochastictree.github.io/stochtree-r/reference
   article: https://stochastictree.github.io/stochtree-r/articles
