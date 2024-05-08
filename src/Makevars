@@ -7,8 +7,8 @@ CXX_STD=CXX17
 
 OBJECTS = \
     data.o \
+    forest.o \
     kernel.o \
-    predictor.o \
     random_effects.o \
     sampler.o \
     serialization.o \

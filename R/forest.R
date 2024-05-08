@@ -22,6 +22,15 @@ ForestSamples <- R6::R6Class(
         }, 
         
         #' @description
+        #' Create a new ForestContainer object from a json object
+        #' @param json_object Object of class `CppJson`
+        #' @param json_forest_label Label referring to a particular forest (i.e. "forest_0") in the overall json hierarchy
+        #' @return A new `ForestContainer` object.
+        load_from_json = function(json_object, json_forest_label) {
+            self$forest_container_ptr <- forest_container_from_json_cpp(json_object$json_ptr, json_forest_label)
+        }, 
+        
+        #' @description
         #' Predict every tree ensemble on every sample in `forest_dataset`
         #' @param forest_dataset `ForestDataset` R class
         #' @return matrix of predictions with as many rows as in forest_dataset 
@@ -169,4 +178,17 @@ createForestContainer <- function(num_trees, output_dimension=1, is_leaf_constan
     return(invisible((
         ForestSamples$new(num_trees, output_dimension, is_leaf_constant)
     )))
+}
+
+#' Load a container of forest samples from json
+#'
+#' @param json_object Object of class `CppJson`
+#' @param json_forest_label Label referring to a particular forest (i.e. "forest_0") in the overall json hierarchy
+#'
+#' @return `ForestSamples` object
+#' @export
+loadForestContainerJson <- function(json_object, json_forest_label) {
+    invisible(output <- ForestSamples$new(0,1,T))
+    output$load_from_json(json_object, json_forest_label)
+    return(output)
 }

@@ -24,11 +24,16 @@ RandomEffectSamples <- R6::R6Class(
         
         #' @description
         #' Create a new RandomEffectSamples object.
+        #' @return A new `RandomEffectSamples` object.
+        initialize = function() {}, 
+        
+        #' @description
+        #' Construct RandomEffectSamples object from other "in-session" R objects
         #' @param num_components Number of "components" or bases defining the random effects regression
         #' @param num_groups Number of random effects groups
         #' @param random_effects_tracker Object of type `RandomEffectsTracker`
-        #' @return A new `RandomEffectSamples` object.
-        initialize = function(num_components, num_groups, random_effects_tracker) {
+        #' @return NULL
+        load_in_session = function(num_components, num_groups, random_effects_tracker) {
             # Initialize
             self$rfx_container_ptr <- rfx_container_cpp(num_components, num_groups)
             self$label_mapper_ptr <- rfx_label_mapper_cpp(random_effects_tracker$rfx_tracker_ptr)
@@ -36,21 +41,37 @@ RandomEffectSamples <- R6::R6Class(
         }, 
         
         #' @description
+        #' Construct RandomEffectSamples object from a json object
+        #' @param json_object Object of class `CppJson`
+        #' @param json_rfx_container_label Label referring to a particular rfx sample container (i.e. "random_effect_container_0") in the overall json hierarchy
+        #' @param json_rfx_mapper_label Label referring to a particular rfx label mapper (i.e. "random_effect_label_mapper_0") in the overall json hierarchy
+        #' @param json_rfx_groupids_label Label referring to a particular set of rfx group IDs (i.e. "random_effect_groupids_0") in the overall json hierarchy
+        #' @return A new `RandomEffectSamples` object.
+        load_from_json = function(json_object, json_rfx_container_label, json_rfx_mapper_label, json_rfx_groupids_label) {
+            self$rfx_container_ptr <- rfx_container_from_json_cpp(json_object$json_ptr, json_rfx_container_label)
+            self$label_mapper_ptr <- rfx_label_mapper_from_json_cpp(json_object$json_ptr, json_rfx_mapper_label)
+            self$training_group_ids <- rfx_group_ids_from_json_cpp(json_object$json_ptr, json_rfx_groupids_label)
+        }, 
+        
+        #' @description
         #' Predict random effects for each observation implied by `rfx_group_ids` and `rfx_basis`. 
         #' If a random effects model is "intercept-only" the `rfx_basis` will be a vector of ones of size `length(rfx_group_ids)`.
         #' @param rfx_group_ids Indices of random effects groups in a prediction set
-        #' @param rfx_basis Basis used for random effects prediction
+        #' @param rfx_basis (Optional ) Basis used for random effects prediction
         #' @return Matrix with as many rows as observations provided and as many columns as samples drawn of the model.
-        predict = function(rfx_group_ids, rfx_basis) {
-            num_observations = length(rfx_group_ids)
+        predict = function(rfx_group_ids, rfx_basis = NULL) {
+            num_obs = length(rfx_group_ids)
+            if (is.null(rfx_basis)) rfx_basis <- matrix(rep(1,num_obs), ncol = 1)
             num_samples = rfx_container_num_samples_cpp(self$rfx_container_ptr)
             num_components = rfx_container_num_components_cpp(self$rfx_container_ptr)
             num_groups = rfx_container_num_groups_cpp(self$rfx_container_ptr)
+            rfx_group_ids_int <- as.integer(rfx_group_ids)
+            stopifnot(sum(abs(rfx_group_ids_int-rfx_group_ids)) < 1e-6)
             stopifnot(sum(!(rfx_group_ids %in% self$training_group_ids)) == 0)
             stopifnot(ncol(rfx_basis) == num_components)
-            rfx_dataset <- createRandomEffectsDataset(rfx_group_ids, rfx_basis)
+            rfx_dataset <- createRandomEffectsDataset(rfx_group_ids_int, rfx_basis)
             output <- rfx_container_predict_cpp(self$rfx_container_ptr, rfx_dataset$data_ptr, self$label_mapper_ptr)
-            dim(output) <- c(num_observations, num_samples)
+            dim(output) <- c(num_obs, num_samples)
             return(output)
         }, 
         
@@ -264,9 +285,9 @@ RandomEffectsModel <- R6::R6Class(
 #' @return `RandomEffectSamples` object
 #' @export
 createRandomEffectSamples <- function(num_components, num_groups, random_effects_tracker) {
-    return(invisible((
-        RandomEffectSamples$new(num_components, num_groups, random_effects_tracker)
-    )))
+    invisible(output <- RandomEffectSamples$new())
+    output$load_in_session(num_components, num_groups, random_effects_tracker)
+    return(output)
 }
 
 #' Create a `RandomEffectsTracker` object
@@ -290,4 +311,20 @@ createRandomEffectsModel <- function(num_components, num_groups) {
     return(invisible((
         RandomEffectsModel$new(num_components, num_groups)
     )))
+}
+
+#' Load a container of forest samples from json
+#'
+#' @param json_object Object of class `CppJson`
+#' @param json_rfx_num Integer index indicating the position of the random effects term to be unpacked
+#'
+#' @return `RandomEffectSamples` object
+#' @export
+loadRandomEffectSamplesJson <- function(json_object, json_rfx_num) {
+    json_rfx_container_label <- paste0("random_effect_container_", json_rfx_num)
+    json_rfx_mapper_label <- paste0("random_effect_label_mapper_", json_rfx_num)
+    json_rfx_groupids_label <- paste0("random_effect_groupids_", json_rfx_num)
+    invisible(output <- RandomEffectSamples$new())
+    output$load_from_json(json_object, json_rfx_container_label, json_rfx_mapper_label, json_rfx_groupids_label)
+    return(output)
 }

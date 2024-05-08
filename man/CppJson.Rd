@@ -10,6 +10,18 @@ Wrapper around a C++ container of tree ensembles
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{json_ptr}}{External pointer to a C++ nlohmann::json object}
+
+\item{\code{num_forests}}{Number of forests in the nlohmann::json object}
+
+\item{\code{forest_labels}}{Names of forest objects in the overall nlohmann::json object}
+
+\item{\code{num_rfx}}{Number of random effects terms in the nlohman::json object}
+
+\item{\code{rfx_container_labels}}{Names of rfx container objects in the overall nlohmann::json object}
+
+\item{\code{rfx_mapper_labels}}{Names of rfx label mapper objects in the overall nlohmann::json object}
+
+\item{\code{rfx_groupid_labels}}{Names of rfx group id objects in the overall nlohmann::json object}
 }
 \if{html}{\out{</div>}}
 }

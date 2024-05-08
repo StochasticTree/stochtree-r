@@ -51,9 +51,24 @@ bart_model <- stochtree::bart(
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma = T, sample_tau = T
 )
+rfx_preds_test_orig <- bart_model$rfx_preds_test
+forest_preds_test_orig <- bart_model$yhat_test - rfx_preds_test_orig
+y_scale <- bart_model$model_params$outcome_scale
+y_bar <- bart_model$model_params$outcome_mean
 
 # Convert to json
 jsonobj <- createCppJson()
 jsonobj$add_forest(bart_model$forests)
 jsonobj$add_random_effects(bart_model$rfx_samples)
 jsonobj$save_file("test.json")
+
+# Convert the forest back from json to ForestSamples
+forest_samples_roundtrip <- loadForestContainerJson(jsonobj, "forest_0")
+forest_dataset_test_roundtrip <- createForestDataset(X_test, W_test)
+forest_preds_test_roundtrip <- forest_samples_roundtrip$predict(forest_dataset_test_roundtrip)*y_scale + y_bar
+plot(rowMeans(forest_preds_test_orig), rowMeans(forest_preds_test_roundtrip)); abline(0,1,col="red",lwd=3,lty=3)
+
+# Convert the forest back from json to RandomEffectsSamples
+rfx_samples_roundtrip <- loadRandomEffectSamplesJson(jsonobj, 0)
+rfx_preds_test_roundtrip <- rfx_samples_roundtrip$predict(group_ids_test, rfx_basis_test)*y_scale
+plot(rowMeans(rfx_preds_test_orig), rowMeans(rfx_preds_test_roundtrip)); abline(0,1,col="red",lwd=3,lty=3)
