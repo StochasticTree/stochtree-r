@@ -296,6 +296,46 @@ init_json_cpp <- function() {
   .Call(`_stochtree_init_json_cpp`)
 }
 
+json_add_double_subfolder_cpp <- function(json_ptr, subfolder_name, field_name, field_value) {
+  invisible(.Call(`_stochtree_json_add_double_subfolder_cpp`, json_ptr, subfolder_name, field_name, field_value))
+}
+
+json_add_double_cpp <- function(json_ptr, field_name, field_value) {
+  invisible(.Call(`_stochtree_json_add_double_cpp`, json_ptr, field_name, field_value))
+}
+
+json_add_vector_subfolder_cpp <- function(json_ptr, subfolder_name, field_name, field_vector) {
+  invisible(.Call(`_stochtree_json_add_vector_subfolder_cpp`, json_ptr, subfolder_name, field_name, field_vector))
+}
+
+json_add_vector_cpp <- function(json_ptr, field_name, field_vector) {
+  invisible(.Call(`_stochtree_json_add_vector_cpp`, json_ptr, field_name, field_vector))
+}
+
+json_contains_field_subfolder_cpp <- function(json_ptr, subfolder_name, field_name) {
+  .Call(`_stochtree_json_contains_field_subfolder_cpp`, json_ptr, subfolder_name, field_name)
+}
+
+json_contains_field_cpp <- function(json_ptr, field_name) {
+  .Call(`_stochtree_json_contains_field_cpp`, json_ptr, field_name)
+}
+
+json_extract_double_subfolder_cpp <- function(json_ptr, subfolder_name, field_name) {
+  .Call(`_stochtree_json_extract_double_subfolder_cpp`, json_ptr, subfolder_name, field_name)
+}
+
+json_extract_double_cpp <- function(json_ptr, field_name) {
+  .Call(`_stochtree_json_extract_double_cpp`, json_ptr, field_name)
+}
+
+json_extract_vector_subfolder_cpp <- function(json_ptr, subfolder_name, field_name) {
+  .Call(`_stochtree_json_extract_vector_subfolder_cpp`, json_ptr, subfolder_name, field_name)
+}
+
+json_extract_vector_cpp <- function(json_ptr, field_name) {
+  .Call(`_stochtree_json_extract_vector_cpp`, json_ptr, field_name)
+}
+
 json_add_forest_cpp <- function(json_ptr, forest_samples) {
   .Call(`_stochtree_json_add_forest_cpp`, json_ptr, forest_samples)
 }

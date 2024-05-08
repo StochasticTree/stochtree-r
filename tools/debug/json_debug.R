@@ -55,14 +55,26 @@ rfx_preds_test_orig <- bart_model$rfx_preds_test
 forest_preds_test_orig <- bart_model$yhat_test - rfx_preds_test_orig
 y_scale <- bart_model$model_params$outcome_scale
 y_bar <- bart_model$model_params$outcome_mean
+sigma2_samples <- bart_model$sigma2_samples
 
 # Convert to json
 jsonobj <- createCppJson()
 jsonobj$add_forest(bart_model$forests)
 jsonobj$add_random_effects(bart_model$rfx_samples)
+jsonobj$add_scalar("y_scale", bart_model$model_params$outcome_scale)
+jsonobj$add_scalar("y_bar", bart_model$model_params$outcome_mean)
+jsonobj$add_vector("sigma2_samples", bart_model$sigma2_samples, "parameters")
+jsonobj$add_random_effects(bart_model$rfx_samples)
 jsonobj$save_file("test.json")
 
-# Convert the forest back from json to ForestSamples
+# Check scalars
+jsonobj$get_scalar("y_scale") - y_scale
+jsonobj$get_scalar("y_bar") - y_bar
+
+# Check vectors
+jsonobj$get_vector("sigma2_samples", "parameters") - bart_model$sigma2_samples
+
+# Check ForestSamples
 forest_samples_roundtrip <- loadForestContainerJson(jsonobj, "forest_0")
 forest_dataset_test_roundtrip <- createForestDataset(X_test, W_test)
 forest_preds_test_roundtrip <- forest_samples_roundtrip$predict(forest_dataset_test_roundtrip)*y_scale + y_bar

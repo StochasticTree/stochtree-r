@@ -68,6 +68,66 @@ CppJson <- R6::R6Class(
         }, 
         
         #' @description
+        #' Add a scalar to the json object under the name "field_name" (with optional subfolder "subfolder_name")
+        #' @param field_name The name of the field to be added to json
+        #' @param field_value Numeric value of the field to be added to json
+        #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which to place the value
+        #' @return NULL
+        add_scalar = function(field_name, field_value, subfolder_name = NULL) {
+            if (is.null(subfolder_name)) {
+                json_add_double_cpp(self$json_ptr, field_name, field_value)
+            } else {
+                json_add_double_subfolder_cpp(self$json_ptr, subfolder_name, field_name, field_value)
+            }
+        }, 
+        
+        #' @description
+        #' Add an array to the json object under the name "field_name" (with optional subfolder "subfolder_name")
+        #' @param field_name The name of the field to be added to json
+        #' @param field_vector Vector to be stored in json
+        #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which to place the value
+        #' @return NULL
+        add_vector = function(field_name, field_vector, subfolder_name = NULL) {
+            if (is.null(subfolder_name)) {
+                json_add_vector_cpp(self$json_ptr, field_name, field_vector)
+            } else {
+                json_add_vector_subfolder_cpp(self$json_ptr, subfolder_name, field_name, field_vector)
+            }
+        }, 
+        
+        #' @description
+        #' Retrieve a scalar value from the json object under the name "field_name" (with optional subfolder "subfolder_name")
+        #' @param field_name The name of the field to be accessed from json
+        #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which the field is stored
+        #' @return NULL
+        get_scalar = function(field_name, subfolder_name = NULL) {
+            if (is.null(subfolder_name)) {
+                stopifnot(json_contains_field_cpp(self$json_ptr, field_name))
+                result <- json_extract_double_cpp(self$json_ptr, field_name)
+            } else {
+                stopifnot(json_contains_field_subfolder_cpp(self$json_ptr, subfolder_name, field_name))
+                result <- json_extract_double_subfolder_cpp(self$json_ptr, subfolder_name, field_name)
+            }
+            return(result)
+        }, 
+        
+        #' @description
+        #' Retrieve a vector from the json object under the name "field_name" (with optional subfolder "subfolder_name")
+        #' @param field_name The name of the field to be accessed from json
+        #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which the field is stored
+        #' @return NULL
+        get_vector = function(field_name, subfolder_name = NULL) {
+            if (is.null(subfolder_name)) {
+                stopifnot(json_contains_field_cpp(self$json_ptr, field_name))
+                result <- json_extract_vector_cpp(self$json_ptr, field_name)
+            } else {
+                stopifnot(json_contains_field_subfolder_cpp(self$json_ptr, subfolder_name, field_name))
+                result <- json_extract_vector_subfolder_cpp(self$json_ptr, subfolder_name, field_name)
+            }
+            return(result)
+        }, 
+        
+        #' @description
         #' Save a json object to file
         #' @param filename String of filepath, must end in ".json"
         #' @return NULL

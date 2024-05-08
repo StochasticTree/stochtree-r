@@ -31,6 +31,10 @@ Wrapper around a C++ container of tree ensembles
 \item \href{#method-CppJson-new}{\code{CppJson$new()}}
 \item \href{#method-CppJson-add_forest}{\code{CppJson$add_forest()}}
 \item \href{#method-CppJson-add_random_effects}{\code{CppJson$add_random_effects()}}
+\item \href{#method-CppJson-add_scalar}{\code{CppJson$add_scalar()}}
+\item \href{#method-CppJson-add_vector}{\code{CppJson$add_vector()}}
+\item \href{#method-CppJson-get_scalar}{\code{CppJson$get_scalar()}}
+\item \href{#method-CppJson-get_vector}{\code{CppJson$get_vector()}}
 \item \href{#method-CppJson-save_file}{\code{CppJson$save_file()}}
 }
 }
@@ -80,6 +84,98 @@ Convert a random effects container to json and add to the current \code{CppJson}
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{rfx_samples}}{\code{RandomEffectSamples} R class}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-add_scalar"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-add_scalar}{}}}
+\subsection{Method \code{add_scalar()}}{
+Add a scalar to the json object under the name "field_name" (with optional subfolder "subfolder_name")
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$add_scalar(field_name, field_value, subfolder_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be added to json}
+
+\item{\code{field_value}}{Numeric value of the field to be added to json}
+
+\item{\code{subfolder_name}}{(Optional) Name of the subfolder / hierarchy under which to place the value}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-add_vector"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-add_vector}{}}}
+\subsection{Method \code{add_vector()}}{
+Add an array to the json object under the name "field_name" (with optional subfolder "subfolder_name")
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$add_vector(field_name, field_vector, subfolder_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be added to json}
+
+\item{\code{field_vector}}{Vector to be stored in json}
+
+\item{\code{subfolder_name}}{(Optional) Name of the subfolder / hierarchy under which to place the value}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-get_scalar"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-get_scalar}{}}}
+\subsection{Method \code{get_scalar()}}{
+Retrieve a scalar value from the json object under the name "field_name" (with optional subfolder "subfolder_name")
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$get_scalar(field_name, subfolder_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be accessed from json}
+
+\item{\code{subfolder_name}}{(Optional) Name of the subfolder / hierarchy under which the field is stored}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-get_vector"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-get_vector}{}}}
+\subsection{Method \code{get_vector()}}{
+Retrieve a vector from the json object under the name "field_name" (with optional subfolder "subfolder_name")
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$get_vector(field_name, subfolder_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be accessed from json}
+
+\item{\code{subfolder_name}}{(Optional) Name of the subfolder / hierarchy under which the field is stored}
 }
 \if{html}{\out{</div>}}
 }
