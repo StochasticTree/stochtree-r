@@ -372,6 +372,13 @@ extern "C" SEXP _stochtree_rfx_model_sample_random_effects_cpp(SEXP rfx_model, S
   END_CPP11
 }
 // random_effects.cpp
+cpp11::writable::doubles rfx_model_predict_cpp(cpp11::external_pointer<StochTree::MultivariateRegressionRandomEffectsModel> rfx_model, cpp11::external_pointer<StochTree::RandomEffectsDataset> rfx_dataset, cpp11::external_pointer<StochTree::RandomEffectsTracker> rfx_tracker);
+extern "C" SEXP _stochtree_rfx_model_predict_cpp(SEXP rfx_model, SEXP rfx_dataset, SEXP rfx_tracker) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(rfx_model_predict_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<StochTree::MultivariateRegressionRandomEffectsModel>>>(rfx_model), cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<StochTree::RandomEffectsDataset>>>(rfx_dataset), cpp11::as_cpp<cpp11::decay_t<cpp11::external_pointer<StochTree::RandomEffectsTracker>>>(rfx_tracker)));
+  END_CPP11
+}
+// random_effects.cpp
 cpp11::writable::doubles rfx_container_predict_cpp(cpp11::external_pointer<StochTree::RandomEffectsContainer> rfx_container, cpp11::external_pointer<StochTree::RandomEffectsDataset> rfx_dataset, cpp11::external_pointer<StochTree::LabelMapper> label_mapper);
 extern "C" SEXP _stochtree_rfx_container_predict_cpp(SEXP rfx_container, SEXP rfx_dataset, SEXP label_mapper) {
   BEGIN_CPP11
@@ -740,6 +747,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stochtree_rfx_label_mapper_from_json_cpp",                    (DL_FUNC) &_stochtree_rfx_label_mapper_from_json_cpp,                     2},
     {"_stochtree_rfx_label_mapper_to_list_cpp",                      (DL_FUNC) &_stochtree_rfx_label_mapper_to_list_cpp,                       1},
     {"_stochtree_rfx_model_cpp",                                     (DL_FUNC) &_stochtree_rfx_model_cpp,                                      2},
+    {"_stochtree_rfx_model_predict_cpp",                             (DL_FUNC) &_stochtree_rfx_model_predict_cpp,                              3},
     {"_stochtree_rfx_model_sample_random_effects_cpp",               (DL_FUNC) &_stochtree_rfx_model_sample_random_effects_cpp,                7},
     {"_stochtree_rfx_model_set_group_parameter_covariance_cpp",      (DL_FUNC) &_stochtree_rfx_model_set_group_parameter_covariance_cpp,       2},
     {"_stochtree_rfx_model_set_group_parameters_cpp",                (DL_FUNC) &_stochtree_rfx_model_set_group_parameters_cpp,                 2},

@@ -104,7 +104,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
                 nu = 3, lambda = NULL, a_leaf_mu = 3, a_leaf_tau = 3, b_leaf_mu = NULL, b_leaf_tau = NULL, 
                 q = 0.9, sigma2 = NULL, num_trees_mu = 250, num_trees_tau = 50, num_gfr = 5, 
                 num_burnin = 0, num_mcmc = 100, sample_sigma_global = T, sample_sigma_leaf_mu = T, 
-                sample_sigma_leaf_tau = T, propensity_covariate = "mu", adaptive_coding = T,
+                sample_sigma_leaf_tau = F, propensity_covariate = "mu", adaptive_coding = T,
                 b_0 = -0.5, b_1 = 0.5, random_seed = -1) {
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(X_train))) && (!is.null(X_train))) {
@@ -414,6 +414,10 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
                 mu_x_raw_train <- forest_samples_mu$predict_raw_single_forest(forest_dataset_mu_train, i-1)
                 tau_x_raw_train <- forest_samples_tau$predict_raw_single_forest(forest_dataset_tau_train, i-1)
                 partial_resid_mu_train <- resid_train - mu_x_raw_train
+                if (has_rfx) {
+                    rfx_preds_train <- rfx_model$predict(rfx_dataset_train, rfx_tracker_train)
+                    partial_resid_mu_train <- partial_resid_mu_train - rfx_preds_train
+                }
                 
                 # Compute sufficient statistics for regression of y - mu(X) on [tau(X)(1-Z), tau(X)Z]
                 s_tt0 <- sum(tau_x_raw_train*tau_x_raw_train*(Z_train==0))
@@ -484,15 +488,26 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
             
             # Sample coding parameters (if requested)
             if (adaptive_coding) {
+                # Estimate mu(X) and tau(X) and compute y - mu(X)
                 mu_x_raw_train <- forest_samples_mu$predict_raw_single_forest(forest_dataset_mu_train, i-1)
                 tau_x_raw_train <- forest_samples_tau$predict_raw_single_forest(forest_dataset_tau_train, i-1)
+                partial_resid_mu_train <- resid_train - mu_x_raw_train
+                if (has_rfx) {
+                    rfx_preds_train <- rfx_model$predict(rfx_dataset_train, rfx_tracker_train)
+                    partial_resid_mu_train <- partial_resid_mu_train - rfx_preds_train
+                }
+                
+                # Compute sufficient statistics for regression of y - mu(X) on [tau(X)(1-Z), tau(X)Z]
                 s_tt0 <- sum(tau_x_raw_train*tau_x_raw_train*(Z_train==0))
                 s_tt1 <- sum(tau_x_raw_train*tau_x_raw_train*(Z_train==1))
-                partial_resid_mu_train <- resid_train - mu_x_raw_train
                 s_ty0 <- sum(tau_x_raw_train*partial_resid_mu_train*(Z_train==0))
                 s_ty1 <- sum(tau_x_raw_train*partial_resid_mu_train*(Z_train==1))
+                
+                # Sample b0 (coefficient on tau(X)(1-Z)) and b1 (coefficient on tau(X)Z)
                 current_b_0 <- rnorm(1, (s_ty0/(s_tt0 + 2*current_sigma2)), sqrt(current_sigma2/(s_tt0 + 2*current_sigma2)))
                 current_b_1 <- rnorm(1, (s_ty1/(s_tt1 + 2*current_sigma2)), sqrt(current_sigma2/(s_tt1 + 2*current_sigma2)))
+                
+                # Update basis for the leaf regression
                 tau_basis_train <- (1-Z_train)*current_b_0 + Z_train*current_b_1
                 forest_dataset_tau_train$update_basis(tau_basis_train)
                 b_0_samples[i] <- current_b_0
@@ -501,6 +516,9 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
                     tau_basis_test <- (1-Z_test)*current_b_0 + Z_test*current_b_1
                     forest_dataset_tau_test$update_basis(tau_basis_test)
                 }
+                
+                # TODO Update leaf predictions and residual
+                
             }
             
             # Sample variance parameters (if requested)
@@ -583,8 +601,8 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         "adaptive_coding" = adaptive_coding, 
         "num_samples" = num_samples, 
         "has_rfx" = has_rfx, 
-        "has_basis_rfx" = has_basis_rfx, 
-        "num_basis_rfx" = num_basis_rfx
+        "has_rfx_basis" = has_basis_rfx, 
+        "num_rfx_basis" = num_basis_rfx
     )
     result <- list(
         "forests_mu" = forest_samples_mu, 

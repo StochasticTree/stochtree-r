@@ -200,6 +200,10 @@ rfx_model_sample_random_effects_cpp <- function(rfx_model, rfx_dataset, residual
   invisible(.Call(`_stochtree_rfx_model_sample_random_effects_cpp`, rfx_model, rfx_dataset, residual, rfx_tracker, rfx_container, global_variance, rng))
 }
 
+rfx_model_predict_cpp <- function(rfx_model, rfx_dataset, rfx_tracker) {
+  .Call(`_stochtree_rfx_model_predict_cpp`, rfx_model, rfx_dataset, rfx_tracker)
+}
+
 rfx_container_predict_cpp <- function(rfx_container, rfx_dataset, label_mapper) {
   .Call(`_stochtree_rfx_container_predict_cpp`, rfx_container, rfx_dataset, label_mapper)
 }

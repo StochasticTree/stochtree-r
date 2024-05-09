@@ -23,6 +23,7 @@ sampling from the conditional posterior of each parameter.
 \itemize{
 \item \href{#method-RandomEffectsModel-new}{\code{RandomEffectsModel$new()}}
 \item \href{#method-RandomEffectsModel-sample_random_effect}{\code{RandomEffectsModel$sample_random_effect()}}
+\item \href{#method-RandomEffectsModel-predict}{\code{RandomEffectsModel$predict()}}
 \item \href{#method-RandomEffectsModel-set_working_parameter}{\code{RandomEffectsModel$set_working_parameter()}}
 \item \href{#method-RandomEffectsModel-set_group_parameters}{\code{RandomEffectsModel$set_group_parameters()}}
 \item \href{#method-RandomEffectsModel-set_working_parameter_cov}{\code{RandomEffectsModel$set_working_parameter_cov()}}
@@ -88,6 +89,28 @@ Sample from random effects model.
 }
 \subsection{Returns}{
 None
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-RandomEffectsModel-predict"></a>}}
+\if{latex}{\out{\hypertarget{method-RandomEffectsModel-predict}{}}}
+\subsection{Method \code{predict()}}{
+Predict from (a single sample of a) random effects model.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{RandomEffectsModel$predict(rfx_dataset, rfx_tracker)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{rfx_dataset}}{Object of type \code{RandomEffectsDataset}}
+
+\item{\code{rfx_tracker}}{Object of type \code{RandomEffectsTracker}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Vector of predictions with size matching number of observations in rfx_dataset
 }
 }
 \if{html}{\out{<hr>}}

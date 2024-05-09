@@ -199,6 +199,16 @@ RandomEffectsModel <- R6::R6Class(
         },
         
         #' @description
+        #' Predict from (a single sample of a) random effects model.
+        #' @param rfx_dataset Object of type `RandomEffectsDataset`
+        #' @param rfx_tracker Object of type `RandomEffectsTracker`
+        #' @return Vector of predictions with size matching number of observations in rfx_dataset
+        predict = function(rfx_dataset, rfx_tracker) {
+            pred <- rfx_model_predict_cpp(self$rfx_model_ptr, rfx_dataset$data_ptr, rfx_tracker$rfx_tracker_ptr)
+            return(pred)
+        },
+        
+        #' @description
         #' Set value for the "working parameter." This is typically 
         #' used for initialization, but could also be used to interrupt 
         #' or override the sampler.

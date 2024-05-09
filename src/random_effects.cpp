@@ -108,6 +108,14 @@ void rfx_model_sample_random_effects_cpp(cpp11::external_pointer<StochTree::Mult
 }
 
 [[cpp11::register]]
+cpp11::writable::doubles rfx_model_predict_cpp(cpp11::external_pointer<StochTree::MultivariateRegressionRandomEffectsModel> rfx_model, 
+                                               cpp11::external_pointer<StochTree::RandomEffectsDataset> rfx_dataset, 
+                                               cpp11::external_pointer<StochTree::RandomEffectsTracker> rfx_tracker) {
+    std::vector<double> output = rfx_model->Predict(*rfx_dataset, *rfx_tracker);
+    return output;
+}
+
+[[cpp11::register]]
 cpp11::writable::doubles rfx_container_predict_cpp(cpp11::external_pointer<StochTree::RandomEffectsContainer> rfx_container, 
                                                    cpp11::external_pointer<StochTree::RandomEffectsDataset> rfx_dataset, 
                                                    cpp11::external_pointer<StochTree::LabelMapper> label_mapper) {
