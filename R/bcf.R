@@ -224,9 +224,11 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
     # Estimate if pre-estimated propensity score is not provided
     if ((is.null(pi_train)) && (propensity_covariate != "none")) {
         # Estimate using the last of several iterations of GFR BART
-        bart_model_propensity <- bart(X_train = X_train, y_train = as.numeric(Z_train), X_test = X_test, leaf_model = 0, feature_types = feature_types, num_gfr = 5, num_burnin = 0, num_mcmc = 0)
-        pi_train <- as.numeric(bart_model_propensity$y_hat_train[,5])
-        if (has_test) pi_test <- as.numeric(bart_model_propensity$y_hat_test[,5])
+        num_burnin <- 10
+        num_total <- 50
+        bart_model_propensity <- bart(X_train = X_train, y_train = as.numeric(Z_train), X_test = X_test, leaf_model = 0, feature_types = feature_types, num_gfr = num_total, num_burnin = 0, num_mcmc = 0)
+        pi_train <- rowMeans(bart_model_propensity$yhat_train[(num_burnin+1):num_total])
+        if (has_test) pi_test <- rowMeans(bart_model_propensity$yhat_test[,(num_burnin+1):num_total])
     }
 
     if (has_test) {
