@@ -18,15 +18,17 @@ LinkingTo:
     cpp11
 Suggests: 
     knitr,
-    rmarkdown, 
-    Matrix, 
-    tgp, 
-    MASS, 
-    mvtnorm, 
-    ggplot2, 
-    latex2exp
+    rmarkdown,
+    Matrix,
+    tgp,
+    MASS,
+    mvtnorm,
+    ggplot2,
+    latex2exp,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 SystemRequirements: C++17
 Imports: 
     R6
 URL: https://stochastictree.github.io/stochtree-r/
+Config/testthat/edition: 3

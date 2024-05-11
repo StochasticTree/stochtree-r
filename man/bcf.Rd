@@ -41,7 +41,7 @@ bcf(
   num_mcmc = 100,
   sample_sigma_global = T,
   sample_sigma_leaf_mu = T,
-  sample_sigma_leaf_tau = T,
+  sample_sigma_leaf_tau = F,
   propensity_covariate = "mu",
   adaptive_coding = T,
   b_0 = -0.5,
