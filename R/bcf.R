@@ -47,6 +47,8 @@
 #' @param b_0 Initial value of the "control" group coding parameter. This is ignored when Z is not binary. Default: -0.5.
 #' @param b_1 Initial value of the "treatment" group coding parameter. This is ignored when Z is not binary. Default: 0.5.
 #' @param random_seed Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to `std::random_device`.
+#' @param keep_burnin Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.
+#' @param keep_gfr Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.
 #'
 #' @return List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).
 #' @export
@@ -105,7 +107,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
                 q = 0.9, sigma2 = NULL, num_trees_mu = 250, num_trees_tau = 50, num_gfr = 5, 
                 num_burnin = 0, num_mcmc = 100, sample_sigma_global = T, sample_sigma_leaf_mu = T, 
                 sample_sigma_leaf_tau = F, propensity_covariate = "mu", adaptive_coding = T,
-                b_0 = -0.5, b_1 = 0.5, random_seed = -1) {
+                b_0 = -0.5, b_1 = 0.5, random_seed = -1, keep_burnin = F, keep_gfr = F) {
     # Preprocess covariates
     if ((is.null(dim(X_train))) && (!is.null(X_train))) {
         X_train <- as.matrix(X_train)
@@ -401,6 +403,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
     
     # Run GFR (warm start) if specified
     if (num_gfr > 0){
+        gfr_indices = 1:num_gfr
         for (i in 1:num_gfr) {
             # Sample the prognostic forest
             forest_model_mu$sample_one_iteration(
@@ -479,6 +482,12 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
     
     # Run MCMC
     if (num_burnin + num_mcmc > 0) {
+        if (num_burnin > 0) {
+            burnin_indices = (num_gfr+1):(num_gfr+num_burnin)
+        }
+        if (num_mcmc > 0) {
+            mcmc_indices = (num_gfr+num_burnin+1):(num_gfr+num_burnin+num_mcmc)
+        }
         for (i in (num_gfr+1):num_samples) {
             # Sample the prognostic forest
             forest_model_mu$sample_one_iteration(
@@ -575,7 +584,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         }
         y_hat_test <- mu_hat_test + tau_hat_test * as.numeric(Z_test)
     }
-    
+
     # Random effects predictions
     if (has_rfx) {
         rfx_preds_train <- rfx_samples$predict(group_ids_train, rfx_basis_train)*y_std_train
@@ -586,14 +595,51 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         y_hat_test <- y_hat_test + rfx_preds_test
     }
     
+    # Compute retention indices
+    if (num_mcmc > 0) {
+        keep_indices = mcmc_indices
+        if (keep_gfr) keep_indices <- c(gfr_indices, keep_indices)
+        if (keep_burnin) keep_indices <- c(burnin_indices, keep_indices)
+    } else {
+        if ((num_gfr > 0) && (num_burnin > 0)) {
+            # Override keep_gfr = FALSE since there are no MCMC samples
+            # Don't retain both GFR and burnin samples
+            keep_indices = gfr_indices
+        } else if ((num_gfr <= 0) && (num_burnin > 0)) {
+            # Override keep_burnin = FALSE since there are no MCMC or GFR samples
+            keep_indices = burnin_indices
+        } else if ((num_gfr > 0) && (num_burnin <= 0)) {
+            # Override keep_gfr = FALSE since there are no MCMC samples
+            keep_indices = gfr_indices
+        } else {
+            stop("There are no samples to retain!")
+        } 
+    }
+    
+    # Subset forest and RFX predictions
+    mu_hat_train <- mu_hat_train[,keep_indices]
+    tau_hat_train <- tau_hat_train[,keep_indices]
+    y_hat_train <- y_hat_train[,keep_indices]
+    if (has_rfx) {
+        rfx_preds_train <- rfx_preds_train[,keep_indices]
+    }
+    if (has_test) {
+        mu_hat_test <- mu_hat_test[,keep_indices]
+        tau_hat_test <- tau_hat_test[,keep_indices]
+        y_hat_test <- y_hat_test[,keep_indices]
+        if (has_rfx_test) {
+            rfx_preds_test <- rfx_preds_test[,keep_indices]
+        }
+    }
+    
     # Global error variance
-    if (sample_sigma_global) sigma2_samples <- global_var_samples*(y_std_train^2)
+    if (sample_sigma_global) sigma2_samples <- global_var_samples[keep_indices]*(y_std_train^2)
     
     # Leaf parameter variance for prognostic forest
-    if (sample_sigma_leaf_mu) sigma_leaf_mu_samples <- leaf_scale_mu_samples
+    if (sample_sigma_leaf_mu) sigma_leaf_mu_samples <- leaf_scale_mu_samples[keep_indices]
     
     # Leaf parameter variance for treatment effect forest
-    if (sample_sigma_leaf_tau) sigma_leaf_tau_samples <- leaf_scale_tau_samples
+    if (sample_sigma_leaf_tau) sigma_leaf_tau_samples <- leaf_scale_tau_samples[keep_indices]
     
     # Return results as a list
     model_params <- list(
@@ -618,9 +664,15 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         "binary_treatment" = binary_treatment, 
         "adaptive_coding" = adaptive_coding, 
         "num_samples" = num_samples, 
+        "num_gfr" = num_gfr, 
+        "num_burnin" = num_burnin, 
+        "num_mcmc" = num_mcmc, 
         "has_rfx" = has_rfx, 
         "has_rfx_basis" = has_basis_rfx, 
-        "num_rfx_basis" = num_basis_rfx
+        "num_rfx_basis" = num_basis_rfx, 
+        "sample_sigma_global" = sample_sigma_global,
+        "sample_sigma_leaf_mu" = sample_sigma_leaf_mu,
+        "sample_sigma_leaf_tau" = sample_sigma_leaf_tau
     )
     result <- list(
         "forests_mu" = forest_samples_mu, 
@@ -629,8 +681,12 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         "mu_hat_train" = mu_hat_train, 
         "tau_hat_train" = tau_hat_train, 
         "y_hat_train" = y_hat_train, 
-        "train_set_metadata" = X_train_metadata
+        "train_set_metadata" = X_train_metadata,
+        "keep_indices" = keep_indices
     )
+    if (num_gfr > 0) result[["gfr_indices"]] = gfr_indices
+    if (num_burnin > 0) result[["burnin_indices"]] = burnin_indices
+    if (num_mcmc > 0) result[["mcmc_indices"]] = mcmc_indices
     if (has_test) result[["mu_hat_test"]] = mu_hat_test
     if (has_test) result[["tau_hat_test"]] = tau_hat_test
     if (has_test) result[["y_hat_test"]] = y_hat_test
@@ -662,6 +718,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' We do not currently support (but plan to in the near future), test set evaluation for group labels
 #' that were not in the training set.
 #' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
+#' @param predict_all (Optional) Whether to predict the model for all of the samples in the stored objects or the subset of burnt-in / GFR samples as specified at training time. Default FALSE.
 #'
 #' @return List of three (or four) `nrow(X_test)` by `bcf$num_samples` matrices: prognostic function estimates, treatment effect estimates, (possibly) random effects predictions, and outcome predictions.
 #' @export
@@ -710,7 +767,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' # abline(0,1,col="red",lty=3,lwd=3)
 #' # plot(rowMeans(preds$tau_hat), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")
 #' # abline(0,1,col="red",lty=3,lwd=3)
-predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL){
+predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL, predict_all = F){
     # Preprocess covariates
     if ((is.null(dim(X_test))) && (!is.null(X_test))) {
         X_test <- as.matrix(X_test)
@@ -755,7 +812,7 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NU
     }
     
     # Produce basis for the "intercept-only" random effects case
-    if ((bart$model_params$has_rfx) && (is.null(rfx_basis_test))) {
+    if ((bcf$model_params$has_rfx) && (is.null(rfx_basis_test))) {
         rfx_basis_test <- matrix(rep(1, nrow(X_test)), ncol = 1)
     }
     
@@ -794,6 +851,15 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NU
     # Compute overall "y_hat" predictions
     y_hat_test <- mu_hat_test + tau_hat_test * as.numeric(Z_test)
     if (bcf$model_params$has_rfx) y_hat_test <- y_hat_test + rfx_predictions
+    
+    # Restrict predictions to the "retained" samples (if applicable)
+    if (!predict_all) {
+        keep_indices = bcf$keep_indices
+        mu_hat_test <- mu_hat_test[,keep_indices]
+        tau_hat_test <- tau_hat_test[,keep_indices]
+        y_hat_test <- y_hat_test[,keep_indices]
+        if (bcf$model_params$has_rfx) rfx_predictions <- rfx_predictions[,keep_indices]
+    }
     
     if (bcf$model_params$has_rfx) {
         result <- list(
@@ -893,4 +959,407 @@ getRandomEffectSamples.bcf <- function(object, ...){
     result$sigma_samples <- result$sigma_samples*(object$model_params$outcome_scale^2)
     
     return(result)
+}
+
+#' Convert the persistent aspects of a BCF model to (in-memory) JSON
+#'
+#' @param object Object of type `bcf` containing draws of a Bayesian causal forest model and associated sampling outputs.
+#'
+#' @return Object of type `CppJson`
+#' @export
+#'
+#' @examples
+#' n <- 500
+#' x1 <- rnorm(n)
+#' x2 <- rnorm(n)
+#' x3 <- rnorm(n)
+#' x4 <- as.numeric(rbinom(n,1,0.5))
+#' x5 <- as.numeric(sample(1:3,n,replace=T))
+#' X <- cbind(x1,x2,x3,x4,x5)
+#' p <- ncol(X)
+#' g <- function(x) {ifelse(x[,5]==1,2,ifelse(x[,5]==2,-1,4))}
+#' mu1 <- function(x) {1+g(x)+x[,1]*x[,3]}
+#' mu2 <- function(x) {1+g(x)+6*abs(x[,3]-1)}
+#' tau1 <- function(x) {rep(3,nrow(x))}
+#' tau2 <- function(x) {1+2*x[,2]*x[,4]}
+#' mu_x <- mu1(X)
+#' tau_x <- tau2(X)
+#' pi_x <- 0.8*pnorm((3*mu_x/sd(mu_x)) - 0.5*X[,1]) + 0.05 + runif(n)/10
+#' Z <- rbinom(n,1,pi_x)
+#' E_XZ <- mu_x + Z*tau_x
+#' snr <- 3
+#' group_ids <- rep(c(1,2), n %/% 2)
+#' rfx_coefs <- matrix(c(-1, -1, 1, 1),nrow=2,byrow=T)
+#' rfx_basis <- cbind(1, runif(n, -1, 1))
+#' rfx_term <- rowSums(rfx_coefs[group_ids,] * rfx_basis)
+#' y <- E_XZ + rfx_term + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+#' test_set_pct <- 0.2
+#' n_test <- round(test_set_pct*n)
+#' n_train <- n - n_test
+#' test_inds <- sort(sample(1:n, n_test, replace = F))
+#' train_inds <- (1:n)[!((1:n) %in% test_inds)]
+#' X_test <- X[test_inds,]
+#' X_train <- X[train_inds,]
+#' pi_test <- pi_x[test_inds]
+#' pi_train <- pi_x[train_inds]
+#' Z_test <- Z[test_inds]
+#' Z_train <- Z[train_inds]
+#' y_test <- y[test_inds]
+#' y_train <- y[train_inds]
+#' mu_test <- mu_x[test_inds]
+#' mu_train <- mu_x[train_inds]
+#' tau_test <- tau_x[test_inds]
+#' tau_train <- tau_x[train_inds]
+#' group_ids_test <- group_ids[test_inds]
+#' group_ids_train <- group_ids[train_inds]
+#' rfx_basis_test <- rfx_basis[test_inds,]
+#' rfx_basis_train <- rfx_basis[train_inds,]
+#' rfx_term_test <- rfx_term[test_inds]
+#' rfx_term_train <- rfx_term[train_inds]
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+#'                  group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
+#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+#'                  rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
+#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+#' bcf_json <- convertToJson(bcf_model)
+convertToJson.bcf <- function(object, ...){
+    jsonobj <- createCppJson()
+    
+    if (is.null(object$model_params)) {
+        stop("This BCF model has not yet been sampled")
+    }
+
+    # Add the forests
+    jsonobj$add_forest(object$forests_mu)
+    jsonobj$add_forest(object$forests_tau)
+    
+    # Add metadata
+    jsonobj$add_scalar("num_numeric_vars", object$train_set_metadata$num_numeric_vars)
+    jsonobj$add_scalar("num_ordered_cat_vars", object$train_set_metadata$num_ordered_cat_vars)
+    jsonobj$add_scalar("num_unordered_cat_vars", object$train_set_metadata$num_unordered_cat_vars)
+    if (object$train_set_metadata$num_numeric_vars > 0) {
+        jsonobj$add_string_vector("numeric_vars", object$train_set_metadata$numeric_vars)
+    }
+    if (object$train_set_metadata$num_ordered_cat_vars > 0) {
+        jsonobj$add_string_vector("ordered_cat_vars", object$train_set_metadata$ordered_cat_vars)
+        jsonobj$add_string_list("ordered_unique_levels", object$train_set_metadata$ordered_unique_levels)
+    }
+    if (object$train_set_metadata$num_unordered_cat_vars > 0) {
+        jsonobj$add_string_vector("unordered_cat_vars", object$train_set_metadata$unordered_cat_vars)
+        jsonobj$add_string_list("unordered_unique_levels", object$train_set_metadata$unordered_unique_levels)
+    }
+    
+    # Add global parameters
+    jsonobj$add_scalar("outcome_scale", object$model_params$outcome_scale)
+    jsonobj$add_scalar("outcome_mean", object$model_params$outcome_mean)
+    jsonobj$add_boolean("sample_sigma_global", object$model_params$sample_sigma_global)
+    jsonobj$add_boolean("sample_sigma_leaf_mu", object$model_params$sample_sigma_leaf_mu)
+    jsonobj$add_boolean("sample_sigma_leaf_tau", object$model_params$sample_sigma_leaf_tau)
+    jsonobj$add_string("propensity_covariate", object$model_params$propensity_covariate)
+    jsonobj$add_boolean("has_rfx", object$model_params$has_rfx)
+    jsonobj$add_boolean("has_rfx_basis", object$model_params$has_rfx_basis)
+    jsonobj$add_scalar("num_rfx_basis", object$model_params$num_rfx_basis)
+    jsonobj$add_boolean("adaptive_coding", object$model_params$adaptive_coding)
+    jsonobj$add_scalar("num_gfr", object$model_params$num_gfr)
+    jsonobj$add_scalar("num_burnin", object$model_params$num_burnin)
+    jsonobj$add_scalar("num_mcmc", object$model_params$num_mcmc)
+    jsonobj$add_scalar("num_samples", object$model_params$num_samples)
+    jsonobj$add_scalar("num_covariates", object$model_params$num_covariates)
+    jsonobj$add_vector("keep_indices", object$keep_indices)
+    if (object$model_params$sample_sigma_global) {
+        jsonobj$add_vector("sigma2_samples", object$sigma2_samples, "parameters")
+    }
+    if (object$model_params$sample_sigma_leaf_mu) {
+        jsonobj$add_vector("sigma_leaf_mu_samples", object$sigma_leaf_mu_samples, "parameters")
+    }
+    if (object$model_params$sample_sigma_leaf_tau) {
+        jsonobj$add_vector("sigma_leaf_tau_samples", object$sigma_leaf_tau_samples, "parameters")
+    }
+    if (object$model_params$adaptive_coding) {
+        jsonobj$add_vector("b_1_samples", object$b_1_samples, "parameters")
+        jsonobj$add_vector("b_0_samples", object$b_0_samples, "parameters")
+    }
+
+    # Add random effects (if present)
+    if (bcf_model$model_params$has_rfx) {
+        jsonobj$add_random_effects(bcf_model$rfx_samples)
+    }
+    
+    return(jsonobj)
+}
+
+#' Convert the persistent aspects of a BCF model to (in-memory) JSON and save to a file
+#'
+#' @param object Object of type `bcf` containing draws of a Bayesian causal forest model and associated sampling outputs.
+#' @param filename String of filepath, must end in ".json"
+#'
+#' @return NULL
+#' @export
+#'
+#' @examples
+#' n <- 500
+#' x1 <- rnorm(n)
+#' x2 <- rnorm(n)
+#' x3 <- rnorm(n)
+#' x4 <- as.numeric(rbinom(n,1,0.5))
+#' x5 <- as.numeric(sample(1:3,n,replace=T))
+#' X <- cbind(x1,x2,x3,x4,x5)
+#' p <- ncol(X)
+#' g <- function(x) {ifelse(x[,5]==1,2,ifelse(x[,5]==2,-1,4))}
+#' mu1 <- function(x) {1+g(x)+x[,1]*x[,3]}
+#' mu2 <- function(x) {1+g(x)+6*abs(x[,3]-1)}
+#' tau1 <- function(x) {rep(3,nrow(x))}
+#' tau2 <- function(x) {1+2*x[,2]*x[,4]}
+#' mu_x <- mu1(X)
+#' tau_x <- tau2(X)
+#' pi_x <- 0.8*pnorm((3*mu_x/sd(mu_x)) - 0.5*X[,1]) + 0.05 + runif(n)/10
+#' Z <- rbinom(n,1,pi_x)
+#' E_XZ <- mu_x + Z*tau_x
+#' snr <- 3
+#' group_ids <- rep(c(1,2), n %/% 2)
+#' rfx_coefs <- matrix(c(-1, -1, 1, 1),nrow=2,byrow=T)
+#' rfx_basis <- cbind(1, runif(n, -1, 1))
+#' rfx_term <- rowSums(rfx_coefs[group_ids,] * rfx_basis)
+#' y <- E_XZ + rfx_term + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+#' test_set_pct <- 0.2
+#' n_test <- round(test_set_pct*n)
+#' n_train <- n - n_test
+#' test_inds <- sort(sample(1:n, n_test, replace = F))
+#' train_inds <- (1:n)[!((1:n) %in% test_inds)]
+#' X_test <- X[test_inds,]
+#' X_train <- X[train_inds,]
+#' pi_test <- pi_x[test_inds]
+#' pi_train <- pi_x[train_inds]
+#' Z_test <- Z[test_inds]
+#' Z_train <- Z[train_inds]
+#' y_test <- y[test_inds]
+#' y_train <- y[train_inds]
+#' mu_test <- mu_x[test_inds]
+#' mu_train <- mu_x[train_inds]
+#' tau_test <- tau_x[test_inds]
+#' tau_train <- tau_x[train_inds]
+#' group_ids_test <- group_ids[test_inds]
+#' group_ids_train <- group_ids[train_inds]
+#' rfx_basis_test <- rfx_basis[test_inds,]
+#' rfx_basis_train <- rfx_basis[train_inds,]
+#' rfx_term_test <- rfx_term[test_inds]
+#' rfx_term_train <- rfx_term[train_inds]
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+#'                  group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
+#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+#'                  rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
+#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+#' saveToJsonFile(bcf_model, "test.json")
+saveToJsonFile.bcf <- function(object, filename, ...){
+    # Convert to Json
+    jsonobj <- convertToJson.bcf(object)
+    
+    # Save to file
+    jsonobj$save_file(filename)
+}
+
+#' Convert an (in-memory) JSON representation of a BCF model to a BCF model object 
+#' which can be used for prediction, etc...
+#'
+#' @param json_object Object of type `CppJson` containing Json representation of a BCF model
+#'
+#' @return Object of type `bcf`
+#' @export
+#'
+#' @examples
+#' n <- 500
+#' x1 <- rnorm(n)
+#' x2 <- rnorm(n)
+#' x3 <- rnorm(n)
+#' x4 <- as.numeric(rbinom(n,1,0.5))
+#' x5 <- as.numeric(sample(1:3,n,replace=T))
+#' X <- cbind(x1,x2,x3,x4,x5)
+#' p <- ncol(X)
+#' g <- function(x) {ifelse(x[,5]==1,2,ifelse(x[,5]==2,-1,4))}
+#' mu1 <- function(x) {1+g(x)+x[,1]*x[,3]}
+#' mu2 <- function(x) {1+g(x)+6*abs(x[,3]-1)}
+#' tau1 <- function(x) {rep(3,nrow(x))}
+#' tau2 <- function(x) {1+2*x[,2]*x[,4]}
+#' mu_x <- mu1(X)
+#' tau_x <- tau2(X)
+#' pi_x <- 0.8*pnorm((3*mu_x/sd(mu_x)) - 0.5*X[,1]) + 0.05 + runif(n)/10
+#' Z <- rbinom(n,1,pi_x)
+#' E_XZ <- mu_x + Z*tau_x
+#' snr <- 3
+#' group_ids <- rep(c(1,2), n %/% 2)
+#' rfx_coefs <- matrix(c(-1, -1, 1, 1),nrow=2,byrow=T)
+#' rfx_basis <- cbind(1, runif(n, -1, 1))
+#' rfx_term <- rowSums(rfx_coefs[group_ids,] * rfx_basis)
+#' y <- E_XZ + rfx_term + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+#' test_set_pct <- 0.2
+#' n_test <- round(test_set_pct*n)
+#' n_train <- n - n_test
+#' test_inds <- sort(sample(1:n, n_test, replace = F))
+#' train_inds <- (1:n)[!((1:n) %in% test_inds)]
+#' X_test <- X[test_inds,]
+#' X_train <- X[train_inds,]
+#' pi_test <- pi_x[test_inds]
+#' pi_train <- pi_x[train_inds]
+#' Z_test <- Z[test_inds]
+#' Z_train <- Z[train_inds]
+#' y_test <- y[test_inds]
+#' y_train <- y[train_inds]
+#' mu_test <- mu_x[test_inds]
+#' mu_train <- mu_x[train_inds]
+#' tau_test <- tau_x[test_inds]
+#' tau_train <- tau_x[train_inds]
+#' group_ids_test <- group_ids[test_inds]
+#' group_ids_train <- group_ids[train_inds]
+#' rfx_basis_test <- rfx_basis[test_inds,]
+#' rfx_basis_train <- rfx_basis[train_inds,]
+#' rfx_term_test <- rfx_term[test_inds]
+#' rfx_term_train <- rfx_term[train_inds]
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+#'                  group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
+#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+#'                  rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
+#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+#' bcf_json <- convertToJson(bcf_model)
+#' bcf_model_roundtrip <- createBCFModelFromJson(bcf_json)
+createBCFModelFromJson <- function(json_object){
+    # Initialize the BCF model
+    output <- list()
+    
+    # Unpack the forests
+    output[["forests_mu"]] <- loadForestContainerJson(json_object, "forest_0")
+    output[["forests_tau"]] <- loadForestContainerJson(json_object, "forest_1")
+
+    # Unpack metadata
+    train_set_metadata = list()
+    train_set_metadata[["num_numeric_vars"]] <- json_object$get_scalar("num_numeric_vars")
+    train_set_metadata[["num_ordered_cat_vars"]] <- json_object$get_scalar("num_ordered_cat_vars")
+    train_set_metadata[["num_unordered_cat_vars"]] <- json_object$get_scalar("num_unordered_cat_vars")
+    if (train_set_metadata[["num_numeric_vars"]] > 0) {
+        train_set_metadata[["numeric_vars"]] <- json_object$get_string_vector("numeric_vars")
+    }
+    if (train_set_metadata[["num_ordered_cat_vars"]] > 0) {
+        train_set_metadata[["ordered_cat_vars"]] <- json_object$get_string_vector("ordered_cat_vars")
+        train_set_metadata[["ordered_unique_levels"]] <- json_object$get_string_list("ordered_unique_levels", train_set_metadata[["ordered_cat_vars"]])
+    }
+    if (train_set_metadata[["num_unordered_cat_vars"]] > 0) {
+        train_set_metadata[["unordered_cat_vars"]] <- json_object$get_string_vector("unordered_cat_vars")
+        train_set_metadata[["unordered_unique_levels"]] <- json_object$get_string_list("unordered_unique_levels", train_set_metadata[["unordered_cat_vars"]])
+    }
+    output[["train_set_metadata"]] <- train_set_metadata
+    output[["keep_indices"]] <- json_object$get_vector("keep_indices")
+    
+    # Unpack model params
+    model_params = list()
+    model_params[["outcome_scale"]] <- json_object$get_scalar("outcome_scale")
+    model_params[["outcome_mean"]] <- json_object$get_scalar("outcome_mean")
+    model_params[["sample_sigma_global"]] <- json_object$get_boolean("sample_sigma_global")
+    model_params[["sample_sigma_leaf_mu"]] <- json_object$get_boolean("sample_sigma_leaf_mu")
+    model_params[["sample_sigma_leaf_tau"]] <- json_object$get_boolean("sample_sigma_leaf_tau")
+    model_params[["propensity_covariate"]] <- json_object$get_string("propensity_covariate")
+    model_params[["has_rfx"]] <- json_object$get_boolean("has_rfx")
+    model_params[["has_rfx_basis"]] <- json_object$get_boolean("has_rfx_basis")
+    model_params[["num_rfx_basis"]] <- json_object$get_scalar("num_rfx_basis")
+    model_params[["adaptive_coding"]] <- json_object$get_boolean("adaptive_coding")
+    model_params[["num_gfr"]] <- json_object$get_scalar("num_gfr")
+    model_params[["num_burnin"]] <- json_object$get_scalar("num_burnin")
+    model_params[["num_mcmc"]] <- json_object$get_scalar("num_mcmc")
+    model_params[["num_samples"]] <- json_object$get_scalar("num_samples")
+    model_params[["num_covariates"]] <- json_object$get_scalar("num_covariates")
+    output[["model_params"]] <- model_params
+    
+    # Unpack sampled parameters
+    if (model_params[["sample_sigma_global"]]) {
+        output[["sigma2_samples"]] <- json_object$get_vector("sigma2_samples", "parameters")
+    }
+    if (model_params[["sample_sigma_leaf_mu"]]) {
+        output[["sigma_leaf_mu_samples"]] <- json_object$get_vector("sigma_leaf_mu_samples", "parameters")
+    }
+    if (model_params[["sample_sigma_leaf_tau"]]) {
+        output[["sigma_leaf_tau_samples"]] <- json_object$get_vector("sigma_leaf_tau_samples", "parameters")
+    }
+    if (model_params[["adaptive_coding"]]) {
+        output[["b_1_samples"]] <- json_object$get_vector("b_1_samples", "parameters")
+        output[["b_0_samples"]] <- json_object$get_vector("b_0_samples", "parameters")
+    }
+    
+    # Unpack random effects
+    if (model_params[["has_rfx"]]) {
+        output[["rfx_samples"]] <- loadRandomEffectSamplesJson(json_object, 0)
+    }
+    
+    class(output) <- "bcf"
+    return(output)
+}
+
+#' Convert a JSON file containing sample information on a trained BCF model 
+#' to a BCF model object which can be used for prediction, etc...
+#'
+#' @param json_filename String of filepath, must end in ".json"
+#'
+#' @return Object of type `bcf`
+#' @export
+#'
+#' @examples
+#' n <- 500
+#' x1 <- rnorm(n)
+#' x2 <- rnorm(n)
+#' x3 <- rnorm(n)
+#' x4 <- as.numeric(rbinom(n,1,0.5))
+#' x5 <- as.numeric(sample(1:3,n,replace=T))
+#' X <- cbind(x1,x2,x3,x4,x5)
+#' p <- ncol(X)
+#' g <- function(x) {ifelse(x[,5]==1,2,ifelse(x[,5]==2,-1,4))}
+#' mu1 <- function(x) {1+g(x)+x[,1]*x[,3]}
+#' mu2 <- function(x) {1+g(x)+6*abs(x[,3]-1)}
+#' tau1 <- function(x) {rep(3,nrow(x))}
+#' tau2 <- function(x) {1+2*x[,2]*x[,4]}
+#' mu_x <- mu1(X)
+#' tau_x <- tau2(X)
+#' pi_x <- 0.8*pnorm((3*mu_x/sd(mu_x)) - 0.5*X[,1]) + 0.05 + runif(n)/10
+#' Z <- rbinom(n,1,pi_x)
+#' E_XZ <- mu_x + Z*tau_x
+#' snr <- 3
+#' group_ids <- rep(c(1,2), n %/% 2)
+#' rfx_coefs <- matrix(c(-1, -1, 1, 1),nrow=2,byrow=T)
+#' rfx_basis <- cbind(1, runif(n, -1, 1))
+#' rfx_term <- rowSums(rfx_coefs[group_ids,] * rfx_basis)
+#' y <- E_XZ + rfx_term + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+#' test_set_pct <- 0.2
+#' n_test <- round(test_set_pct*n)
+#' n_train <- n - n_test
+#' test_inds <- sort(sample(1:n, n_test, replace = F))
+#' train_inds <- (1:n)[!((1:n) %in% test_inds)]
+#' X_test <- X[test_inds,]
+#' X_train <- X[train_inds,]
+#' pi_test <- pi_x[test_inds]
+#' pi_train <- pi_x[train_inds]
+#' Z_test <- Z[test_inds]
+#' Z_train <- Z[train_inds]
+#' y_test <- y[test_inds]
+#' y_train <- y[train_inds]
+#' mu_test <- mu_x[test_inds]
+#' mu_train <- mu_x[train_inds]
+#' tau_test <- tau_x[test_inds]
+#' tau_train <- tau_x[train_inds]
+#' group_ids_test <- group_ids[test_inds]
+#' group_ids_train <- group_ids[train_inds]
+#' rfx_basis_test <- rfx_basis[test_inds,]
+#' rfx_basis_train <- rfx_basis[train_inds,]
+#' rfx_term_test <- rfx_term[test_inds]
+#' rfx_term_train <- rfx_term[train_inds]
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
+#'                  group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
+#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+#'                  rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
+#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+#' bcf_model_roundtrip <- createBCFModelFromJsonFile("test.json")
+#' saveToJsonFile(bcf_model, "test.json")
+createBCFModelFromJsonFile <- function(json_filename){
+    # Load a `CppJson` object from file
+    bcf_json <- createCppJsonFile(json_filename)
+    
+    # Create and return the BCF object
+    bcf_object <- createBCFModelFromJson(bcf_json)
+    
+    return(bcf_object)
 }

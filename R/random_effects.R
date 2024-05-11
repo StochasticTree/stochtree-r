@@ -322,19 +322,3 @@ createRandomEffectsModel <- function(num_components, num_groups) {
         RandomEffectsModel$new(num_components, num_groups)
     )))
 }
-
-#' Load a container of forest samples from json
-#'
-#' @param json_object Object of class `CppJson`
-#' @param json_rfx_num Integer index indicating the position of the random effects term to be unpacked
-#'
-#' @return `RandomEffectSamples` object
-#' @export
-loadRandomEffectSamplesJson <- function(json_object, json_rfx_num) {
-    json_rfx_container_label <- paste0("random_effect_container_", json_rfx_num)
-    json_rfx_mapper_label <- paste0("random_effect_label_mapper_", json_rfx_num)
-    json_rfx_groupids_label <- paste0("random_effect_groupids_", json_rfx_num)
-    invisible(output <- RandomEffectSamples$new())
-    output$load_from_json(json_object, json_rfx_container_label, json_rfx_mapper_label, json_rfx_groupids_label)
-    return(output)
-}

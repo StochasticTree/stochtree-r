@@ -25,8 +25,6 @@ cpp11::external_pointer<nlohmann::json> init_json_cpp() {
     return cpp11::external_pointer<nlohmann::json>(json_ptr.release());
 }
 
-
-
 [[cpp11::register]]
 void json_add_double_subfolder_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string subfolder_name, std::string field_name, double field_value) {
     if (json_ptr->contains(subfolder_name)) {
@@ -43,6 +41,29 @@ void json_add_double_subfolder_cpp(cpp11::external_pointer<nlohmann::json> json_
 
 [[cpp11::register]]
 void json_add_double_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string field_name, double field_value) {
+    if (json_ptr->contains(field_name)) {
+        json_ptr->at(field_name) = field_value;
+    } else {
+        json_ptr->emplace(std::pair(field_name, field_value));
+    }
+}
+
+[[cpp11::register]]
+void json_add_bool_subfolder_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string subfolder_name, std::string field_name, bool field_value) {
+    if (json_ptr->contains(subfolder_name)) {
+        if (json_ptr->at(subfolder_name).contains(field_name)) {
+            json_ptr->at(subfolder_name).at(field_name) = field_value;
+        } else {
+            json_ptr->at(subfolder_name).emplace(std::pair(field_name, field_value));
+        }
+    } else {
+        json_ptr->emplace(std::pair(subfolder_name, nlohmann::json::object()));
+        json_ptr->at(subfolder_name).emplace(std::pair(field_name, field_value));
+    }
+}
+
+[[cpp11::register]]
+void json_add_bool_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string field_name, bool field_value) {
     if (json_ptr->contains(field_name)) {
         json_ptr->at(field_name) = field_value;
     } else {
@@ -91,6 +112,69 @@ void json_add_vector_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::
 }
 
 [[cpp11::register]]
+void json_add_string_vector_subfolder_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string subfolder_name, std::string field_name, cpp11::strings field_vector) {
+    int vec_length = field_vector.size();
+    if (json_ptr->contains(subfolder_name)) {
+        if (json_ptr->at(subfolder_name).contains(field_name)) {
+            json_ptr->at(subfolder_name).at(field_name).clear();
+            for (int i = 0; i < vec_length; i++) {
+                json_ptr->at(subfolder_name).at(field_name).emplace_back(field_vector.at(i));
+            }
+        } else {
+            json_ptr->at(subfolder_name).emplace(std::pair(field_name, nlohmann::json::array()));
+            for (int i = 0; i < vec_length; i++) {
+                json_ptr->at(subfolder_name).at(field_name).emplace_back(field_vector.at(i));
+            }
+        }
+    } else {
+        json_ptr->emplace(std::pair(subfolder_name, nlohmann::json::object()));
+        json_ptr->at(subfolder_name).emplace(std::pair(field_name, nlohmann::json::array()));
+        for (int i = 0; i < vec_length; i++) {
+            json_ptr->at(subfolder_name).at(field_name).emplace_back(field_vector.at(i));
+        }
+    }
+}
+
+[[cpp11::register]]
+void json_add_string_vector_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string field_name, cpp11::strings field_vector) {
+    int vec_length = field_vector.size();
+    if (json_ptr->contains(field_name)) {
+        json_ptr->at(field_name).clear();
+        for (int i = 0; i < vec_length; i++) {
+            json_ptr->at(field_name).emplace_back(field_vector.at(i));
+        }
+    } else {
+        json_ptr->emplace(std::pair(field_name, nlohmann::json::array()));
+        for (int i = 0; i < vec_length; i++) {
+            json_ptr->at(field_name).emplace_back(field_vector.at(i));
+        }
+    }
+}
+
+[[cpp11::register]]
+void json_add_string_subfolder_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string subfolder_name, std::string field_name, std::string field_value) {
+    if (json_ptr->contains(subfolder_name)) {
+        if (json_ptr->at(subfolder_name).contains(field_name)) {
+            json_ptr->at(subfolder_name).at(field_name) = field_value;
+        } else {
+            json_ptr->at(subfolder_name).emplace(std::pair(field_name, field_value));
+        }
+    } else {
+        json_ptr->emplace(std::pair(subfolder_name, nlohmann::json::object()));
+        json_ptr->at(subfolder_name).emplace(std::pair(field_name, field_value));
+    }
+}
+
+[[cpp11::register]]
+void json_add_string_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string field_name, std::string field_value) {
+    if (json_ptr->contains(field_name)) {
+        json_ptr->at(field_name) = field_value;
+    } else {
+        json_ptr->emplace(std::pair(field_name, field_value));
+    }
+}
+
+[[cpp11::register]]
 bool json_contains_field_subfolder_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string subfolder_name, std::string field_name) {
     if (json_ptr->contains(subfolder_name)) {
         if (json_ptr->at(subfolder_name).contains(field_name)) {
@@ -123,6 +207,26 @@ double json_extract_double_cpp(cpp11::external_pointer<nlohmann::json> json_ptr,
 }
 
 [[cpp11::register]]
+bool json_extract_bool_subfolder_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string subfolder_name, std::string field_name) {
+    return json_ptr->at(subfolder_name).at(field_name);
+}
+
+[[cpp11::register]]
+bool json_extract_bool_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string field_name) {
+    return json_ptr->at(field_name);
+}
+
+[[cpp11::register]]
+std::string json_extract_string_subfolder_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string subfolder_name, std::string field_name) {
+    return json_ptr->at(subfolder_name).at(field_name);
+}
+
+[[cpp11::register]]
+std::string json_extract_string_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string field_name) {
+    return json_ptr->at(field_name);
+}
+
+[[cpp11::register]]
 cpp11::writable::doubles json_extract_vector_subfolder_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string subfolder_name, std::string field_name) {
     cpp11::writable::doubles output;
     int vec_length = json_ptr->at(subfolder_name).at(field_name).size();
@@ -135,6 +239,22 @@ cpp11::writable::doubles json_extract_vector_cpp(cpp11::external_pointer<nlohman
     cpp11::writable::doubles output;
     int vec_length = json_ptr->at(field_name).size();
     for (int i = 0; i < vec_length; i++) output.push_back((json_ptr->at(field_name).at(i)));
+    return output;
+}
+
+[[cpp11::register]]
+cpp11::writable::strings json_extract_string_vector_subfolder_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string subfolder_name, std::string field_name) {
+    int vec_length = json_ptr->at(subfolder_name).at(field_name).size();
+    std::vector<std::string> output(vec_length);
+    for (int i = 0; i < vec_length; i++) output.at(i) = json_ptr->at(subfolder_name).at(field_name).at(i);
+    return output;
+}
+
+[[cpp11::register]]
+cpp11::writable::strings json_extract_string_vector_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string field_name) {
+    int vec_length = json_ptr->at(field_name).size();
+    std::vector<std::string> output(vec_length);
+    for (int i = 0; i < vec_length; i++) output.at(i) = json_ptr->at(field_name).at(i);
     return output;
 }
 
@@ -188,4 +308,12 @@ std::string json_add_rfx_groupids_cpp(cpp11::external_pointer<nlohmann::json> js
 void json_save_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string filename) {
     std::ofstream output_file(filename);
     output_file << *json_ptr << std::endl;
+}
+
+[[cpp11::register]]
+void json_load_cpp(cpp11::external_pointer<nlohmann::json> json_ptr, std::string filename) {
+    std::ifstream f(filename);
+    // nlohmann::json file_json = nlohmann::json::parse(f);
+    *json_ptr = nlohmann::json::parse(f);
+    // json_ptr.reset(&file_json);
 }

@@ -10,7 +10,8 @@
   Z_test,
   pi_test = NULL,
   group_ids_test = NULL,
-  rfx_basis_test = NULL
+  rfx_basis_test = NULL,
+  predict_all = F
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ We do not currently support (but plan to in the near future), test set evaluatio
 that were not in the training set.}
 
 \item{rfx_basis_test}{(Optional) Test set basis for "random-slope" regression in additive random effects model.}
+
+\item{predict_all}{(Optional) Whether to predict the model for all of the samples in the stored objects or the subset of burnt-in / GFR samples as specified at training time. Default FALSE.}
 }
 \value{
 List of three (or four) \code{nrow(X_test)} by \code{bcf$num_samples} matrices: prognostic function estimates, treatment effect estimates, (possibly) random effects predictions, and outcome predictions.

@@ -83,29 +83,28 @@ bcf_model_warmstart <- bcf(
 )
 
 # Plot results
-sample_inds <- (num_gfr+1):num_samples
-plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test,
+plot(rowMeans(bcf_model_warmstart$mu_hat_test), mu_test,
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test,
+plot(rowMeans(bcf_model_warmstart$tau_hat_test), tau_test,
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$y_hat_test[,sample_inds]), y_test,
+plot(rowMeans(bcf_model_warmstart$y_hat_test), y_test,
      xlab = "predicted", ylab = "actual", main = "Outcome")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- 1
-plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)),
-                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds,
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples, sigma_observed)),
+                 max(c(bcf_model_warmstart$sigma2_samples, sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples, ylim = plot_bounds,
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
-ymin <- min(c(min(bcf_model_warmstart$b_0_samples[sample_inds]), min(bcf_model_warmstart$b_1_samples[sample_inds])))
-ymax <- max(c(max(bcf_model_warmstart$b_0_samples[sample_inds]), max(bcf_model_warmstart$b_1_samples[sample_inds])))
-plot(bcf_model_warmstart$b_0_samples[sample_inds], ylim = c(ymin, ymax), col = "blue",
+ymin <- min(c(min(bcf_model_warmstart$b_0_samples), min(bcf_model_warmstart$b_1_samples)))
+ymax <- max(c(max(bcf_model_warmstart$b_0_samples), max(bcf_model_warmstart$b_1_samples)))
+plot(bcf_model_warmstart$b_0_samples, ylim = c(ymin, ymax), col = "blue",
      ylab = "Coding parameters", xlab = "Sample", main = "Coding parameters")
-points(bcf_model_warmstart$b_1_samples[sample_inds], ylim = plot_bounds, col = "orange")
+points(bcf_model_warmstart$b_1_samples, ylim = plot_bounds, col = "orange")
 
 # Evaluate RMSEs
-sqrt(mean((rowMeans(bcf_model_warmstart$y_hat_test[,sample_inds]) - y_test)^2))
-sqrt(mean((rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]) - mu_test)^2))
-sqrt(mean((rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]) - tau_test)^2))
+sqrt(mean((rowMeans(bcf_model_warmstart$y_hat_test) - y_test)^2))
+sqrt(mean((rowMeans(bcf_model_warmstart$mu_hat_test) - mu_test)^2))
+sqrt(mean((rowMeans(bcf_model_warmstart$tau_hat_test) - tau_test)^2))

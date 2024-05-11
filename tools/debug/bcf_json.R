@@ -54,43 +54,11 @@ rfx_basis_train <- rfx_basis[train_inds,]
 rfx_term_test <- rfx_term[test_inds]
 rfx_term_train <- rfx_term[train_inds]
 
-# Sample the BCF model without random effects
-num_gfr <- 10
-num_burnin <- 0
-num_mcmc <- 1000
-num_samples <- num_gfr + num_burnin + num_mcmc
-bcf_model_warmstart_no_rfx <- bcf(
-    X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
-    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
-    sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F
-)
-
-# Inspect the results without random effects
-plot(rowMeans(bcf_model_warmstart_no_rfx$mu_hat_test), mu_test, 
-     xlab = "predicted", ylab = "actual", main = "Prognostic function")
-abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart_no_rfx$tau_hat_test), tau_test, 
-     xlab = "predicted", ylab = "actual", main = "Treatment effect")
-abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart_no_rfx$y_hat_test), y_test, 
-     xlab = "predicted", ylab = "actual", main = "Outcome")
-abline(0,1,col="red",lty=3,lwd=3)
-sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_warmstart_no_rfx$sigma2_samples, sigma_observed)), 
-                 max(c(bcf_model_warmstart_no_rfx$sigma2_samples, sigma_observed)))
-plot(bcf_model_warmstart_no_rfx$sigma2_samples, ylim = plot_bounds, 
-     ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
-abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
-test_lb <- apply(bcf_model_warmstart_no_rfx$tau_hat_test, 1, quantile, 0.025)
-test_ub <- apply(bcf_model_warmstart_no_rfx$tau_hat_test, 1, quantile, 0.975)
-cover <- (
-    (test_lb <= tau_test) & (test_ub >= tau_test)
-)
-mean(cover)
-
 # Sample the BCF model with random effects
-bcf_model_warmstart_rfx <- bcf(
+num_gfr <- 10
+num_burnin <- 10
+num_mcmc <- 100
+bcf_model <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
     group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
     X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
@@ -100,27 +68,45 @@ bcf_model_warmstart_rfx <- bcf(
 )
 
 # Inspect the results with random effects
-plot(rowMeans(bcf_model_warmstart_rfx$mu_hat_test), mu_test, 
+plot(rowMeans(bcf_model$mu_hat_test), mu_test, 
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart_rfx$tau_hat_test), tau_test, 
+plot(rowMeans(bcf_model$tau_hat_test), tau_test, 
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart_rfx$y_hat_test), y_test, 
+plot(rowMeans(bcf_model$y_hat_test), y_test, 
      xlab = "predicted", ylab = "actual", main = "Outcome")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart_rfx$rfx_preds_test), rfx_term_test, 
+plot(rowMeans(bcf_model$rfx_preds_test), rfx_term_test, 
      xlab = "predicted", ylab = "actual", main = "Random effects terms")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ-rfx_term)
-plot_bounds <- c(min(c(bcf_model_warmstart_rfx$sigma2_samples, sigma_observed)), 
-                 max(c(bcf_model_warmstart_rfx$sigma2_samples, sigma_observed)))
-plot(bcf_model_warmstart_rfx$sigma2_samples, ylim = plot_bounds, 
+plot_bounds <- c(min(c(bcf_model$sigma2_samples, sigma_observed)), 
+                 max(c(bcf_model$sigma2_samples, sigma_observed)))
+plot(bcf_model$sigma2_samples, ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
-test_lb <- apply(bcf_model_warmstart_rfx$tau_hat_test, 1, quantile, 0.025)
-test_ub <- apply(bcf_model_warmstart_rfx$tau_hat_test, 1, quantile, 0.975)
+test_lb <- apply(bcf_model$tau_hat_test, 1, quantile, 0.025)
+test_ub <- apply(bcf_model$tau_hat_test, 1, quantile, 0.975)
 cover <- (
     (test_lb <= tau_test) & (test_ub >= tau_test)
 )
 mean(cover)
+
+# Check predictions from the original BCF model
+bcf_preds <- predict(bcf_model, X_train, Z_train, pi_train, group_ids_train, rfx_basis_train)
+plot(rowMeans(bcf_model$mu_hat_train), rowMeans(bcf_preds$mu_hat)); abline(0,1,col="red",lwd=3,lty=3)
+plot(rowMeans(bcf_model$tau_hat_train), rowMeans(bcf_preds$tau_hat)); abline(0,1,col="red",lwd=3,lty=3)
+plot(rowMeans(bcf_model$y_hat_train), rowMeans(bcf_preds$y_hat)); abline(0,1,col="red",lwd=3,lty=3)
+
+# Save the BCF model to a JSON file
+saveToJsonFile(bcf_model, "test.json")
+
+# Load the BCF model from JSON file
+bcf_model_reload <- createBCFModelFromJsonFile("test.json")
+
+# Check predictions from the reloaded BCF model
+bcf_preds_reload <- predict(bcf_model_reload, X_train, Z_train, pi_train, group_ids_train, rfx_basis_train)
+plot(rowMeans(bcf_model$mu_hat_train), rowMeans(bcf_preds_reload$mu_hat)); abline(0,1,col="red",lwd=3,lty=3)
+plot(rowMeans(bcf_model$tau_hat_train), rowMeans(bcf_preds_reload$tau_hat)); abline(0,1,col="red",lwd=3,lty=3)
+plot(rowMeans(bcf_model$y_hat_train), rowMeans(bcf_preds_reload$y_hat)); abline(0,1,col="red",lwd=3,lty=3)

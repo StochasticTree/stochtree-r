@@ -16,7 +16,8 @@ bcf(
   pi_test = NULL,
   group_ids_test = NULL,
   rfx_basis_test = NULL,
-  feature_types = rep(0, ncol(X_train)),
+  ordered_cat_vars = NULL,
+  unordered_cat_vars = NULL,
   cutpoint_grid_size = 100,
   sigma_leaf_mu = NULL,
   sigma_leaf_tau = NULL,
@@ -46,11 +47,13 @@ bcf(
   adaptive_coding = T,
   b_0 = -0.5,
   b_1 = 0.5,
-  random_seed = -1
+  random_seed = -1,
+  keep_burnin = F,
+  keep_gfr = F
 )
 }
 \arguments{
-\item{X_train}{Covariates used to split trees in the ensemble.}
+\item{X_train}{Covariates used to split trees in the ensemble. Can be passed as either a matrix or dataframe.}
 
 \item{Z_train}{Vector of (continuous or binary) treatment assignments.}
 
@@ -64,7 +67,7 @@ bcf(
 If \code{group_ids_train} is provided with a regression basis, an intercept-only random effects model
 will be estimated.}
 
-\item{X_test}{(Optional) Test set of covariates used to define "out of sample" evaluation data.}
+\item{X_test}{(Optional) Test set of covariates used to define "out of sample" evaluation data. Can be passed as either a matrix or dataframe.}
 
 \item{Z_test}{(Optional) Test set of (continuous or binary) treatment assignments.}
 
@@ -76,8 +79,9 @@ that were not in the training set.}
 
 \item{rfx_basis_test}{(Optional) Test set basis for "random-slope" regression in additive random effects model.}
 
-\item{feature_types}{Vector of length \code{ncol(X_train)} indicating the "type" of each covariates
-(0 = numeric, 1 = ordered categorical, 2 = unordered categorical). Default: \code{rep(0,ncol(X_train))}.}
+\item{ordered_cat_vars}{Vector of names of ordered categorical variables.}
+
+\item{unordered_cat_vars}{Vector of names of unordered categorical variables.}
 
 \item{cutpoint_grid_size}{Maximum size of the "grid" of potential cutpoints to consider. Default: 100.}
 
@@ -138,6 +142,10 @@ that were not in the training set.}
 \item{b_1}{Initial value of the "treatment" group coding parameter. This is ignored when Z is not binary. Default: 0.5.}
 
 \item{random_seed}{Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to \code{std::random_device}.}
+
+\item{keep_burnin}{Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.}
+
+\item{keep_gfr}{Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.}
 }
 \value{
 List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).

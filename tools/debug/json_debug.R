@@ -80,7 +80,22 @@ forest_dataset_test_roundtrip <- createForestDataset(X_test, W_test)
 forest_preds_test_roundtrip <- forest_samples_roundtrip$predict(forest_dataset_test_roundtrip)*y_scale + y_bar
 plot(rowMeans(forest_preds_test_orig), rowMeans(forest_preds_test_roundtrip)); abline(0,1,col="red",lwd=3,lty=3)
 
-# Convert the forest back from json to RandomEffectsSamples
+# Check RandomEffectsSamples
 rfx_samples_roundtrip <- loadRandomEffectSamplesJson(jsonobj, 0)
+rfx_preds_test_roundtrip <- rfx_samples_roundtrip$predict(group_ids_test, rfx_basis_test)*y_scale
+plot(rowMeans(rfx_preds_test_orig), rowMeans(rfx_preds_test_roundtrip)); abline(0,1,col="red",lwd=3,lty=3)
+
+# Now, test the full file serialization roundtrip
+json_filename <- "test.json"
+jsonobj$save_file(json_filename)
+jsonobj_reload <- createCppJsonFile(json_filename)
+
+# Check ForestSamples
+forest_samples_roundtrip <- loadForestContainerJson(jsonobj_reload, "forest_0")
+forest_preds_test_roundtrip <- forest_samples_roundtrip$predict(forest_dataset_test_roundtrip)*y_scale + y_bar
+plot(rowMeans(forest_preds_test_orig), rowMeans(forest_preds_test_roundtrip)); abline(0,1,col="red",lwd=3,lty=3)
+
+# Check RandomEffectsSamples
+rfx_samples_roundtrip <- loadRandomEffectSamplesJson(jsonobj_reload, 0)
 rfx_preds_test_roundtrip <- rfx_samples_roundtrip$predict(group_ids_test, rfx_basis_test)*y_scale
 plot(rowMeans(rfx_preds_test_orig), rowMeans(rfx_preds_test_roundtrip)); abline(0,1,col="red",lwd=3,lty=3)
