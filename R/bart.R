@@ -359,8 +359,8 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
         "num_samples" = num_samples, 
         "has_basis" = !is.null(W_train), 
         "has_rfx" = has_rfx, 
-        "has_basis_rfx" = has_basis_rfx, 
-        "num_basis_rfx" = num_basis_rfx
+        "has_rfx_basis" = has_basis_rfx, 
+        "num_rfx_basis" = num_basis_rfx
     )
     result <- list(
         "forests" = forest_samples, 

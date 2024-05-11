@@ -179,16 +179,3 @@ createForestContainer <- function(num_trees, output_dimension=1, is_leaf_constan
         ForestSamples$new(num_trees, output_dimension, is_leaf_constant)
     )))
 }
-
-#' Load a container of forest samples from json
-#'
-#' @param json_object Object of class `CppJson`
-#' @param json_forest_label Label referring to a particular forest (i.e. "forest_0") in the overall json hierarchy
-#'
-#' @return `ForestSamples` object
-#' @export
-loadForestContainerJson <- function(json_object, json_forest_label) {
-    invisible(output <- ForestSamples$new(0,1,T))
-    output$load_from_json(json_object, json_forest_label)
-    return(output)
-}

@@ -32,10 +32,21 @@ Wrapper around a C++ container of tree ensembles
 \item \href{#method-CppJson-add_forest}{\code{CppJson$add_forest()}}
 \item \href{#method-CppJson-add_random_effects}{\code{CppJson$add_random_effects()}}
 \item \href{#method-CppJson-add_scalar}{\code{CppJson$add_scalar()}}
+\item \href{#method-CppJson-add_boolean}{\code{CppJson$add_boolean()}}
+\item \href{#method-CppJson-add_string}{\code{CppJson$add_string()}}
 \item \href{#method-CppJson-add_vector}{\code{CppJson$add_vector()}}
+\item \href{#method-CppJson-add_string_vector}{\code{CppJson$add_string_vector()}}
+\item \href{#method-CppJson-add_list}{\code{CppJson$add_list()}}
+\item \href{#method-CppJson-add_string_list}{\code{CppJson$add_string_list()}}
 \item \href{#method-CppJson-get_scalar}{\code{CppJson$get_scalar()}}
+\item \href{#method-CppJson-get_boolean}{\code{CppJson$get_boolean()}}
+\item \href{#method-CppJson-get_string}{\code{CppJson$get_string()}}
 \item \href{#method-CppJson-get_vector}{\code{CppJson$get_vector()}}
+\item \href{#method-CppJson-get_string_vector}{\code{CppJson$get_string_vector()}}
+\item \href{#method-CppJson-get_numeric_list}{\code{CppJson$get_numeric_list()}}
+\item \href{#method-CppJson-get_string_list}{\code{CppJson$get_string_list()}}
 \item \href{#method-CppJson-save_file}{\code{CppJson$save_file()}}
+\item \href{#method-CppJson-load_from_file}{\code{CppJson$load_from_file()}}
 }
 }
 \if{html}{\out{<hr>}}
@@ -116,6 +127,54 @@ NULL
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-add_boolean"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-add_boolean}{}}}
+\subsection{Method \code{add_boolean()}}{
+Add a boolean value to the json object under the name "field_name" (with optional subfolder "subfolder_name")
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$add_boolean(field_name, field_value, subfolder_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be added to json}
+
+\item{\code{field_value}}{Numeric value of the field to be added to json}
+
+\item{\code{subfolder_name}}{(Optional) Name of the subfolder / hierarchy under which to place the value}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-add_string"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-add_string}{}}}
+\subsection{Method \code{add_string()}}{
+Add a string value to the json object under the name "field_name" (with optional subfolder "subfolder_name")
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$add_string(field_name, field_value, subfolder_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be added to json}
+
+\item{\code{field_value}}{Numeric value of the field to be added to json}
+
+\item{\code{subfolder_name}}{(Optional) Name of the subfolder / hierarchy under which to place the value}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CppJson-add_vector"></a>}}
 \if{latex}{\out{\hypertarget{method-CppJson-add_vector}{}}}
 \subsection{Method \code{add_vector()}}{
@@ -140,12 +199,124 @@ NULL
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-add_string_vector"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-add_string_vector}{}}}
+\subsection{Method \code{add_string_vector()}}{
+Add an array to the json object under the name "field_name" (with optional subfolder "subfolder_name")
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$add_string_vector(field_name, field_vector, subfolder_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be added to json}
+
+\item{\code{field_vector}}{Character vector to be stored in json}
+
+\item{\code{subfolder_name}}{(Optional) Name of the subfolder / hierarchy under which to place the value}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-add_list"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-add_list}{}}}
+\subsection{Method \code{add_list()}}{
+Add a list of vectors (as an object map of arrays) to the json object under the name "field_name"
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$add_list(field_name, field_list)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be added to json}
+
+\item{\code{field_list}}{List to be stored in json}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-add_string_list"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-add_string_list}{}}}
+\subsection{Method \code{add_string_list()}}{
+Add a list of vectors (as an object map of arrays) to the json object under the name "field_name"
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$add_string_list(field_name, field_list)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be added to json}
+
+\item{\code{field_list}}{List to be stored in json}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CppJson-get_scalar"></a>}}
 \if{latex}{\out{\hypertarget{method-CppJson-get_scalar}{}}}
 \subsection{Method \code{get_scalar()}}{
 Retrieve a scalar value from the json object under the name "field_name" (with optional subfolder "subfolder_name")
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{CppJson$get_scalar(field_name, subfolder_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be accessed from json}
+
+\item{\code{subfolder_name}}{(Optional) Name of the subfolder / hierarchy under which the field is stored}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-get_boolean"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-get_boolean}{}}}
+\subsection{Method \code{get_boolean()}}{
+Retrieve a boolean value from the json object under the name "field_name" (with optional subfolder "subfolder_name")
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$get_boolean(field_name, subfolder_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be accessed from json}
+
+\item{\code{subfolder_name}}{(Optional) Name of the subfolder / hierarchy under which the field is stored}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-get_string"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-get_string}{}}}
+\subsection{Method \code{get_string()}}{
+Retrieve a string value from the json object under the name "field_name" (with optional subfolder "subfolder_name")
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$get_string(field_name, subfolder_name = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -184,12 +355,98 @@ NULL
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-get_string_vector"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-get_string_vector}{}}}
+\subsection{Method \code{get_string_vector()}}{
+Retrieve a character vector from the json object under the name "field_name" (with optional subfolder "subfolder_name")
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$get_string_vector(field_name, subfolder_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be accessed from json}
+
+\item{\code{subfolder_name}}{(Optional) Name of the subfolder / hierarchy under which the field is stored}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-get_numeric_list"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-get_numeric_list}{}}}
+\subsection{Method \code{get_numeric_list()}}{
+Reconstruct a list of numeric vectors from the json object stored under "field_name"
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$get_numeric_list(field_name, key_names)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be added to json}
+
+\item{\code{key_names}}{Vector of names of list elements (each of which is a vector)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-get_string_list"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-get_string_list}{}}}
+\subsection{Method \code{get_string_list()}}{
+Reconstruct a list of string vectors from the json object stored under "field_name"
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$get_string_list(field_name, key_names)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{field_name}}{The name of the field to be added to json}
+
+\item{\code{key_names}}{Vector of names of list elements (each of which is a vector)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CppJson-save_file"></a>}}
 \if{latex}{\out{\hypertarget{method-CppJson-save_file}{}}}
 \subsection{Method \code{save_file()}}{
 Save a json object to file
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{CppJson$save_file(filename)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{filename}}{String of filepath, must end in ".json"}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CppJson-load_from_file"></a>}}
+\if{latex}{\out{\hypertarget{method-CppJson-load_from_file}{}}}
+\subsection{Method \code{load_from_file()}}{
+Load a json object from file
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CppJson$load_from_file(filename)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

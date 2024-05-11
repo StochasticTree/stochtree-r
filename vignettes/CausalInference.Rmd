@@ -20,8 +20,6 @@ To begin, we load the stochtree package.
 
 ```{r setup}
 library(stochtree)
-library(ggplot2)
-library(latex2exp)
 ```
 
 We also define several simple functions that configue the data generating processes used in this vignette.
@@ -107,7 +105,7 @@ num_mcmc <- 1000
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_warmstart <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
 )
@@ -116,17 +114,16 @@ bcf_model_warmstart <- bcf(
 Inspect the BART samples that were initialized with an XBART warm-start
 
 ```{r bart_warmstart_plot}
-sample_inds <- (num_gfr+1):num_samples
-plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+plot(rowMeans(bcf_model_warmstart$mu_hat_test), mu_test, 
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+plot(rowMeans(bcf_model_warmstart$tau_hat_test), tau_test, 
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples, sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples, sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples, ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```
@@ -154,7 +151,7 @@ num_mcmc <- 1000
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_root <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
 )
@@ -163,17 +160,16 @@ bcf_model_root <- bcf(
 Inspect the BART samples after burnin
 
 ```{r bart_root_plot}
-sample_inds <- (num_burnin+1):num_samples
-plot(rowMeans(bcf_model_root$mu_hat_test[,sample_inds]), mu_test, 
+plot(rowMeans(bcf_model_root$mu_hat_test), mu_test, 
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_root$tau_hat_test[,sample_inds]), tau_test, 
+plot(rowMeans(bcf_model_root$tau_hat_test), tau_test, 
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
+plot_bounds <- c(min(c(bcf_model_root$sigma2_samples, sigma_observed)), 
+                 max(c(bcf_model_root$sigma2_samples, sigma_observed)))
+plot(bcf_model_root$sigma2_samples, ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```
@@ -263,7 +259,7 @@ num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_warmstart <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
 )
@@ -272,17 +268,16 @@ bcf_model_warmstart <- bcf(
 Inspect the BART samples that were initialized with an XBART warm-start
 
 ```{r bart_warmstart_plot_2}
-sample_inds <- (num_gfr+1):num_samples
-plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+plot(rowMeans(bcf_model_warmstart$mu_hat_test), mu_test, 
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+plot(rowMeans(bcf_model_warmstart$tau_hat_test), tau_test, 
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples, sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples, sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples, ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```
@@ -310,7 +305,7 @@ num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_root <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
 )
@@ -319,17 +314,16 @@ bcf_model_root <- bcf(
 Inspect the BART samples after burnin
 
 ```{r bart_root_plot_2}
-sample_inds <- (num_burnin+1):num_samples
-plot(rowMeans(bcf_model_root$mu_hat_test[,sample_inds]), mu_test, 
+plot(rowMeans(bcf_model_root$mu_hat_test), mu_test, 
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_root$tau_hat_test[,sample_inds]), tau_test, 
+plot(rowMeans(bcf_model_root$tau_hat_test), tau_test, 
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
+plot_bounds <- c(min(c(bcf_model_root$sigma2_samples, sigma_observed)), 
+                 max(c(bcf_model_root$sigma2_samples, sigma_observed)))
+plot(bcf_model_root$sigma2_samples, ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```
@@ -419,7 +413,7 @@ num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_warmstart <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
 )
@@ -428,17 +422,16 @@ bcf_model_warmstart <- bcf(
 Inspect the BART samples that were initialized with an XBART warm-start
 
 ```{r bart_warmstart_plot_3}
-sample_inds <- (num_gfr+1):num_samples
-plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+plot(rowMeans(bcf_model_warmstart$mu_hat_test), mu_test, 
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+plot(rowMeans(bcf_model_warmstart$tau_hat_test), tau_test, 
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples, sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples, sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples, ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```
@@ -466,7 +459,7 @@ num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_root <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
 )
@@ -475,17 +468,16 @@ bcf_model_root <- bcf(
 Inspect the BART samples after burnin
 
 ```{r bart_root_plot_3}
-sample_inds <- (num_burnin+1):num_samples
-plot(rowMeans(bcf_model_root$mu_hat_test[,sample_inds]), mu_test, 
+plot(rowMeans(bcf_model_root$mu_hat_test), mu_test, 
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_root$tau_hat_test[,sample_inds]), tau_test, 
+plot(rowMeans(bcf_model_root$tau_hat_test), tau_test, 
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
+plot_bounds <- c(min(c(bcf_model_root$sigma2_samples, sigma_observed)), 
+                 max(c(bcf_model_root$sigma2_samples, sigma_observed)))
+plot(bcf_model_root$sigma2_samples, ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```
@@ -579,7 +571,7 @@ num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_warmstart <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
 )
@@ -588,17 +580,16 @@ bcf_model_warmstart <- bcf(
 Inspect the BART samples that were initialized with an XBART warm-start
 
 ```{r bart_warmstart_plot_4}
-sample_inds <- (num_gfr+1):num_samples
-plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+plot(rowMeans(bcf_model_warmstart$mu_hat_test), mu_test, 
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+plot(rowMeans(bcf_model_warmstart$tau_hat_test), tau_test, 
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples, sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples, sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples, ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```
@@ -626,7 +617,7 @@ num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_root <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = F, sample_sigma_leaf_tau = F
 )
@@ -635,17 +626,16 @@ bcf_model_root <- bcf(
 Inspect the BART samples after burnin
 
 ```{r bart_root_plot_4}
-sample_inds <- (num_burnin+1):num_samples
-plot(rowMeans(bcf_model_root$mu_hat_test[,sample_inds]), mu_test, 
+plot(rowMeans(bcf_model_root$mu_hat_test), mu_test, 
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_root$tau_hat_test[,sample_inds]), tau_test, 
+plot(rowMeans(bcf_model_root$tau_hat_test), tau_test, 
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ)
-plot_bounds <- c(min(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_root$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_root$sigma2_samples[sample_inds], ylim = plot_bounds, 
+plot_bounds <- c(min(c(bcf_model_root$sigma2_samples, sigma_observed)), 
+                 max(c(bcf_model_root$sigma2_samples, sigma_observed)))
+plot(bcf_model_root$sigma2_samples, ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```
@@ -732,7 +722,7 @@ bcf_model_warmstart <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
     group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
     X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-    rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
+    rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F
 )
@@ -741,23 +731,22 @@ bcf_model_warmstart <- bcf(
 Inspect the BART samples that were initialized with an XBART warm-start
 
 ```{r bart_warmstart_plot_rfx}
-sample_inds <- (num_gfr+1):num_samples
-plot(rowMeans(bcf_model_warmstart$mu_hat_test[,sample_inds]), mu_test, 
+plot(rowMeans(bcf_model_warmstart$mu_hat_test), mu_test, 
      xlab = "predicted", ylab = "actual", main = "Prognostic function")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$tau_hat_test[,sample_inds]), tau_test, 
+plot(rowMeans(bcf_model_warmstart$tau_hat_test), tau_test, 
      xlab = "predicted", ylab = "actual", main = "Treatment effect")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$y_hat_test[,sample_inds]), y_test, 
+plot(rowMeans(bcf_model_warmstart$y_hat_test), y_test, 
      xlab = "predicted", ylab = "actual", main = "Outcome")
 abline(0,1,col="red",lty=3,lwd=3)
-plot(rowMeans(bcf_model_warmstart$rfx_preds_test[,sample_inds]), rfx_term_test, 
+plot(rowMeans(bcf_model_warmstart$rfx_preds_test), rfx_term_test, 
      xlab = "predicted", ylab = "actual", main = "Random effects terms")
 abline(0,1,col="red",lty=3,lwd=3)
 sigma_observed <- var(y-E_XZ-rfx_term)
-plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)), 
-                 max(c(bcf_model_warmstart$sigma2_samples[sample_inds], sigma_observed)))
-plot(bcf_model_warmstart$sigma2_samples[sample_inds], ylim = plot_bounds, 
+plot_bounds <- c(min(c(bcf_model_warmstart$sigma2_samples, sigma_observed)), 
+                 max(c(bcf_model_warmstart$sigma2_samples, sigma_observed)))
+plot(bcf_model_warmstart$sigma2_samples, ylim = plot_bounds, 
      ylab = "sigma^2", xlab = "Sample", main = "Global variance parameter")
 abline(h = sigma_observed, lty=3, lwd = 3, col = "blue")
 ```

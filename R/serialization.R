@@ -82,16 +82,89 @@ CppJson <- R6::R6Class(
         }, 
         
         #' @description
+        #' Add a boolean value to the json object under the name "field_name" (with optional subfolder "subfolder_name")
+        #' @param field_name The name of the field to be added to json
+        #' @param field_value Numeric value of the field to be added to json
+        #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which to place the value
+        #' @return NULL
+        add_boolean = function(field_name, field_value, subfolder_name = NULL) {
+            if (is.null(subfolder_name)) {
+                json_add_bool_cpp(self$json_ptr, field_name, field_value)
+            } else {
+                json_add_bool_subfolder_cpp(self$json_ptr, subfolder_name, field_name, field_value)
+            }
+        }, 
+        
+        #' @description
+        #' Add a string value to the json object under the name "field_name" (with optional subfolder "subfolder_name")
+        #' @param field_name The name of the field to be added to json
+        #' @param field_value Numeric value of the field to be added to json
+        #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which to place the value
+        #' @return NULL
+        add_string = function(field_name, field_value, subfolder_name = NULL) {
+            if (is.null(subfolder_name)) {
+                json_add_string_cpp(self$json_ptr, field_name, field_value)
+            } else {
+                json_add_string_subfolder_cpp(self$json_ptr, subfolder_name, field_name, field_value)
+            }
+        }, 
+        
+        #' @description
         #' Add an array to the json object under the name "field_name" (with optional subfolder "subfolder_name")
         #' @param field_name The name of the field to be added to json
         #' @param field_vector Vector to be stored in json
         #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which to place the value
         #' @return NULL
         add_vector = function(field_name, field_vector, subfolder_name = NULL) {
+            field_vector <- as.numeric(field_vector)
             if (is.null(subfolder_name)) {
                 json_add_vector_cpp(self$json_ptr, field_name, field_vector)
             } else {
                 json_add_vector_subfolder_cpp(self$json_ptr, subfolder_name, field_name, field_vector)
+            }
+        }, 
+        
+        #' @description
+        #' Add an array to the json object under the name "field_name" (with optional subfolder "subfolder_name")
+        #' @param field_name The name of the field to be added to json
+        #' @param field_vector Character vector to be stored in json
+        #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which to place the value
+        #' @return NULL
+        add_string_vector = function(field_name, field_vector, subfolder_name = NULL) {
+            if (is.null(subfolder_name)) {
+                json_add_string_vector_cpp(self$json_ptr, field_name, field_vector)
+            } else {
+                json_add_string_vector_subfolder_cpp(self$json_ptr, subfolder_name, field_name, field_vector)
+            }
+        }, 
+        
+        #' @description
+        #' Add a list of vectors (as an object map of arrays) to the json object under the name "field_name"
+        #' @param field_name The name of the field to be added to json
+        #' @param field_list List to be stored in json
+        #' @return NULL
+        add_list = function(field_name, field_list) {
+            stopifnot(sum(!sapply(field_list, is.vector))==0)
+            list_names <- names(field_list)
+            for (i in 1:length(field_list)) {
+                vec_name <- list_names[i]
+                vec <- field_list[[i]]
+                json_add_vector_subfolder_cpp(self$json_ptr, field_name, vec_name, vec)
+            }
+        }, 
+        
+        #' @description
+        #' Add a list of vectors (as an object map of arrays) to the json object under the name "field_name"
+        #' @param field_name The name of the field to be added to json
+        #' @param field_list List to be stored in json
+        #' @return NULL
+        add_string_list = function(field_name, field_list) {
+            stopifnot(sum(!sapply(field_list, is.vector))==0)
+            list_names <- names(field_list)
+            for (i in 1:length(field_list)) {
+                vec_name <- list_names[i]
+                vec <- field_list[[i]]
+                json_add_string_vector_subfolder_cpp(self$json_ptr, field_name, vec_name, vec)
             }
         }, 
         
@@ -107,6 +180,38 @@ CppJson <- R6::R6Class(
             } else {
                 stopifnot(json_contains_field_subfolder_cpp(self$json_ptr, subfolder_name, field_name))
                 result <- json_extract_double_subfolder_cpp(self$json_ptr, subfolder_name, field_name)
+            }
+            return(result)
+        }, 
+        
+        #' @description
+        #' Retrieve a boolean value from the json object under the name "field_name" (with optional subfolder "subfolder_name")
+        #' @param field_name The name of the field to be accessed from json
+        #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which the field is stored
+        #' @return NULL
+        get_boolean = function(field_name, subfolder_name = NULL) {
+            if (is.null(subfolder_name)) {
+                stopifnot(json_contains_field_cpp(self$json_ptr, field_name))
+                result <- json_extract_bool_cpp(self$json_ptr, field_name)
+            } else {
+                stopifnot(json_contains_field_subfolder_cpp(self$json_ptr, subfolder_name, field_name))
+                result <- json_extract_bool_subfolder_cpp(self$json_ptr, subfolder_name, field_name)
+            }
+            return(result)
+        }, 
+        
+        #' @description
+        #' Retrieve a string value from the json object under the name "field_name" (with optional subfolder "subfolder_name")
+        #' @param field_name The name of the field to be accessed from json
+        #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which the field is stored
+        #' @return NULL
+        get_string = function(field_name, subfolder_name = NULL) {
+            if (is.null(subfolder_name)) {
+                stopifnot(json_contains_field_cpp(self$json_ptr, field_name))
+                result <- json_extract_string_cpp(self$json_ptr, field_name)
+            } else {
+                stopifnot(json_contains_field_subfolder_cpp(self$json_ptr, subfolder_name, field_name))
+                result <- json_extract_string_subfolder_cpp(self$json_ptr, subfolder_name, field_name)
             }
             return(result)
         }, 
@@ -128,16 +233,131 @@ CppJson <- R6::R6Class(
         }, 
         
         #' @description
+        #' Retrieve a character vector from the json object under the name "field_name" (with optional subfolder "subfolder_name")
+        #' @param field_name The name of the field to be accessed from json
+        #' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which the field is stored
+        #' @return NULL
+        get_string_vector = function(field_name, subfolder_name = NULL) {
+            if (is.null(subfolder_name)) {
+                stopifnot(json_contains_field_cpp(self$json_ptr, field_name))
+                result <- json_extract_string_vector_cpp(self$json_ptr, field_name)
+            } else {
+                stopifnot(json_contains_field_subfolder_cpp(self$json_ptr, subfolder_name, field_name))
+                result <- json_extract_string_vector_subfolder_cpp(self$json_ptr, subfolder_name, field_name)
+            }
+            return(result)
+        }, 
+        
+        #' @description
+        #' Reconstruct a list of numeric vectors from the json object stored under "field_name"
+        #' @param field_name The name of the field to be added to json
+        #' @param key_names Vector of names of list elements (each of which is a vector)
+        #' @return NULL
+        get_numeric_list = function(field_name, key_names) {
+            output <- list()
+            for (i in 1:length(key_names)) {
+                vec_name <- key_names[i]
+                output[[vec_name]] <- json_extract_vector_subfolder_cpp(self$json_ptr, field_name, vec_name)
+            }
+            return(output)
+        }, 
+        
+        #' @description
+        #' Reconstruct a list of string vectors from the json object stored under "field_name"
+        #' @param field_name The name of the field to be added to json
+        #' @param key_names Vector of names of list elements (each of which is a vector)
+        #' @return NULL
+        get_string_list = function(field_name, key_names) {
+            output <- list()
+            for (i in 1:length(key_names)) {
+                vec_name <- key_names[i]
+                output[[vec_name]] <- json_extract_string_vector_subfolder_cpp(self$json_ptr, field_name, vec_name)
+            }
+            return(output)
+        }, 
+        
+        #' @description
         #' Save a json object to file
         #' @param filename String of filepath, must end in ".json"
         #' @return NULL
         save_file = function(filename) {
             json_save_cpp(self$json_ptr, filename)
+        }, 
+        
+        #' @description
+        #' Load a json object from file
+        #' @param filename String of filepath, must end in ".json"
+        #' @return NULL
+        load_from_file = function(filename) {
+            json_load_cpp(self$json_ptr, filename)
         }
     )
 )
 
-#' Create a C++ Json object
+#' Load a container of forest samples from json
+#'
+#' @param json_object Object of class `CppJson`
+#' @param json_forest_label Label referring to a particular forest (i.e. "forest_0") in the overall json hierarchy
+#'
+#' @return `ForestSamples` object
+#' @export
+loadForestContainerJson <- function(json_object, json_forest_label) {
+    invisible(output <- ForestSamples$new(0,1,T))
+    output$load_from_json(json_object, json_forest_label)
+    return(output)
+}
+
+#' Load a container of forest samples from json
+#'
+#' @param json_object Object of class `CppJson`
+#' @param json_rfx_num Integer index indicating the position of the random effects term to be unpacked
+#'
+#' @return `RandomEffectSamples` object
+#' @export
+loadRandomEffectSamplesJson <- function(json_object, json_rfx_num) {
+    json_rfx_container_label <- paste0("random_effect_container_", json_rfx_num)
+    json_rfx_mapper_label <- paste0("random_effect_label_mapper_", json_rfx_num)
+    json_rfx_groupids_label <- paste0("random_effect_groupids_", json_rfx_num)
+    invisible(output <- RandomEffectSamples$new())
+    output$load_from_json(json_object, json_rfx_container_label, json_rfx_mapper_label, json_rfx_groupids_label)
+    return(output)
+}
+
+#' Load a vector from json
+#'
+#' @param json_object Object of class `CppJson`
+#' @param json_vector_label Label referring to a particular vector (i.e. "sigma2_samples") in the overall json hierarchy
+#' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which vector sits
+#'
+#' @return R vector
+#' @export
+loadVectorJson <- function(json_object, json_vector_label, subfolder_name = NULL) {
+    if (is.null(subfolder_name)) {
+        output <- jsonobj$get_vector(json_vector_label, subfolder_name)
+    } else {
+        output <- jsonobj$get_vector(json_vector_label, subfolder_name)
+    }
+    return(output)
+}
+
+#' Load a scalar from json
+#'
+#' @param json_object Object of class `CppJson`
+#' @param json_scalar_label Label referring to a particular scalar / string value (i.e. "num_samples") in the overall json hierarchy
+#' @param subfolder_name (Optional) Name of the subfolder / hierarchy under which vector sits
+#'
+#' @return R vector
+#' @export
+loadScalarJson <- function(json_object, json_scalar_label, subfolder_name = NULL) {
+    if (is.null(subfolder_name)) {
+        output <- jsonobj$get_vector(json_scalar_label, subfolder_name)
+    } else {
+        output <- jsonobj$get_vector(json_scalar_label, subfolder_name)
+    }
+    return(output)
+}
+
+#' Create a new (empty) C++ Json object
 #'
 #' @return `CppJson` object
 #' @export
@@ -145,4 +365,16 @@ createCppJson <- function() {
     return(invisible((
         CppJson$new()
     )))
+}
+
+#' Create a C++ Json object from a Json file
+#'
+#' @return `CppJson` object
+#' @export
+createCppJsonFile <- function(json_filename) {
+    invisible((
+        output <- CppJson$new()
+    ))
+    output$load_from_file(json_filename)
+    return(output)
 }

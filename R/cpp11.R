@@ -200,6 +200,10 @@ rfx_model_sample_random_effects_cpp <- function(rfx_model, rfx_dataset, residual
   invisible(.Call(`_stochtree_rfx_model_sample_random_effects_cpp`, rfx_model, rfx_dataset, residual, rfx_tracker, rfx_container, global_variance, rng))
 }
 
+rfx_model_predict_cpp <- function(rfx_model, rfx_dataset, rfx_tracker) {
+  .Call(`_stochtree_rfx_model_predict_cpp`, rfx_model, rfx_dataset, rfx_tracker)
+}
+
 rfx_container_predict_cpp <- function(rfx_container, rfx_dataset, label_mapper) {
   .Call(`_stochtree_rfx_container_predict_cpp`, rfx_container, rfx_dataset, label_mapper)
 }
@@ -304,12 +308,36 @@ json_add_double_cpp <- function(json_ptr, field_name, field_value) {
   invisible(.Call(`_stochtree_json_add_double_cpp`, json_ptr, field_name, field_value))
 }
 
+json_add_bool_subfolder_cpp <- function(json_ptr, subfolder_name, field_name, field_value) {
+  invisible(.Call(`_stochtree_json_add_bool_subfolder_cpp`, json_ptr, subfolder_name, field_name, field_value))
+}
+
+json_add_bool_cpp <- function(json_ptr, field_name, field_value) {
+  invisible(.Call(`_stochtree_json_add_bool_cpp`, json_ptr, field_name, field_value))
+}
+
 json_add_vector_subfolder_cpp <- function(json_ptr, subfolder_name, field_name, field_vector) {
   invisible(.Call(`_stochtree_json_add_vector_subfolder_cpp`, json_ptr, subfolder_name, field_name, field_vector))
 }
 
 json_add_vector_cpp <- function(json_ptr, field_name, field_vector) {
   invisible(.Call(`_stochtree_json_add_vector_cpp`, json_ptr, field_name, field_vector))
+}
+
+json_add_string_vector_subfolder_cpp <- function(json_ptr, subfolder_name, field_name, field_vector) {
+  invisible(.Call(`_stochtree_json_add_string_vector_subfolder_cpp`, json_ptr, subfolder_name, field_name, field_vector))
+}
+
+json_add_string_vector_cpp <- function(json_ptr, field_name, field_vector) {
+  invisible(.Call(`_stochtree_json_add_string_vector_cpp`, json_ptr, field_name, field_vector))
+}
+
+json_add_string_subfolder_cpp <- function(json_ptr, subfolder_name, field_name, field_value) {
+  invisible(.Call(`_stochtree_json_add_string_subfolder_cpp`, json_ptr, subfolder_name, field_name, field_value))
+}
+
+json_add_string_cpp <- function(json_ptr, field_name, field_value) {
+  invisible(.Call(`_stochtree_json_add_string_cpp`, json_ptr, field_name, field_value))
 }
 
 json_contains_field_subfolder_cpp <- function(json_ptr, subfolder_name, field_name) {
@@ -328,12 +356,36 @@ json_extract_double_cpp <- function(json_ptr, field_name) {
   .Call(`_stochtree_json_extract_double_cpp`, json_ptr, field_name)
 }
 
+json_extract_bool_subfolder_cpp <- function(json_ptr, subfolder_name, field_name) {
+  .Call(`_stochtree_json_extract_bool_subfolder_cpp`, json_ptr, subfolder_name, field_name)
+}
+
+json_extract_bool_cpp <- function(json_ptr, field_name) {
+  .Call(`_stochtree_json_extract_bool_cpp`, json_ptr, field_name)
+}
+
+json_extract_string_subfolder_cpp <- function(json_ptr, subfolder_name, field_name) {
+  .Call(`_stochtree_json_extract_string_subfolder_cpp`, json_ptr, subfolder_name, field_name)
+}
+
+json_extract_string_cpp <- function(json_ptr, field_name) {
+  .Call(`_stochtree_json_extract_string_cpp`, json_ptr, field_name)
+}
+
 json_extract_vector_subfolder_cpp <- function(json_ptr, subfolder_name, field_name) {
   .Call(`_stochtree_json_extract_vector_subfolder_cpp`, json_ptr, subfolder_name, field_name)
 }
 
 json_extract_vector_cpp <- function(json_ptr, field_name) {
   .Call(`_stochtree_json_extract_vector_cpp`, json_ptr, field_name)
+}
+
+json_extract_string_vector_subfolder_cpp <- function(json_ptr, subfolder_name, field_name) {
+  .Call(`_stochtree_json_extract_string_vector_subfolder_cpp`, json_ptr, subfolder_name, field_name)
+}
+
+json_extract_string_vector_cpp <- function(json_ptr, field_name) {
+  .Call(`_stochtree_json_extract_string_vector_cpp`, json_ptr, field_name)
 }
 
 json_add_forest_cpp <- function(json_ptr, forest_samples) {
@@ -358,4 +410,8 @@ json_add_rfx_groupids_cpp <- function(json_ptr, groupids) {
 
 json_save_cpp <- function(json_ptr, filename) {
   invisible(.Call(`_stochtree_json_save_cpp`, json_ptr, filename))
+}
+
+json_load_cpp <- function(json_ptr, filename) {
+  invisible(.Call(`_stochtree_json_load_cpp`, json_ptr, filename))
 }

@@ -199,6 +199,16 @@ RandomEffectsModel <- R6::R6Class(
         },
         
         #' @description
+        #' Predict from (a single sample of a) random effects model.
+        #' @param rfx_dataset Object of type `RandomEffectsDataset`
+        #' @param rfx_tracker Object of type `RandomEffectsTracker`
+        #' @return Vector of predictions with size matching number of observations in rfx_dataset
+        predict = function(rfx_dataset, rfx_tracker) {
+            pred <- rfx_model_predict_cpp(self$rfx_model_ptr, rfx_dataset$data_ptr, rfx_tracker$rfx_tracker_ptr)
+            return(pred)
+        },
+        
+        #' @description
         #' Set value for the "working parameter." This is typically 
         #' used for initialization, but could also be used to interrupt 
         #' or override the sampler.
@@ -311,20 +321,4 @@ createRandomEffectsModel <- function(num_components, num_groups) {
     return(invisible((
         RandomEffectsModel$new(num_components, num_groups)
     )))
-}
-
-#' Load a container of forest samples from json
-#'
-#' @param json_object Object of class `CppJson`
-#' @param json_rfx_num Integer index indicating the position of the random effects term to be unpacked
-#'
-#' @return `RandomEffectSamples` object
-#' @export
-loadRandomEffectSamplesJson <- function(json_object, json_rfx_num) {
-    json_rfx_container_label <- paste0("random_effect_container_", json_rfx_num)
-    json_rfx_mapper_label <- paste0("random_effect_label_mapper_", json_rfx_num)
-    json_rfx_groupids_label <- paste0("random_effect_groupids_", json_rfx_num)
-    invisible(output <- RandomEffectSamples$new())
-    output$load_from_json(json_object, json_rfx_container_label, json_rfx_mapper_label, json_rfx_groupids_label)
-    return(output)
 }
