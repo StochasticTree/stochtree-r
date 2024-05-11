@@ -18,18 +18,20 @@
 #' X <- preprocess_list$X
 createForestCovariates <- function(input_df, ordered_cat_vars = NULL, unordered_cat_vars = NULL) {
     df_vars <- names(input_df)
-    ordered_cat_matches <- df_vars %in% ordered_cat_vars
-    unordered_cat_matches <- df_vars %in% unordered_cat_vars
-    numeric_matches <- ((!ordered_cat_matches) && (unordered_cat_matches))
+    if (is.null(ordered_cat_vars)) ordered_cat_matches <- rep(F, length(df_vars))
+    else ordered_cat_matches <- df_vars %in% ordered_cat_vars
+    if (is.null(unordered_cat_vars)) unordered_cat_matches <- rep(F, length(df_vars))
+    else unordered_cat_matches <- df_vars %in% unordered_cat_vars
+    numeric_matches <- ((!ordered_cat_matches) & (!unordered_cat_matches))
     ordered_cat_vars <- df_vars[ordered_cat_matches]
     unordered_cat_vars <- df_vars[unordered_cat_matches]
     numeric_vars <- df_vars[numeric_matches]
     num_ordered_cat_vars <- length(ordered_cat_vars)
     num_unordered_cat_vars <- length(unordered_cat_vars)
     num_numeric_vars <- length(numeric_vars)
-    if (num_ordered_cat_vars > 0) ordered_cat_df <- input_df[,ordered_cat_vars]
-    if (num_unordered_cat_vars > 0) unordered_cat_df <- input_df[,unordered_cat_vars]
-    if (num_numeric_vars > 0) numeric_df <- input_df[,numeric_vars]
+    if (num_ordered_cat_vars > 0) ordered_cat_df <- input_df[,ordered_cat_vars,drop=F]
+    if (num_unordered_cat_vars > 0) unordered_cat_df <- input_df[,unordered_cat_vars,drop=F]
+    if (num_numeric_vars > 0) numeric_df <- input_df[,numeric_vars,drop=F]
     
     # Empty outputs
     X <- double(0)
@@ -54,8 +56,8 @@ createForestCovariates <- function(input_df, ordered_cat_vars = NULL, unordered_
         for (i in 1:ncol(ordered_cat_df)) {
             var_name <- names(ordered_cat_df)[i]
             preprocess_list <- orderedCatInitializeAndPreprocess(ordered_cat_df[,i])
-            ordered_unique_levels[[var]] <- preprocess_list$unique_levels
-            Xordcat <- cbind(Xcat, preprocess_list$x_preprocessed)
+            ordered_unique_levels[[var_name]] <- preprocess_list$unique_levels
+            Xordcat <- cbind(Xordcat, preprocess_list$x_preprocessed)
         }
         X <- cbind(X, Xordcat)
         feature_types <- c(feature_types, rep(1, ncol(Xordcat)))
@@ -67,8 +69,8 @@ createForestCovariates <- function(input_df, ordered_cat_vars = NULL, unordered_
         for (i in 1:ncol(unordered_cat_df)) {
             var_name <- names(unordered_cat_df)[i]
             encode_list <- oneHotInitializeAndEncode(unordered_cat_df[,i])
-            unordered_unique_levels[[var]] <- encode_list$unique_levels
-            one_hot_mats[[var]] <- encode_list$Xtilde
+            unordered_unique_levels[[var_name]] <- encode_list$unique_levels
+            one_hot_mats[[var_name]] <- encode_list$Xtilde
         }
         Xcat <- do.call(cbind, one_hot_mats)
         X <- cbind(X, Xcat)
