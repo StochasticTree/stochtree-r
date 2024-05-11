@@ -61,7 +61,7 @@ num_mcmc <- 1000
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_warmstart_no_rfx <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F
 )
@@ -95,7 +95,7 @@ bcf_model_warmstart_rfx <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
     group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
     X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-    rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
+    rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F
 )

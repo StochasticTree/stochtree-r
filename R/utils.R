@@ -2,10 +2,10 @@
 #' to integers and one-hot encoding if need be. Returns a list including a 
 #' matrix of preprocessed covariate values and associated tracking.
 #'
-#' @param input_df Dataframe of covariates. Users may pre-process any categorical 
-#' variables as factors but it is not necessary.
-#' @param ordered_cat_vars Vector of names of ordered categorical variables.
-#' @param unordered_cat_vars Vector of names of unordered categorical variables.
+#' @param input_data Dataframe or matrix of covariates. Users may pre-process any 
+#' categorical variables as factors but it is not necessary.
+#' @param ordered_cat_vars (Optional) Vector of names of ordered categorical variables, or vector of column indices if `input_data` is a matrix.
+#' @param unordered_cat_vars (Optional) Vector of names of unordered categorical variables, or vector of column indices if `input_data` is a matrix.
 #'
 #' @return List with preprocessed data and details on the number of each type 
 #' of variable, unique categories associated with categorical variables, and the 
@@ -16,7 +16,21 @@
 #' cov_df <- data.frame(x1 = 1:5, x2 = 5:1, x3 = 6:10)
 #' preprocess_list <- createForestCovariates(cov_df)
 #' X <- preprocess_list$X
-createForestCovariates <- function(input_df, ordered_cat_vars = NULL, unordered_cat_vars = NULL) {
+createForestCovariates <- function(input_data, ordered_cat_vars = NULL, unordered_cat_vars = NULL) {
+    if (is.matrix(input_data)) {
+        input_df <- as.data.frame(input_data)
+        names(input_df) <- paste0("x", 1:ncol(input_data))
+        if (!is.null(ordered_cat_vars)) {
+            if (is.numeric(ordered_cat_vars)) ordered_cat_vars <- paste0("x", as.integer(ordered_cat_vars))
+        }
+        if (!is.null(unordered_cat_vars)) {
+            if (is.numeric(unordered_cat_vars)) unordered_cat_vars <- paste0("x", as.integer(unordered_cat_vars))
+        }
+    } else if (is.data.frame(input_data)) {
+        input_df <- input_data
+    } else {
+        stop("input_data must be either a matrix or a data frame")
+    }
     df_vars <- names(input_df)
     if (is.null(ordered_cat_vars)) ordered_cat_matches <- rep(F, length(df_vars))
     else ordered_cat_matches <- df_vars %in% ordered_cat_vars
@@ -39,14 +53,14 @@ createForestCovariates <- function(input_df, ordered_cat_vars = NULL, unordered_
     ordered_unique_levels <- list()
     feature_types <- integer(0)
     
-    # Finally, extract the numeric covariates
+    # First, extract the numeric covariates
     if (num_numeric_vars > 0) {
         Xnum <- double(0)
         for (i in 1:ncol(numeric_df)) {
             stopifnot(is.numeric(numeric_df[,i]))
             Xnum <- cbind(Xnum, numeric_df[,i])
         }
-        X <- cbind(X, Xnum)
+        X <- cbind(X, unname(Xnum))
         feature_types <- c(feature_types, rep(0, ncol(Xnum)))
     }
     
@@ -59,11 +73,11 @@ createForestCovariates <- function(input_df, ordered_cat_vars = NULL, unordered_
             ordered_unique_levels[[var_name]] <- preprocess_list$unique_levels
             Xordcat <- cbind(Xordcat, preprocess_list$x_preprocessed)
         }
-        X <- cbind(X, Xordcat)
+        X <- cbind(X, unname(Xordcat))
         feature_types <- c(feature_types, rep(1, ncol(Xordcat)))
     }
     
-    # First, one-hot encode the unordered categorical covariates
+    # Finally, one-hot encode the unordered categorical covariates
     if (num_unordered_cat_vars > 0) {
         one_hot_mats <- list()
         for (i in 1:ncol(unordered_cat_df)) {
@@ -73,29 +87,114 @@ createForestCovariates <- function(input_df, ordered_cat_vars = NULL, unordered_
             one_hot_mats[[var_name]] <- encode_list$Xtilde
         }
         Xcat <- do.call(cbind, one_hot_mats)
-        X <- cbind(X, Xcat)
+        X <- cbind(X, unname(Xcat))
         feature_types <- c(feature_types, rep(1, ncol(Xcat)))
     }
     
     # Aggregate results into a list
-    output <- list(
-        X = X, 
+    metadata <- list(
         feature_types = feature_types, 
         num_ordered_cat_vars = num_ordered_cat_vars, 
         num_unordered_cat_vars = num_unordered_cat_vars, 
         num_numeric_vars = num_numeric_vars
     )
     if (num_ordered_cat_vars > 0) {
-        output[["ordered_cat_vars"]] = ordered_cat_vars
-        output[["ordered_unique_levels"]] = ordered_unique_levels
+        metadata[["ordered_cat_vars"]] = ordered_cat_vars
+        metadata[["ordered_unique_levels"]] = ordered_unique_levels
     }
     if (num_unordered_cat_vars > 0) {
-        output[["unordered_cat_vars"]] = unordered_cat_vars
-        output[["unordered_unique_levels"]] = unordered_unique_levels
+        metadata[["unordered_cat_vars"]] = unordered_cat_vars
+        metadata[["unordered_unique_levels"]] = unordered_unique_levels
     }
-    if (num_numeric_vars > 0) output[["numeric_vars"]] = numeric_vars
+    if (num_numeric_vars > 0) metadata[["numeric_vars"]] = numeric_vars
+    output <- list(
+        data = X, 
+        metadata = metadata
+    )
     
     return(output)
+}
+
+#' Preprocess a dataframe of covariate values, converting categorical variables 
+#' to integers and one-hot encoding if need be. Returns a list including a 
+#' matrix of preprocessed covariate values and associated tracking.
+#'
+#' @param input_data Dataframe or matrix of covariates. Users may pre-process any 
+#' categorical variables as factors but it is not necessary.
+#' @param metadata List containing information on variables, including train set 
+#' categories for categorical variables
+#'
+#' @return Preprocessed data with categorical variables appropriately preprocessed
+#' @export
+#'
+#' @examples
+#' cov_df <- data.frame(x1 = 1:5, x2 = 5:1, x3 = 6:10)
+#' metadata <- list(num_ordered_cat_vars = 0, num_unordered_cat_vars = 0, num_numeric_vars = 3)
+#' X_preprocessed <- createForestCovariatesFromMetadata(cov_df, metadata)
+createForestCovariatesFromMetadata <- function(input_data, metadata) {
+    if (is.matrix(input_data)) {
+        input_df <- as.data.frame(input_data)
+        names(input_df) <- paste0("x", 1:ncol(input_data))
+    } else if (is.data.frame(input_data)) {
+        input_df <- input_data
+    } else {
+        stop("input_data must be either a matrix or a data frame")
+    }
+    df_vars <- names(input_df)
+    num_ordered_cat_vars <- metadata$num_ordered_cat_vars
+    num_unordered_cat_vars <- metadata$num_unordered_cat_vars
+    num_numeric_vars <- metadata$num_numeric_vars
+    
+    if (num_ordered_cat_vars > 0) {
+        ordered_cat_vars <- metadata$ordered_cat_vars
+        ordered_cat_df <- input_df[,ordered_cat_vars,drop=F]
+    }
+    if (num_unordered_cat_vars > 0) {
+        unordered_cat_vars <- metadata$unordered_cat_vars
+        unordered_cat_df <- input_df[,unordered_cat_vars,drop=F]
+    }
+    if (num_numeric_vars > 0) {
+        numeric_vars <- metadata$numeric_vars
+        numeric_df <- input_df[,numeric_vars,drop=F]
+    }
+        
+    # Empty outputs
+    X <- double(0)
+
+    # First, extract the numeric covariates
+    if (num_numeric_vars > 0) {
+        Xnum <- double(0)
+        for (i in 1:ncol(numeric_df)) {
+            stopifnot(is.numeric(numeric_df[,i]))
+            Xnum <- cbind(Xnum, numeric_df[,i])
+        }
+        X <- cbind(X, unname(Xnum))
+    }
+    
+    # Next, run some simple preprocessing on the ordered categorical covariates
+    if (num_ordered_cat_vars > 0) {
+        Xordcat <- double(0)
+        for (i in 1:ncol(ordered_cat_df)) {
+            var_name <- names(ordered_cat_df)[i]
+            x_preprocessed <- orderedCatPreprocess(ordered_cat_df[,i], metadata$ordered_unique_levels[[var_name]])
+            Xordcat <- cbind(Xordcat, x_preprocessed)
+        }
+        X <- cbind(X, unname(Xordcat))
+    }
+    
+    # Finally, one-hot encode the unordered categorical covariates
+    if (num_unordered_cat_vars > 0) {
+        one_hot_mats <- list()
+        for (i in 1:ncol(unordered_cat_df)) {
+            var_name <- names(unordered_cat_df)[i]
+            Xtilde <- oneHotEncode(unordered_cat_df[,i], metadata$unordered_unique_levels[[var_name]])
+            one_hot_mats[[var_name]] <- Xtilde
+        }
+        Xcat <- do.call(cbind, one_hot_mats)
+        X <- cbind(X, unname(Xcat))
+    }
+    
+    return(X)
 }
 
 #' Convert a vector of unordered categorical data (either numeric or character 

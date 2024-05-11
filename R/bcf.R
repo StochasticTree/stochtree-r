@@ -1,6 +1,6 @@
 #' Run the Bayesian Causal Forest (BCF) algorithm for regularized causal effect estimation. 
 #'
-#' @param X_train Covariates used to split trees in the ensemble.
+#' @param X_train Covariates used to split trees in the ensemble. Can be passed as either a matrix or dataframe.
 #' @param Z_train Vector of (continuous or binary) treatment assignments.
 #' @param y_train Outcome to be modeled by the ensemble.
 #' @param pi_train (Optional) Vector of propensity scores. If not provided, this will be estimated from the data.
@@ -8,15 +8,15 @@
 #' @param rfx_basis_train (Optional) Basis for "random-slope" regression in an additive random effects model.
 #' If `group_ids_train` is provided with a regression basis, an intercept-only random effects model 
 #' will be estimated.
-#' @param X_test (Optional) Test set of covariates used to define "out of sample" evaluation data.
+#' @param X_test (Optional) Test set of covariates used to define "out of sample" evaluation data. Can be passed as either a matrix or dataframe.
 #' @param Z_test (Optional) Test set of (continuous or binary) treatment assignments.
 #' @param pi_test (Optional) Vector of propensity scores. If not provided, this will be estimated from the data.
 #' @param group_ids_test (Optional) Test set group labels used for an additive random effects model. 
 #' We do not currently support (but plan to in the near future), test set evaluation for group labels
 #' that were not in the training set.
 #' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
-#' @param feature_types Vector of length `ncol(X_train)` indicating the "type" of each covariates 
-#' (0 = numeric, 1 = ordered categorical, 2 = unordered categorical). Default: `rep(0,ncol(X_train))`.
+#' @param ordered_cat_vars Vector of names of ordered categorical variables.
+#' @param unordered_cat_vars Vector of names of unordered categorical variables.
 #' @param cutpoint_grid_size Maximum size of the "grid" of potential cutpoints to consider. Default: 100.
 #' @param sigma_leaf_mu Starting value of leaf node scale parameter for the prognostic forest. Calibrated internally as `2/num_trees_mu` if not set here.
 #' @param sigma_leaf_tau Starting value of leaf node scale parameter for the treatment effect forest. Calibrated internally as `1/num_trees_tau` if not set here.
@@ -97,8 +97,8 @@
 #' # abline(0,1,col="red",lty=3,lwd=3)
 bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NULL, 
                 rfx_basis_train = NULL, X_test = NULL, Z_test = NULL, pi_test = NULL, 
-                group_ids_test = NULL, rfx_basis_test = NULL, 
-                feature_types = rep(0, ncol(X_train)), cutpoint_grid_size = 100, 
+                group_ids_test = NULL, rfx_basis_test = NULL, ordered_cat_vars = NULL, 
+                unordered_cat_vars = NULL, cutpoint_grid_size = 100, 
                 sigma_leaf_mu = NULL, sigma_leaf_tau = NULL, alpha_mu = 0.95, alpha_tau = 0.25, 
                 beta_mu = 2.0, beta_tau = 3.0, min_samples_leaf_mu = 5, min_samples_leaf_tau = 5, 
                 nu = 3, lambda = NULL, a_leaf_mu = 3, a_leaf_tau = 3, b_leaf_mu = NULL, b_leaf_tau = NULL, 
@@ -106,18 +106,34 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
                 num_burnin = 0, num_mcmc = 100, sample_sigma_global = T, sample_sigma_leaf_mu = T, 
                 sample_sigma_leaf_tau = F, propensity_covariate = "mu", adaptive_coding = T,
                 b_0 = -0.5, b_1 = 0.5, random_seed = -1) {
-    # Convert all input data to matrices if not already converted
+    # Preprocess covariates
     if ((is.null(dim(X_train))) && (!is.null(X_train))) {
         X_train <- as.matrix(X_train)
     }
+    if ((is.null(dim(X_test))) && (!is.null(X_test))) {
+        X_test <- as.matrix(X_test)
+    }
+    if (!is.matrix(X_train) && !is.data.frame(X_train)) {
+        stop("X_train must be a matrix or dataframe")
+    }
+    if (!is.null(X_test)){
+        if (!is.matrix(X_test) && !is.data.frame(X_test)) {
+            stop("X_test must be a matrix or dataframe")
+        }
+    }
+    train_cov_preprocess_list <- createForestCovariates(X_train, ordered_cat_vars = ordered_cat_vars, 
+                                                        unordered_cat_vars = unordered_cat_vars)
+    X_train_metadata <- train_cov_preprocess_list$metadata
+    X_train <- train_cov_preprocess_list$data
+    feature_types <- X_train_metadata$feature_types
+    if (!is.null(X_test)) X_test <- createForestCovariatesFromMetadata(X_test, X_train_metadata)
+    
+    # Convert all input data to matrices if not already converted
     if ((is.null(dim(Z_train))) && (!is.null(Z_train))) {
         Z_train <- as.matrix(as.numeric(Z_train))
     }
     if ((is.null(dim(pi_train))) && (!is.null(pi_train))) {
         pi_train <- as.matrix(pi_train)
-    }
-    if ((is.null(dim(X_test))) && (!is.null(X_test))) {
-        X_test <- as.matrix(X_test)
     }
     if ((is.null(dim(Z_test))) && (!is.null(Z_test))) {
         Z_test <- as.matrix(as.numeric(Z_test))

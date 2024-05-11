@@ -69,7 +69,7 @@ simulation_function = function(n, mu=mu1, tau=tau2, gfr_iter=10, burnin_iter=100
     num_samples <- num_gfr + num_burnin + num_mcmc
     bcf_model_warmstart <- bcf(
         X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-        X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+        X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
         num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
         sample_sigma_leaf_mu = sample_tau, sample_sigma_leaf_tau = F, 
         num_trees_mu = 200, num_trees_tau = 50
@@ -92,7 +92,7 @@ simulation_function = function(n, mu=mu1, tau=tau2, gfr_iter=10, burnin_iter=100
     num_samples <- num_gfr + num_burnin + num_mcmc
     bcf_model_root <- bcf(
         X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-        X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,1,1), 
+        X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
         num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
         sample_sigma_leaf_mu = sample_tau, sample_sigma_leaf_tau = F, 
         num_trees_mu = 200, num_trees_tau = 50

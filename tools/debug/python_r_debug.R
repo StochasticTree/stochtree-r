@@ -77,7 +77,7 @@ num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_warmstart <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, feature_types = c(0,0,0,0,0), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test,  
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F
 )
