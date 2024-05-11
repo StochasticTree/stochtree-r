@@ -38,6 +38,12 @@ reference:
   - createOutcome
   - RandomEffectsDataset
   - createRandomEffectsDataset
+  - createForestCovariates
+  - createForestCovariatesFromMetadata
+  - oneHotEncode
+  - oneHotInitializeAndEncode
+  - orderedCatPreprocess
+  - orderedCatInitializeAndPreprocess
 
 - subtitle: Forest
   desc: >
