@@ -35,18 +35,17 @@ createForestCovariates <- function(input_df, ordered_cat_vars = NULL, unordered_
     X <- double(0)
     unordered_unique_levels <- list()
     ordered_unique_levels <- list()
-
-    # First, one-hot encode the unordered categorical covariates
-    if (num_unordered_cat_vars > 0) {
-        one_hot_mats <- list()
-        for (i in 1:ncol(unordered_cat_df)) {
-            var_name <- names(unordered_cat_df)[i]
-            encode_list <- oneHotInitializeAndEncode(unordered_cat_df[,i])
-            unordered_unique_levels[[var]] <- encode_list$unique_levels
-            one_hot_mats[[var]] <- encode_list$Xtilde
+    feature_types <- integer(0)
+    
+    # Finally, extract the numeric covariates
+    if (num_numeric_vars > 0) {
+        Xnum <- double(0)
+        for (i in 1:ncol(numeric_df)) {
+            stopifnot(is.numeric(numeric_df[,i]))
+            Xnum <- cbind(Xnum, numeric_df[,i])
         }
-        Xcat <- do.call(cbind, one_hot_mats)
-        X <- cbind(X, Xcat)
+        X <- cbind(X, Xnum)
+        feature_types <- c(feature_types, rep(0, ncol(Xnum)))
     }
     
     # Next, run some simple preprocessing on the ordered categorical covariates
@@ -59,21 +58,27 @@ createForestCovariates <- function(input_df, ordered_cat_vars = NULL, unordered_
             Xordcat <- cbind(Xcat, preprocess_list$x_preprocessed)
         }
         X <- cbind(X, Xordcat)
+        feature_types <- c(feature_types, rep(1, ncol(Xordcat)))
     }
-
-    # Finally, extract the numeric covariates
-    if (num_numeric_vars > 0) {
-        Xnum <- double(0)
-        for (i in 1:ncol(numeric_df)) {
-            stopifnot(is.numeric(numeric_df[,i]))
-            Xnum <- cbind(Xnum, numeric_df[,i])
+    
+    # First, one-hot encode the unordered categorical covariates
+    if (num_unordered_cat_vars > 0) {
+        one_hot_mats <- list()
+        for (i in 1:ncol(unordered_cat_df)) {
+            var_name <- names(unordered_cat_df)[i]
+            encode_list <- oneHotInitializeAndEncode(unordered_cat_df[,i])
+            unordered_unique_levels[[var]] <- encode_list$unique_levels
+            one_hot_mats[[var]] <- encode_list$Xtilde
         }
-        X <- cbind(X, Xnum)
+        Xcat <- do.call(cbind, one_hot_mats)
+        X <- cbind(X, Xcat)
+        feature_types <- c(feature_types, rep(1, ncol(Xcat)))
     }
     
     # Aggregate results into a list
     output <- list(
-        X = X,
+        X = X, 
+        feature_types = feature_types, 
         num_ordered_cat_vars = num_ordered_cat_vars, 
         num_unordered_cat_vars = num_unordered_cat_vars, 
         num_numeric_vars = num_numeric_vars
