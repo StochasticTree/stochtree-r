@@ -628,7 +628,8 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         "model_params" = model_params, 
         "mu_hat_train" = mu_hat_train, 
         "tau_hat_train" = tau_hat_train, 
-        "y_hat_train" = y_hat_train
+        "y_hat_train" = y_hat_train, 
+        "train_set_metadata" = X_train_metadata
     )
     if (has_test) result[["mu_hat_test"]] = mu_hat_test
     if (has_test) result[["tau_hat_test"]] = tau_hat_test
@@ -710,10 +711,19 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' # plot(rowMeans(preds$tau_hat), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")
 #' # abline(0,1,col="red",lty=3,lwd=3)
 predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL){
-    # Convert all input data to matrices if not already converted
+    # Preprocess covariates
     if ((is.null(dim(X_test))) && (!is.null(X_test))) {
         X_test <- as.matrix(X_test)
     }
+    if (!is.null(X_test)){
+        if (!is.matrix(X_test) && !is.data.frame(X_test)) {
+            stop("X_test must be a matrix or dataframe")
+        }
+    }
+    train_set_metadata <- bcf$train_set_metadata
+    if (!is.null(X_test)) X_test <- createForestCovariatesFromMetadata(X_test, train_set_metadata)
+    
+    # Convert all input data to matrices if not already converted
     if ((is.null(dim(Z_test))) && (!is.null(Z_test))) {
         Z_test <- as.matrix(as.numeric(Z_test))
     }
