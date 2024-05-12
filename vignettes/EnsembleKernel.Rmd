@@ -2,7 +2,7 @@
 title: "Kernel Methods from Tree Ensembles in StochTree"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Prototype-Interface}
+  %\VignetteIndexEntry{Ensemble-Kernel}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 bibliography: vignettes.bib

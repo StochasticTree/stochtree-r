@@ -22,7 +22,7 @@ To begin, we load the stochtree package.
 library(stochtree)
 ```
 
-We also define several simple functions that configue the data generating processes used in this vignette.
+We also define several simple functions that configure the data generating processes used in this vignette.
 
 ```{r}
 g <- function(x) {ifelse(x[,5]==1,2,ifelse(x[,5]==2,-1,-4))}

@@ -192,7 +192,7 @@ mu_train <- mu_x[train_inds]
 tau_test <- tau_x[test_inds]
 tau_train <- tau_x[train_inds]
 bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-                 X_test = X_test, Z_test = Z_test, pi_test = pi_test)
+                 X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5))
 # plot(rowMeans(bcf_model$mu_hat_test), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")
 # abline(0,1,col="red",lty=3,lwd=3)
 # plot(rowMeans(bcf_model$tau_hat_test), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")

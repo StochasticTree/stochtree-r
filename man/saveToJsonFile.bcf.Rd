@@ -62,10 +62,12 @@ rfx_basis_test <- rfx_basis[test_inds,]
 rfx_basis_train <- rfx_basis[train_inds,]
 rfx_term_test <- rfx_term[test_inds]
 rfx_term_train <- rfx_term[train_inds]
-bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-                 group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
-                 X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-                 rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
-                 num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
-saveToJsonFile(bcf_model, "test.json")
+bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, 
+                 pi_train = pi_train, group_ids_train = group_ids_train, 
+                 rfx_basis_train = rfx_basis_train, X_test = X_test, 
+                 Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+                 rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
+                 num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
+                 sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+# saveToJsonFile(bcf_model, "test.json")
 }

@@ -92,7 +92,7 @@
 #' tau_test <- tau_x[test_inds]
 #' tau_train <- tau_x[train_inds]
 #' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test)
+#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5))
 #' # plot(rowMeans(bcf_model$mu_hat_test), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")
 #' # abline(0,1,col="red",lty=3,lwd=3)
 #' # plot(rowMeans(bcf_model$tau_hat_test), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")
@@ -761,7 +761,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' mu_train <- mu_x[train_inds]
 #' tau_test <- tau_x[test_inds]
 #' tau_train <- tau_x[train_inds]
-#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train)
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, ordered_cat_vars = c(4,5))
 #' preds <- predict(bcf_model, X_test, Z_test, pi_test)
 #' # plot(rowMeans(preds$mu_hat), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")
 #' # abline(0,1,col="red",lty=3,lwd=3)
@@ -935,11 +935,13 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NU
 #' rfx_basis_train <- rfx_basis[train_inds,]
 #' rfx_term_test <- rfx_term[test_inds]
 #' rfx_term_train <- rfx_term[train_inds]
-#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-#'                  group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
-#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-#'                  rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
-#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, 
+#'                  pi_train = pi_train, group_ids_train = group_ids_train, 
+#'                  rfx_basis_train = rfx_basis_train, X_test = X_test, 
+#'                  Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+#'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
+#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
+#'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
 #' rfx_samples <- getRandomEffectSamples(bcf_model)
 getRandomEffectSamples.bcf <- function(object, ...){
     result = list()
@@ -1016,12 +1018,14 @@ getRandomEffectSamples.bcf <- function(object, ...){
 #' rfx_basis_train <- rfx_basis[train_inds,]
 #' rfx_term_test <- rfx_term[test_inds]
 #' rfx_term_train <- rfx_term[train_inds]
-#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-#'                  group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
-#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-#'                  rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
-#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
-#' bcf_json <- convertToJson(bcf_model)
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, 
+#'                  pi_train = pi_train, group_ids_train = group_ids_train, 
+#'                  rfx_basis_train = rfx_basis_train, X_test = X_test, 
+#'                  Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+#'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
+#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
+#'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+#' # bcf_json <- convertToJson(bcf_model)
 convertToJson.bcf <- function(object, ...){
     jsonobj <- createCppJson()
     
@@ -1144,12 +1148,14 @@ convertToJson.bcf <- function(object, ...){
 #' rfx_basis_train <- rfx_basis[train_inds,]
 #' rfx_term_test <- rfx_term[test_inds]
 #' rfx_term_train <- rfx_term[train_inds]
-#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-#'                  group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
-#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-#'                  rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
-#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
-#' saveToJsonFile(bcf_model, "test.json")
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, 
+#'                  pi_train = pi_train, group_ids_train = group_ids_train, 
+#'                  rfx_basis_train = rfx_basis_train, X_test = X_test, 
+#'                  Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+#'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
+#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
+#'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+#' # saveToJsonFile(bcf_model, "test.json")
 saveToJsonFile.bcf <- function(object, filename, ...){
     # Convert to Json
     jsonobj <- convertToJson.bcf(object)
@@ -1214,13 +1220,15 @@ saveToJsonFile.bcf <- function(object, filename, ...){
 #' rfx_basis_train <- rfx_basis[train_inds,]
 #' rfx_term_test <- rfx_term[test_inds]
 #' rfx_term_train <- rfx_term[train_inds]
-#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-#'                  group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
-#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-#'                  rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
-#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
-#' bcf_json <- convertToJson(bcf_model)
-#' bcf_model_roundtrip <- createBCFModelFromJson(bcf_json)
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, 
+#'                  pi_train = pi_train, group_ids_train = group_ids_train, 
+#'                  rfx_basis_train = rfx_basis_train, X_test = X_test, 
+#'                  Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+#'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
+#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
+#'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+#' # bcf_json <- convertToJson(bcf_model)
+#' # bcf_model_roundtrip <- createBCFModelFromJson(bcf_json)
 createBCFModelFromJson <- function(json_object){
     # Initialize the BCF model
     output <- list()
@@ -1347,13 +1355,15 @@ createBCFModelFromJson <- function(json_object){
 #' rfx_basis_train <- rfx_basis[train_inds,]
 #' rfx_term_test <- rfx_term[test_inds]
 #' rfx_term_train <- rfx_term[train_inds]
-#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-#'                  group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
-#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-#'                  rfx_basis_test = rfx_basis_test, feature_types = c(0,0,0,1,1), 
-#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
-#' bcf_model_roundtrip <- createBCFModelFromJsonFile("test.json")
-#' saveToJsonFile(bcf_model, "test.json")
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, 
+#'                  pi_train = pi_train, group_ids_train = group_ids_train, 
+#'                  rfx_basis_train = rfx_basis_train, X_test = X_test, 
+#'                  Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
+#'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
+#'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
+#'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
+#' # saveToJsonFile(bcf_model, "test.json")
+#' # bcf_model_roundtrip <- createBCFModelFromJsonFile("test.json")
 createBCFModelFromJsonFile <- function(json_filename){
     # Load a `CppJson` object from file
     bcf_json <- createCppJsonFile(json_filename)
