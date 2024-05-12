@@ -1040,8 +1040,8 @@ getRandomEffectSamples.bcf <- function(object, ...){
 #'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
 #'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
 #'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
-#' # bcf_json <- convertToJson(bcf_model)
-convertToJson.bcf <- function(object, ...){
+#' # bcf_json <- convertBCFModelToJson(bcf_model)
+convertBCFModelToJson <- function(object){
     jsonobj <- createCppJson()
     
     if (is.null(object$model_params)) {
@@ -1171,10 +1171,10 @@ convertToJson.bcf <- function(object, ...){
 #'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
 #'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
 #'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
-#' # saveToJsonFile(bcf_model, "test.json")
-saveToJsonFile.bcf <- function(object, filename, ...){
+#' # saveBCFModelToJsonFile(bcf_model, "test.json")
+saveBCFModelToJsonFile <- function(object, filename){
     # Convert to Json
-    jsonobj <- convertToJson.bcf(object)
+    jsonobj <- convertBCFModelToJson(object)
     
     # Save to file
     jsonobj$save_file(filename)
@@ -1243,7 +1243,7 @@ saveToJsonFile.bcf <- function(object, filename, ...){
 #'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
 #'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
 #'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
-#' # bcf_json <- convertToJson(bcf_model)
+#' # bcf_json <- convertBCFModelToJson(bcf_model)
 #' # bcf_model_roundtrip <- createBCFModelFromJson(bcf_json)
 createBCFModelFromJson <- function(json_object){
     # Initialize the BCF model
@@ -1379,7 +1379,7 @@ createBCFModelFromJson <- function(json_object){
 #'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
 #'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
 #'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
-#' # saveToJsonFile(bcf_model, "test.json")
+#' # saveBCFModelToJsonFile(bcf_model, "test.json")
 #' # bcf_model_roundtrip <- createBCFModelFromJsonFile("test.json")
 createBCFModelFromJsonFile <- function(json_filename){
     # Load a `CppJson` object from file

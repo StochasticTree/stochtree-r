@@ -100,7 +100,7 @@ plot(rowMeans(bcf_model$tau_hat_train), rowMeans(bcf_preds$tau_hat)); abline(0,1
 plot(rowMeans(bcf_model$y_hat_train), rowMeans(bcf_preds$y_hat)); abline(0,1,col="red",lwd=3,lty=3)
 
 # Save the BCF model to a JSON file
-saveToJsonFile(bcf_model, "test.json")
+saveBCFModelToJsonFile(bcf_model, "test.json")
 
 # Load the BCF model from JSON file
 bcf_model_reload <- createBCFModelFromJsonFile("test.json")

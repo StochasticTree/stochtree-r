@@ -16,9 +16,9 @@ reference:
   contents:
   - bcf
   - predict.bcf
-  - saveToJsonFile.bcf
+  - saveBCFModelToJsonFile
   - createBCFModelFromJsonFile
-  - convertToJson.bcf
+  - convertBCFModelToJson
   - createBCFModelFromJson
 
 - title: Low-level functionality
@@ -33,9 +33,7 @@ reference:
   - loadRandomEffectSamplesJson
   - loadVectorJson
   - loadScalarJson
-  - convertToJson
   - createCppJsonFile
-  - saveToJsonFile
 
 - subtitle: Data
   desc: >

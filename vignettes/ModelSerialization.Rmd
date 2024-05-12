@@ -112,7 +112,7 @@ bcf_model <- bcf(
 Save the BCF model to disk.
 
 ```{r bcf_serialization}
-saveToJsonFile(bcf_model, "bcf.json")
+saveBCFModelToJsonFile(bcf_model, "bcf.json")
 ```
 
 ## Deserialization

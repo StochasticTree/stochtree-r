@@ -72,6 +72,6 @@ bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train,
                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
-# bcf_json <- convertToJson(bcf_model)
+# bcf_json <- convertBCFModelToJson(bcf_model)
 # bcf_model_roundtrip <- createBCFModelFromJson(bcf_json)
 }
