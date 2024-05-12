@@ -48,7 +48,7 @@
 #' @param b_1 Initial value of the "treatment" group coding parameter. This is ignored when Z is not binary. Default: 0.5.
 #' @param random_seed Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to `std::random_device`.
 #' @param keep_burnin Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.
-#' @param keep_gfr Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.
+#' @param keep_gfr Whether or not "grow-from-root" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.
 #'
 #' @return List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).
 #' @export
@@ -244,9 +244,12 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         # Estimate using the last of several iterations of GFR BART
         num_burnin <- 10
         num_total <- 50
-        bart_model_propensity <- bart(X_train = X_train, y_train = as.numeric(Z_train), X_test = X_test, leaf_model = 0, feature_types = feature_types, num_gfr = num_total, num_burnin = 0, num_mcmc = 0)
-        pi_train <- rowMeans(bart_model_propensity$yhat_train[(num_burnin+1):num_total])
-        if (has_test) pi_test <- rowMeans(bart_model_propensity$yhat_test[,(num_burnin+1):num_total])
+        bart_model_propensity <- bart(X_train = X_train, y_train = as.numeric(Z_train), X_test = X_test, 
+                                      num_gfr = num_total, num_burnin = 0, num_mcmc = 0, 
+                                      ordered_cat_vars = ordered_cat_vars, 
+                                      unordered_cat_vars = unordered_cat_vars)
+        pi_train <- rowMeans(bart_model_propensity$y_hat_train[(num_burnin+1):num_total])
+        if (has_test) pi_test <- rowMeans(bart_model_propensity$y_hat_test[,(num_burnin+1):num_total])
     }
 
     if (has_test) {

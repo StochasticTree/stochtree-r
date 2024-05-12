@@ -47,12 +47,12 @@ bart_model <- stochtree::bart(
     X_train = X_train, W_train = W_train, y_train = y_train, 
     group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
     X_test = X_test, W_test = W_test, group_ids_test = group_ids_test,
-    rfx_basis_test = rfx_basis_test, leaf_model = 1, num_trees = 100, 
+    rfx_basis_test = rfx_basis_test, num_trees = 100, 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma = T, sample_tau = T
 )
 rfx_preds_test_orig <- bart_model$rfx_preds_test
-forest_preds_test_orig <- bart_model$yhat_test - rfx_preds_test_orig
+forest_preds_test_orig <- bart_model$y_hat_test - rfx_preds_test_orig
 y_scale <- bart_model$model_params$outcome_scale
 y_bar <- bart_model$model_params$outcome_mean
 sigma2_samples <- bart_model$sigma2_samples

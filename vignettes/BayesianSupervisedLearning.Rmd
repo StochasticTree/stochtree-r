@@ -18,8 +18,8 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette demonstrates how to use the `bart()` function for supervised learning.
-To begin, we load the stochtree package.
+This vignette demonstrates how to use the `bart()` function for Bayesian supervised learning 
+(@chipman2010bart). To begin, we load the `stochtree` package.
 
 ```{r setup}
 library(stochtree)
@@ -64,7 +64,7 @@ y_train <- y[train_inds]
 
 ### Warmstart
 
-We first simulate from an ensemble model of $y \mid X$ using "warm-start" 
+We first sample from an ensemble model of $y \mid X$ using "warm-start" 
 initialization samples (@he2023stochastic). This is the default in 
 `stochtree`.
 
@@ -74,33 +74,24 @@ num_burnin <- 0
 num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bart_model_warmstart <- stochtree::bart(
-    X_train = X_train, y_train = y_train, X_test = X_test, leaf_model = 0, 
+    X_train = X_train, y_train = y_train, X_test = X_test, 
     num_trees = 100, num_gfr = num_gfr, num_burnin = num_burnin, 
     num_mcmc = num_mcmc, sample_sigma = T, sample_tau = T
 )
 ```
 
-Inspect the initial XBART "warm-start" samples
-
-```{r xbart_plot}
-plot(bart_model_warmstart$sigma2_samples[1:num_gfr], ylab="sigma^2")
-plot(rowMeans(bart_model_warmstart$yhat_test[,1:num_gfr]), y_test, pch=16, 
-     cex=0.75, xlab = "pred", ylab = "actual")
-abline(0,1,col="red",lty=2,lwd=2.5)
-```
-
-Inspect the BART samples that were initialized with an XBART warm-start
+Inspect the MCMC samples
 
 ```{r bart_warmstart_plot}
-plot(bart_model_warmstart$sigma2_samples[(num_gfr + 1):num_samples], ylab="sigma^2")
-plot(rowMeans(bart_model_warmstart$yhat_test[,(num_gfr + 1):num_samples]), y_test, 
+plot(bart_model_warmstart$sigma2_samples, ylab="sigma^2")
+plot(rowMeans(bart_model_warmstart$y_hat_test), y_test, 
      pch=16, cex=0.75, xlab = "pred", ylab = "actual")
 abline(0,1,col="red",lty=2,lwd=2.5)
 ```
 
 ### BART MCMC without Warmstart
 
-Next, we simulate from this ensemble model without any warm-start initialization. 
+Next, we sample from this ensemble model without any warm-start initialization. 
 
 ```{r}
 num_gfr <- 0
@@ -108,17 +99,17 @@ num_burnin <- 100
 num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bart_model_root <- stochtree::bart(
-    X_train = X_train, y_train = y_train, X_test = X_test, leaf_model = 0, 
+    X_train = X_train, y_train = y_train, X_test = X_test, 
     num_trees = 100, num_gfr = num_gfr, num_burnin = num_burnin, 
     num_mcmc = num_mcmc, sample_sigma = T, sample_tau = T
 )
 ```
 
-Inspect the BART samples after burnin.
+Inspect the MCMC samples
 
 ```{r bart_root_plot}
-plot(bart_model_root$sigma2_samples[(num_burnin + 1):num_samples], ylab="sigma^2")
-plot(rowMeans(bart_model_root$yhat_test[,(num_burnin + 1):num_samples]), y_test, 
+plot(bart_model_root$sigma2_samples, ylab="sigma^2")
+plot(rowMeans(bart_model_root$y_hat_test), y_test, 
      pch=16, cex=0.75, xlab = "pred", ylab = "actual")
 abline(0,1,col="red",lty=2,lwd=2.5)
 ```
@@ -164,7 +155,7 @@ y_train <- y[train_inds]
 
 ### Warmstart
 
-We first simulate from an ensemble model of $y \mid X$ using "warm-start" 
+We first sample from an ensemble model of $y \mid X$ using "warm-start" 
 initialization samples (@he2023stochastic). This is the default in 
 `stochtree`.
 
@@ -175,33 +166,24 @@ num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bart_model_warmstart <- stochtree::bart(
     X_train = X_train, W_train = W_train, y_train = y_train, 
-    X_test = X_test, W_test = W_test, leaf_model = 1, 
-    num_trees = 100, num_gfr = num_gfr, num_burnin = num_burnin, 
+    X_test = X_test, W_test = W_test, num_trees = 100, 
+    num_gfr = num_gfr, num_burnin = num_burnin, 
     num_mcmc = num_mcmc, sample_sigma = T, sample_tau = T
 )
 ```
 
-Inspect the initial XBART "warm-start" samples
-
-```{r xbart_plot_plm}
-plot(bart_model_warmstart$sigma2_samples[1:num_gfr], ylab="sigma^2")
-plot(rowMeans(bart_model_warmstart$yhat_test[,1:num_gfr]), y_test, pch=16, 
-     cex=0.75, xlab = "pred", ylab = "actual")
-abline(0,1,col="red",lty=2,lwd=2.5)
-```
-
-Inspect the BART samples that were initialized with an XBART warm-start
+Inspect the MCMC samples
 
 ```{r bart_warmstart_plot_plm}
-plot(bart_model_warmstart$sigma2_samples[(num_gfr + 1):num_samples], ylab="sigma^2")
-plot(rowMeans(bart_model_warmstart$yhat_test[,(num_gfr + 1):num_samples]), y_test, 
+plot(bart_model_warmstart$sigma2_samples, ylab="sigma^2")
+plot(rowMeans(bart_model_warmstart$y_hat_test), y_test, 
      pch=16, cex=0.75, xlab = "pred", ylab = "actual")
 abline(0,1,col="red",lty=2,lwd=2.5)
 ```
 
 ### BART MCMC without Warmstart
 
-Next, we simulate from this ensemble model without any warm-start initialization. 
+Next, we sample from this ensemble model without any warm-start initialization. 
 
 ```{r}
 num_gfr <- 0
@@ -210,8 +192,8 @@ num_mcmc <- 100
 num_samples <- num_gfr + num_burnin + num_mcmc
 bart_model_root <- stochtree::bart(
     X_train = X_train, W_train = W_train, y_train = y_train, 
-    X_test = X_test, W_test = W_test, leaf_model = 1, 
-    num_trees = 100, num_gfr = num_gfr, num_burnin = num_burnin, 
+    X_test = X_test, W_test = W_test, num_trees = 100, 
+    num_gfr = num_gfr, num_burnin = num_burnin, 
     num_mcmc = num_mcmc, sample_sigma = T, sample_tau = T
 )
 ```
@@ -219,8 +201,8 @@ bart_model_root <- stochtree::bart(
 Inspect the BART samples after burnin.
 
 ```{r bart_root_plot_plm}
-plot(bart_model_root$sigma2_samples[(num_burnin + 1):num_samples], ylab="sigma^2")
-plot(rowMeans(bart_model_root$yhat_test[,(num_burnin + 1):num_samples]), y_test, 
+plot(bart_model_root$sigma2_samples, ylab="sigma^2")
+plot(rowMeans(bart_model_root$y_hat_test), y_test, 
      pch=16, cex=0.75, xlab = "pred", ylab = "actual")
 abline(0,1,col="red",lty=2,lwd=2.5)
 ```
@@ -275,7 +257,7 @@ rfx_basis_train <- rfx_basis[train_inds,]
 
 ### Warmstart
 
-We first simulate from an ensemble model of $y \mid X$ using "warm-start" 
+We first sample from an ensemble model of $y \mid X$ using "warm-start" 
 initialization samples (@he2023stochastic). This is the default in 
 `stochtree`.
 
@@ -288,35 +270,25 @@ bart_model_warmstart <- stochtree::bart(
     X_train = X_train, W_train = W_train, y_train = y_train, 
     group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
     X_test = X_test, W_test = W_test, group_ids_test = group_ids_test,
-    rfx_basis_test = rfx_basis_test, leaf_model = 1, num_trees = 100, 
-    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
+    rfx_basis_test = rfx_basis_test, num_trees = 100, num_gfr = num_gfr, 
+    num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma = T, sample_tau = T
 )
 ```
 
-Inspect the initial XBART "warm-start" samples
-
-```{r xbart_plot_plm_rfx}
-plot(bart_model_warmstart$sigma2_samples[1:num_gfr], ylab="sigma^2")
-abline(h=noise_sd^2,col="red",lty=2,lwd=2.5)
-plot(rowMeans(bart_model_warmstart$yhat_test[,1:num_gfr]), y_test, pch=16, 
-     cex=0.75, xlab = "pred", ylab = "actual")
-abline(0,1,col="red",lty=2,lwd=2.5)
-```
-
-Inspect the BART samples that were initialized with an XBART warm-start
+Inspect the MCMC samples
 
 ```{r bart_warmstart_plot_plm_rfx}
-plot(bart_model_warmstart$sigma2_samples[(num_gfr + 1):num_samples], ylab="sigma^2")
+plot(bart_model_warmstart$sigma2_samples, ylab="sigma^2")
 abline(h=noise_sd^2,col="red",lty=2,lwd=2.5)
-plot(rowMeans(bart_model_warmstart$yhat_test[,(num_gfr + 1):num_samples]), y_test, 
+plot(rowMeans(bart_model_warmstart$y_hat_test), y_test, 
      pch=16, cex=0.75, xlab = "pred", ylab = "actual")
 abline(0,1,col="red",lty=2,lwd=2.5)
 ```
 
 ### BART MCMC without Warmstart
 
-Next, we simulate from this ensemble model without any warm-start initialization. 
+Next, we sample from this ensemble model without any warm-start initialization. 
 
 ```{r}
 num_gfr <- 0
@@ -327,18 +299,18 @@ bart_model_root <- stochtree::bart(
     X_train = X_train, W_train = W_train, y_train = y_train, 
     group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
     X_test = X_test, W_test = W_test, group_ids_test = group_ids_test,
-    rfx_basis_test = rfx_basis_test, leaf_model = 1, num_trees = 100, 
-    num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
+    rfx_basis_test = rfx_basis_test, num_trees = 100, num_gfr = num_gfr, 
+    num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma = T, sample_tau = T
 )
 ```
 
-Inspect the BART samples after burnin.
+Inspect the MCMC samples
 
 ```{r bart_root_plot_plm_rfx}
-plot(bart_model_root$sigma2_samples[(num_burnin + 1):num_samples], ylab="sigma^2")
+plot(bart_model_root$sigma2_samples, ylab="sigma^2")
 abline(h=noise_sd^2,col="red",lty=2,lwd=2.5)
-plot(rowMeans(bart_model_root$yhat_test[,(num_burnin + 1):num_samples]), y_test, 
+plot(rowMeans(bart_model_root$y_hat_test), y_test, 
      pch=16, cex=0.75, xlab = "pred", ylab = "actual")
 abline(0,1,col="red",lty=2,lwd=2.5)
 ```

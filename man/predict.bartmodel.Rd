@@ -9,7 +9,8 @@
   X_test,
   W_test = NULL,
   group_ids_test = NULL,
-  rfx_basis_test = NULL
+  rfx_basis_test = NULL,
+  predict_all = F
 )
 }
 \arguments{
@@ -24,6 +25,8 @@ We do not currently support (but plan to in the near future), test set evaluatio
 that were not in the training set.}
 
 \item{rfx_basis_test}{(Optional) Test set basis for "random-slope" regression in additive random effects model.}
+
+\item{predict_all}{(Optional) Whether to predict the model for all of the samples in the stored objects or the subset of burnt-in / GFR samples as specified at training time. Default FALSE.}
 }
 \value{
 List of prediction matrices. If model does not have random effects, the list has one element -- the predictions from the forest.
@@ -53,8 +56,8 @@ X_test <- X[test_inds,]
 X_train <- X[train_inds,]
 y_test <- y[test_inds]
 y_train <- y[train_inds]
-bart_model <- bart(X_train = X_train, y_train = y_train, leaf_model = 0)
-yhat_test <- predict(bart_model, X_test)
-# plot(rowMeans(yhat_test), y_test, xlab = "predicted", ylab = "actual")
+bart_model <- bart(X_train = X_train, y_train = y_train)
+y_hat_test <- predict(bart_model, X_test)
+# plot(rowMeans(y_hat_test), y_test, xlab = "predicted", ylab = "actual")
 # abline(0,1,col="red",lty=3,lwd=3)
 }

@@ -14,8 +14,8 @@ bart(
   W_test = NULL,
   group_ids_test = NULL,
   rfx_basis_test = NULL,
-  feature_types = rep(0, ncol(X_train)),
-  variable_weights = rep(1/ncol(X_train), ncol(X_train)),
+  ordered_cat_vars = NULL,
+  unordered_cat_vars = NULL,
   cutpoint_grid_size = 100,
   tau_init = NULL,
   alpha = 0.95,
@@ -34,7 +34,9 @@ bart(
   num_mcmc = 100,
   sample_sigma = T,
   sample_tau = T,
-  random_seed = -1
+  random_seed = -1,
+  keep_burnin = F,
+  keep_gfr = F
 )
 }
 \arguments{
@@ -65,11 +67,9 @@ that were not in the training set.}
 
 \item{rfx_basis_test}{(Optional) Test set basis for "random-slope" regression in additive random effects model.}
 
-\item{feature_types}{Vector of length \code{ncol(X_train)} indicating the "type" of each covariates
-(0 = numeric, 1 = ordered categorical, 2 = unordered categorical). Default: \code{rep(0,ncol(X_train))}.}
+\item{ordered_cat_vars}{Vector of names of ordered categorical variables.}
 
-\item{variable_weights}{Vector of length \code{ncol(X_train)} indicating a "weight" placed on each
-variable for sampling purposes. Default: \code{rep(1/ncol(X_train),ncol(X_train))}.}
+\item{unordered_cat_vars}{Vector of names of unordered categorical variables.}
 
 \item{cutpoint_grid_size}{Maximum size of the "grid" of potential cutpoints to consider. Default: 100.}
 
@@ -80,8 +80,6 @@ variable for sampling purposes. Default: \code{rep(1/ncol(X_train),ncol(X_train)
 \item{beta}{Exponent that decreases split probabilities for nodes of depth > 0. Tree split prior combines \code{alpha} and \code{beta} via \code{alpha*(1+node_depth)^-beta}.}
 
 \item{min_samples_leaf}{Minimum allowable size of a leaf, in terms of training samples. Default: 5.}
-
-\item{leaf_model}{Integer indicating leaf model, where 0 = constant with Gaussian prior, 1 = univariate regression with Gaussian prior, 2 = multivariate regression with Gaussian prior. W_train will be ignored if this is set to 0. Default: 0.}
 
 \item{nu}{Shape parameter in the \code{IG(nu, nu*lambda)} global error variance model. Default: 3.}
 
@@ -105,9 +103,16 @@ variable for sampling purposes. Default: \code{rep(1/ncol(X_train),ncol(X_train)
 
 \item{sample_sigma}{Whether or not to update the \code{sigma^2} global error variance parameter based on \code{IG(nu, nu*lambda)}. Default: T.}
 
-\item{sample_tau}{Whether or not to update the \code{tau} leaf scale variance parameter based on \code{IG(a_leaf, b_leaf)}. Cannot be set to true if \code{leaf_model=2}. Default: T.}
+\item{sample_tau}{Whether or not to update the \code{tau} leaf scale variance parameter based on \code{IG(a_leaf, b_leaf)}. Cannot (currently) be set to true if \code{ncol(W_train)>1}. Default: T.}
 
 \item{random_seed}{Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to \code{std::random_device}.}
+
+\item{keep_burnin}{Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.}
+
+\item{keep_gfr}{Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.}
+
+\item{variable_weights}{Vector of length \code{ncol(X_train)} indicating a "weight" placed on each
+variable for sampling purposes. Default: \code{rep(1/ncol(X_train),ncol(X_train))}.}
 }
 \value{
 List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).
@@ -136,7 +141,7 @@ X_test <- X[test_inds,]
 X_train <- X[train_inds,]
 y_test <- y[test_inds]
 y_train <- y[train_inds]
-bart_model <- bart(X_train = X_train, y_train = y_train, X_test = X_test, leaf_model = 0)
-# plot(rowMeans(bart_model$yhat_test), y_test, xlab = "predicted", ylab = "actual")
+bart_model <- bart(X_train = X_train, y_train = y_train, X_test = X_test)
+# plot(rowMeans(bart_model$y_hat_test), y_test, xlab = "predicted", ylab = "actual")
 # abline(0,1,col="red",lty=3,lwd=3)
 }

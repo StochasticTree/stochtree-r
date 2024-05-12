@@ -18,8 +18,8 @@
 #' We do not currently support (but plan to in the near future), test set evaluation for group labels
 #' that were not in the training set.
 #' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
-#' @param feature_types Vector of length `ncol(X_train)` indicating the "type" of each covariates 
-#' (0 = numeric, 1 = ordered categorical, 2 = unordered categorical). Default: `rep(0,ncol(X_train))`.
+#' @param ordered_cat_vars Vector of names of ordered categorical variables.
+#' @param unordered_cat_vars Vector of names of unordered categorical variables.
 #' @param variable_weights Vector of length `ncol(X_train)` indicating a "weight" placed on each 
 #' variable for sampling purposes. Default: `rep(1/ncol(X_train),ncol(X_train))`.
 #' @param cutpoint_grid_size Maximum size of the "grid" of potential cutpoints to consider. Default: 100.
@@ -27,7 +27,6 @@
 #' @param alpha Prior probability of splitting for a tree of depth 0. Tree split prior combines `alpha` and `beta` via `alpha*(1+node_depth)^-beta`.
 #' @param beta Exponent that decreases split probabilities for nodes of depth > 0. Tree split prior combines `alpha` and `beta` via `alpha*(1+node_depth)^-beta`.
 #' @param min_samples_leaf Minimum allowable size of a leaf, in terms of training samples. Default: 5.
-#' @param leaf_model Integer indicating leaf model, where 0 = constant with Gaussian prior, 1 = univariate regression with Gaussian prior, 2 = multivariate regression with Gaussian prior. W_train will be ignored if this is set to 0. Default: 0.
 #' @param nu Shape parameter in the `IG(nu, nu*lambda)` global error variance model. Default: 3.
 #' @param lambda Component of the scale parameter in the `IG(nu, nu*lambda)` global error variance prior. If not specified, this is calibrated as in Sparapani et al (2021).
 #' @param a_leaf Shape parameter in the `IG(a_leaf, b_leaf)` leaf node parameter variance model. Default: 3.
@@ -39,8 +38,10 @@
 #' @param num_burnin Number of "burn-in" iterations of the MCMC sampler. Default: 0.
 #' @param num_mcmc Number of "retained" iterations of the MCMC sampler. Default: 100.
 #' @param sample_sigma Whether or not to update the `sigma^2` global error variance parameter based on `IG(nu, nu*lambda)`. Default: T.
-#' @param sample_tau Whether or not to update the `tau` leaf scale variance parameter based on `IG(a_leaf, b_leaf)`. Cannot be set to true if `leaf_model=2`. Default: T.
+#' @param sample_tau Whether or not to update the `tau` leaf scale variance parameter based on `IG(a_leaf, b_leaf)`. Cannot (currently) be set to true if `ncol(W_train)>1`. Default: T.
 #' @param random_seed Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to `std::random_device`.
+#' @param keep_burnin Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.
+#' @param keep_gfr Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.
 #'
 #' @return List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).
 #' @export
@@ -66,29 +67,44 @@
 #' X_train <- X[train_inds,]
 #' y_test <- y[test_inds]
 #' y_train <- y[train_inds]
-#' bart_model <- bart(X_train = X_train, y_train = y_train, X_test = X_test, leaf_model = 0)
-#' # plot(rowMeans(bart_model$yhat_test), y_test, xlab = "predicted", ylab = "actual")
+#' bart_model <- bart(X_train = X_train, y_train = y_train, X_test = X_test)
+#' # plot(rowMeans(bart_model$y_hat_test), y_test, xlab = "predicted", ylab = "actual")
 #' # abline(0,1,col="red",lty=3,lwd=3)
 bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL, 
                  rfx_basis_train = NULL, X_test = NULL, W_test = NULL, 
                  group_ids_test = NULL, rfx_basis_test = NULL, 
-                 feature_types = rep(0, ncol(X_train)), 
-                 variable_weights = rep(1/ncol(X_train), ncol(X_train)), 
+                 ordered_cat_vars = NULL, unordered_cat_vars = NULL, 
                  cutpoint_grid_size = 100, tau_init = NULL, alpha = 0.95, 
                  beta = 2.0, min_samples_leaf = 5, leaf_model = 0, 
                  nu = 3, lambda = NULL, a_leaf = 3, b_leaf = NULL, 
                  q = 0.9, sigma2_init = NULL, num_trees = 200, num_gfr = 5, 
                  num_burnin = 0, num_mcmc = 100, sample_sigma = T, 
-                 sample_tau = T, random_seed = -1){
-    # Convert all input data to matrices if not already converted
+                 sample_tau = T, random_seed = -1, keep_burnin = F, keep_gfr = F){
+    # Preprocess covariates
     if ((is.null(dim(X_train))) && (!is.null(X_train))) {
         X_train <- as.matrix(X_train)
     }
-    if ((is.null(dim(W_train))) && (!is.null(W_train))) {
-        W_train <- as.matrix(W_train)
-    }
     if ((is.null(dim(X_test))) && (!is.null(X_test))) {
         X_test <- as.matrix(X_test)
+    }
+    if (!is.matrix(X_train) && !is.data.frame(X_train)) {
+        stop("X_train must be a matrix or dataframe")
+    }
+    if (!is.null(X_test)){
+        if (!is.matrix(X_test) && !is.data.frame(X_test)) {
+            stop("X_test must be a matrix or dataframe")
+        }
+    }
+    train_cov_preprocess_list <- createForestCovariates(X_train, ordered_cat_vars = ordered_cat_vars, 
+                                                        unordered_cat_vars = unordered_cat_vars)
+    X_train_metadata <- train_cov_preprocess_list$metadata
+    X_train <- train_cov_preprocess_list$data
+    feature_types <- X_train_metadata$feature_types
+    if (!is.null(X_test)) X_test <- createForestCovariatesFromMetadata(X_test, X_train_metadata)
+    
+    # Convert all input data to matrices if not already converted
+    if ((is.null(dim(W_train))) && (!is.null(W_train))) {
+        W_train <- as.matrix(W_train)
     }
     if ((is.null(dim(W_test))) && (!is.null(W_test))) {
         W_test <- as.matrix(W_test)
@@ -196,6 +212,12 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
     current_leaf_scale <- as.matrix(tau_init)
     current_sigma2 <- sigma2_init
     
+    # Determine leaf model type
+    if (!has_basis) leaf_model <- 0
+    else if (ncol(W_train) == 1) leaf_model <- 1
+    else if (ncol(W_train) > 1) leaf_model <- 2
+    else stop("W_train passed must be a matrix with at least 1 column")
+    
     # Unpack model type info
     if (leaf_model == 0) {
         output_dimension = 1
@@ -276,8 +298,12 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
     if (sample_sigma) global_var_samples <- rep(0, num_samples)
     if (sample_tau) leaf_scale_samples <- rep(0, num_samples)
     
+    # Variable selection weights
+    variable_weights <- rep(1/ncol(X_train), ncol(X_train))
+    
     # Run GFR (warm start) if specified
     if (num_gfr > 0){
+        gfr_indices = 1:num_gfr
         for (i in 1:num_gfr) {
             forest_model$sample_one_iteration(
                 forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
@@ -300,6 +326,12 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
     
     # Run MCMC
     if (num_burnin + num_mcmc > 0) {
+        if (num_burnin > 0) {
+            burnin_indices = (num_gfr+1):(num_gfr+num_burnin)
+        }
+        if (num_mcmc > 0) {
+            mcmc_indices = (num_gfr+num_burnin+1):(num_gfr+num_burnin+num_mcmc)
+        }
         for (i in (num_gfr+1):num_samples) {
             forest_model$sample_one_iteration(
                 forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
@@ -321,24 +353,57 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
     }
     
     # Forest predictions
-    yhat_train <- forest_samples$predict(forest_dataset_train)*y_std_train + y_bar_train
-    if (has_test) yhat_test <- forest_samples$predict(forest_dataset_test)*y_std_train + y_bar_train
+    y_hat_train <- forest_samples$predict(forest_dataset_train)*y_std_train + y_bar_train
+    if (has_test) y_hat_test <- forest_samples$predict(forest_dataset_test)*y_std_train + y_bar_train
     
     # Random effects predictions
     if (has_rfx) {
         rfx_preds_train <- rfx_samples$predict(group_ids_train, rfx_basis_train)*y_std_train
-        yhat_train <- yhat_train + rfx_preds_train
+        y_hat_train <- y_hat_train + rfx_preds_train
     }
     if ((has_rfx_test) && (has_test)) {
         rfx_preds_test <- rfx_samples$predict(group_ids_test, rfx_basis_test)*y_std_train
-        yhat_test <- yhat_test + rfx_preds_test
+        y_hat_test <- y_hat_test + rfx_preds_test
+    }
+    
+    # Compute retention indices
+    if (num_mcmc > 0) {
+        keep_indices = mcmc_indices
+        if (keep_gfr) keep_indices <- c(gfr_indices, keep_indices)
+        if (keep_burnin) keep_indices <- c(burnin_indices, keep_indices)
+    } else {
+        if ((num_gfr > 0) && (num_burnin > 0)) {
+            # Override keep_gfr = FALSE since there are no MCMC samples
+            # Don't retain both GFR and burnin samples
+            keep_indices = gfr_indices
+        } else if ((num_gfr <= 0) && (num_burnin > 0)) {
+            # Override keep_burnin = FALSE since there are no MCMC or GFR samples
+            keep_indices = burnin_indices
+        } else if ((num_gfr > 0) && (num_burnin <= 0)) {
+            # Override keep_gfr = FALSE since there are no MCMC samples
+            keep_indices = gfr_indices
+        } else {
+            stop("There are no samples to retain!")
+        } 
+    }
+    
+    # Subset forest and RFX predictions
+    y_hat_train <- y_hat_train[,keep_indices]
+    if (has_rfx) {
+        rfx_preds_train <- rfx_preds_train[,keep_indices]
+    }
+    if (has_test) {
+        y_hat_test <- y_hat_test[,keep_indices]
+        if (has_rfx_test) {
+            rfx_preds_test <- rfx_preds_test[,keep_indices]
+        }
     }
     
     # Global error variance
-    if (sample_sigma) sigma2_samples <- global_var_samples*(y_std_train^2)
+    if (sample_sigma) sigma2_samples <- global_var_samples[keep_indices]*(y_std_train^2)
     
     # Leaf parameter variance
-    if (sample_tau) tau_samples <- leaf_scale_samples
+    if (sample_tau) tau_samples <- leaf_scale_samples[keep_indices]
     
     # Return results as a list
     model_params <- list(
@@ -357,17 +422,24 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
         "num_covariates" = ncol(X_train), 
         "num_basis" = ifelse(is.null(W_train),0,ncol(W_train)), 
         "num_samples" = num_samples, 
+        "num_gfr" = num_gfr, 
+        "num_burnin" = num_burnin, 
+        "num_mcmc" = num_mcmc, 
         "has_basis" = !is.null(W_train), 
         "has_rfx" = has_rfx, 
         "has_rfx_basis" = has_basis_rfx, 
-        "num_rfx_basis" = num_basis_rfx
+        "num_rfx_basis" = num_basis_rfx, 
+        "sample_sigma" = sample_sigma,
+        "sample_tau" = sample_tau
     )
     result <- list(
         "forests" = forest_samples, 
         "model_params" = model_params, 
-        "yhat_train" = yhat_train
+        "y_hat_train" = y_hat_train, 
+        "train_set_metadata" = X_train_metadata,
+        "keep_indices" = keep_indices
     )
-    if (has_test) result[["yhat_test"]] = yhat_test
+    if (has_test) result[["y_hat_test"]] = y_hat_test
     if (sample_sigma) result[["sigma2_samples"]] = sigma2_samples
     if (sample_tau) result[["tau_samples"]] = tau_samples
     if (has_rfx) {
@@ -399,6 +471,7 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
 #' We do not currently support (but plan to in the near future), test set evaluation for group labels
 #' that were not in the training set.
 #' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
+#' @param predict_all (Optional) Whether to predict the model for all of the samples in the stored objects or the subset of burnt-in / GFR samples as specified at training time. Default FALSE.
 #'
 #' @return List of prediction matrices. If model does not have random effects, the list has one element -- the predictions from the forest. 
 #' If the model does have random effects, the list has three elements -- forest predictions, random effects predictions, and their sum (`y_hat`).
@@ -425,15 +498,24 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
 #' X_train <- X[train_inds,]
 #' y_test <- y[test_inds]
 #' y_train <- y[train_inds]
-#' bart_model <- bart(X_train = X_train, y_train = y_train, leaf_model = 0)
-#' yhat_test <- predict(bart_model, X_test)
-#' # plot(rowMeans(yhat_test), y_test, xlab = "predicted", ylab = "actual")
+#' bart_model <- bart(X_train = X_train, y_train = y_train)
+#' y_hat_test <- predict(bart_model, X_test)
+#' # plot(rowMeans(y_hat_test), y_test, xlab = "predicted", ylab = "actual")
 #' # abline(0,1,col="red",lty=3,lwd=3)
-predict.bartmodel <- function(bart, X_test, W_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL){
-    # Convert all input data to matrices if not already converted
+predict.bartmodel <- function(bart, X_test, W_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL, predict_all = F){
+    # Preprocess covariates
     if ((is.null(dim(X_test))) && (!is.null(X_test))) {
         X_test <- as.matrix(X_test)
     }
+    if (!is.null(X_test)){
+        if (!is.matrix(X_test) && !is.data.frame(X_test)) {
+            stop("X_test must be a matrix or dataframe")
+        }
+    }
+    train_set_metadata <- bart$train_set_metadata
+    if (!is.null(X_test)) X_test <- createForestCovariatesFromMetadata(X_test, train_set_metadata)
+    
+    # Convert all input data to matrices if not already converted
     if ((is.null(dim(W_test))) && (!is.null(W_test))) {
         W_test <- as.matrix(W_test)
     }
@@ -478,6 +560,13 @@ predict.bartmodel <- function(bart, X_test, W_test = NULL, group_ids_test = NULL
     # Compute rfx predictions (if needed)
     if (bart$model_params$has_rfx) {
         rfx_predictions <- bart$rfx_samples$predict(group_ids_test, rfx_basis_test)*y_std
+    }
+    
+    # Restrict predictions to the "retained" samples (if applicable)
+    if (!predict_all) {
+        keep_indices = bart$keep_indices
+        forest_predictions <- forest_predictions[,keep_indices]
+        if (bart$model_params$has_rfx) rfx_predictions <- rfx_predictions[,keep_indices]
     }
     
     if (bart$model_params$has_rfx) {

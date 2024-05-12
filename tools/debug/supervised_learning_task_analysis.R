@@ -198,14 +198,12 @@ wrapped_bart_stochtree_analysis <- function(resid_train, resid_test, y_train, y_
     start_time <- proc.time()
     
     # Run BART
-    leaf_model = ifelse(is.null(W_train), 0, 1)
     bart_model <- stochtree::bart(
         X_train = X_train, W_train = W_train, y_train = y_train, 
-        X_test = X_test, W_test = W_test, leaf_model = leaf_model, 
-        num_trees = 200, num_gfr = num_gfr, num_burnin = num_burnin, 
-        num_mcmc = num_mcmc_retained, sample_sigma = T, sample_tau = F, 
+        X_test = X_test, W_test = W_test, num_trees = 200, num_gfr = num_gfr, 
+        num_burnin = num_burnin, num_mcmc = num_mcmc_retained, sample_sigma = T, 
+        sample_tau = F, random_seed = 1234
         # random_seed = 1234, nu = 16
-        random_seed = 1234
     )
     
     # End timer and measure run time
@@ -214,8 +212,8 @@ wrapped_bart_stochtree_analysis <- function(resid_train, resid_test, y_train, y_
     
     # RMSEs
     num_samples <- num_gfr + num_burnin + num_mcmc_retained
-    ypred_mean_train <- rowMeans(bart_model$yhat_train[,(num_gfr+num_burnin+1):num_samples])
-    ypred_mean_test <- rowMeans(bart_model$yhat_test[,(num_gfr+num_burnin+1):num_samples])
+    ypred_mean_train <- rowMeans(bart_model$y_hat_train[,(num_gfr+num_burnin+1):num_samples])
+    ypred_mean_test <- rowMeans(bart_model$y_hat_test[,(num_gfr+num_burnin+1):num_samples])
     train_rmse <- sqrt(mean((ypred_mean_train - y_train)^2))
     test_rmse <- sqrt(mean((ypred_mean_test - y_test)^2))
     
