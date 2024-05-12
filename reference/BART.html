@@ -65,8 +65,8 @@
 <span>  W_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_ids_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  rfx_basis_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  feature_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_train</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  variable_weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_train</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_train</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  ordered_cat_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  unordered_cat_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cutpoint_grid_size <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  tau_init <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.95</span>,</span>
@@ -85,7 +85,9 @@
 <span>  num_mcmc <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  sample_sigma <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>  sample_tau <span class="op">=</span> <span class="cn">T</span>,</span>
-<span>  random_seed <span class="op">=</span> <span class="op">-</span><span class="fl">1</span></span>
+<span>  random_seed <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
+<span>  keep_burnin <span class="op">=</span> <span class="cn">F</span>,</span>
+<span>  keep_gfr <span class="op">=</span> <span class="cn">F</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -136,14 +138,12 @@ that were not in the training set.</p></dd>
 <dd><p>(Optional) Test set basis for "random-slope" regression in additive random effects model.</p></dd>
 
 
-<dt>feature_types</dt>
-<dd><p>Vector of length <code>ncol(X_train)</code> indicating the "type" of each covariates
-(0 = numeric, 1 = ordered categorical, 2 = unordered categorical). Default: <code>rep(0,ncol(X_train))</code>.</p></dd>
+<dt>ordered_cat_vars</dt>
+<dd><p>Vector of names of ordered categorical variables.</p></dd>
 
 
-<dt>variable_weights</dt>
-<dd><p>Vector of length <code>ncol(X_train)</code> indicating a "weight" placed on each
-variable for sampling purposes. Default: <code>rep(1/ncol(X_train),ncol(X_train))</code>.</p></dd>
+<dt>unordered_cat_vars</dt>
+<dd><p>Vector of names of unordered categorical variables.</p></dd>
 
 
 <dt>cutpoint_grid_size</dt>
@@ -164,10 +164,6 @@ variable for sampling purposes. Default: <code>rep(1/ncol(X_train),ncol(X_train)
 
 <dt>min_samples_leaf</dt>
 <dd><p>Minimum allowable size of a leaf, in terms of training samples. Default: 5.</p></dd>
-
-
-<dt>leaf_model</dt>
-<dd><p>Integer indicating leaf model, where 0 = constant with Gaussian prior, 1 = univariate regression with Gaussian prior, 2 = multivariate regression with Gaussian prior. W_train will be ignored if this is set to 0. Default: 0.</p></dd>
 
 
 <dt>nu</dt>
@@ -215,11 +211,24 @@ variable for sampling purposes. Default: <code>rep(1/ncol(X_train),ncol(X_train)
 
 
 <dt>sample_tau</dt>
-<dd><p>Whether or not to update the <code>tau</code> leaf scale variance parameter based on <code>IG(a_leaf, b_leaf)</code>. Cannot be set to true if <code>leaf_model=2</code>. Default: T.</p></dd>
+<dd><p>Whether or not to update the <code>tau</code> leaf scale variance parameter based on <code>IG(a_leaf, b_leaf)</code>. Cannot (currently) be set to true if <code>ncol(W_train)&gt;1</code>. Default: T.</p></dd>
 
 
 <dt>random_seed</dt>
 <dd><p>Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to <code>std::random_device</code>.</p></dd>
+
+
+<dt>keep_burnin</dt>
+<dd><p>Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.</p></dd>
+
+
+<dt>keep_gfr</dt>
+<dd><p>Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.</p></dd>
+
+
+<dt>variable_weights</dt>
+<dd><p>Vector of length <code>ncol(X_train)</code> indicating a "weight" placed on each
+variable for sampling purposes. Default: <code>rep(1/ncol(X_train),ncol(X_train))</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -251,8 +260,8 @@ variable for sampling purposes. Default: <code>rep(1/ncol(X_train),ncol(X_train)
 <span class="r-in"><span><span class="va">X_train</span> <span class="op">&lt;-</span> <span class="va">X</span><span class="op">[</span><span class="va">train_inds</span>,<span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">y_test</span> <span class="op">&lt;-</span> <span class="va">y</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">y_train</span> <span class="op">&lt;-</span> <span class="va">y</span><span class="op">[</span><span class="va">train_inds</span><span class="op">]</span></span></span>
-<span class="r-in"><span><span class="va">bart_model</span> <span class="op">&lt;-</span> <span class="fu">bart</span><span class="op">(</span>X_train <span class="op">=</span> <span class="va">X_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, X_test <span class="op">=</span> <span class="va">X_test</span>, leaf_model <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># plot(rowMeans(bart_model$yhat_test), y_test, xlab = "predicted", ylab = "actual")</span></span></span>
+<span class="r-in"><span><span class="va">bart_model</span> <span class="op">&lt;-</span> <span class="fu">bart</span><span class="op">(</span>X_train <span class="op">=</span> <span class="va">X_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, X_test <span class="op">=</span> <span class="va">X_test</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># plot(rowMeans(bart_model$y_hat_test), y_test, xlab = "predicted", ylab = "actual")</span></span></span>
 <span class="r-in"><span><span class="co"># abline(0,1,col="red",lty=3,lwd=3)</span></span></span>
 </code></pre></div>
     </div>
