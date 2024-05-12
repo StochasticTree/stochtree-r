@@ -44,6 +44,7 @@
     <h6 class="dropdown-header" data-toc-skip>High-Level Interface</h6>
     <a class="dropdown-item" href="../articles/BayesianSupervisedLearning.html">Bayesian Supervised Learning in StochTree</a>
     <a class="dropdown-item" href="../articles/CausalInference.html">Causal Machine Learning in StochTree</a>
+    <a class="dropdown-item" href="../articles/ModelSerialization.html">Model Serialization in StochTree</a>
     <div class="dropdown-divider"></div>
     <h6 class="dropdown-header" data-toc-skip>Prototype Interface</h6>
     <a class="dropdown-item" href="../articles/CustomSamplingRoutine.html">Custom Sampling Routines in StochTree</a>
@@ -80,7 +81,7 @@
 for supervised learning. To begin, we load the stochtree package.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://stochastictree.github.io/stochtree-r/">stochtree</a></span><span class="op">)</span></span></code></pre></div>
-<p>We also define several simple functions that configue the data
+<p>We also define several simple functions that configure the data
 generating processes used in this vignette.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span><span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">x</span><span class="op">[</span>,<span class="fl">5</span><span class="op">]</span><span class="op">==</span><span class="fl">1</span>,<span class="fl">2</span>,<span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">x</span><span class="op">[</span>,<span class="fl">5</span><span class="op">]</span><span class="op">==</span><span class="fl">2</span>,<span class="op">-</span><span class="fl">1</span>,<span class="op">-</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span><span class="op">}</span></span>
@@ -194,7 +195,7 @@ warm-start</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.98</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.94</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="bart-mcmc-without-warmstart">BART MCMC without Warmstart<a class="anchor" aria-label="anchor" href="#bart-mcmc-without-warmstart"></a>
@@ -350,7 +351,7 @@ warm-start</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.66</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.81</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="bart-mcmc-without-warmstart-1">BART MCMC without Warmstart<a class="anchor" aria-label="anchor" href="#bart-mcmc-without-warmstart-1"></a>
@@ -396,7 +397,7 @@ initialization.</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.86</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.92</span></span></code></pre></div>
 </div>
 </div>
 </div>
@@ -711,7 +712,7 @@ initialization.</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.97</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.98</span></span></code></pre></div>
 </div>
 </div>
 </div>
@@ -835,7 +836,7 @@ warm-start</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.93</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.94</span></span></code></pre></div>
 <p>It is clear that causal inference is much more difficult in the
 presence of <strong>both</strong> strong covariate-dependent prognostic
 effects and strong group-level random effects. In this sense, proper
