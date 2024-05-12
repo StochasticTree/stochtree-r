@@ -543,6 +543,18 @@ predict.bartmodel <- function(bart, X_test, W_test = NULL, group_ids_test = NULL
         stop("Random effects basis has a different dimension than the basis used to train this model")
     }
     
+    # Recode group IDs to integer vector (if passed as, for example, a vector of county names, etc...)
+    has_rfx <- F
+    if (!is.null(group_ids_test)) {
+        rfx_unique_group_ids <- bcf$rfx_unique_group_ids
+        group_ids_factor_test <- factor(group_ids_test, levels = rfx_unique_group_ids)
+        if (sum(is.na(group_ids_factor_test)) > 0) {
+            stop("All random effect group labels provided in group_ids_test must be present in group_ids_train")
+        }
+        group_ids_test <- as.integer(group_ids_factor_test)
+        has_rfx <- T
+    }
+    
     # Produce basis for the "intercept-only" random effects case
     if ((bart$model_params$has_rfx) && (is.null(rfx_basis_test))) {
         rfx_basis_test <- matrix(rep(1, nrow(X_test)), ncol = 1)
