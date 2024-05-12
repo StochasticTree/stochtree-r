@@ -79,10 +79,7 @@
     <loc>https://stochastictree.github.io/stochtree-r/reference/computeForestLeafIndices.html</loc>
   </url>
   <url>
-    <loc>https://stochastictree.github.io/stochtree-r/reference/convertToJson.bcf.html</loc>
-  </url>
-  <url>
-    <loc>https://stochastictree.github.io/stochtree-r/reference/convertToJson.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/convertBCFModelToJson.html</loc>
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/createBCFModelFromJson.html</loc>
@@ -181,10 +178,7 @@
     <loc>https://stochastictree.github.io/stochtree-r/reference/sample_tau_one_iteration.html</loc>
   </url>
   <url>
-    <loc>https://stochastictree.github.io/stochtree-r/reference/saveToJsonFile.bcf.html</loc>
-  </url>
-  <url>
-    <loc>https://stochastictree.github.io/stochtree-r/reference/saveToJsonFile.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/saveBCFModelToJsonFile.html</loc>
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/stochtree-package.html</loc>
