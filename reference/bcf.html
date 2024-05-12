@@ -66,7 +66,8 @@
 <span>  pi_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_ids_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  rfx_basis_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  feature_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_train</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  ordered_cat_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  unordered_cat_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cutpoint_grid_size <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  sigma_leaf_mu <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sigma_leaf_tau <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -91,19 +92,21 @@
 <span>  num_mcmc <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  sample_sigma_global <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>  sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">T</span>,</span>
-<span>  sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">T</span>,</span>
+<span>  sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span>,</span>
 <span>  propensity_covariate <span class="op">=</span> <span class="st">"mu"</span>,</span>
 <span>  adaptive_coding <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>  b_0 <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span>,</span>
 <span>  b_1 <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  random_seed <span class="op">=</span> <span class="op">-</span><span class="fl">1</span></span>
+<span>  random_seed <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
+<span>  keep_burnin <span class="op">=</span> <span class="cn">F</span>,</span>
+<span>  keep_gfr <span class="op">=</span> <span class="cn">F</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>X_train</dt>
-<dd><p>Covariates used to split trees in the ensemble.</p></dd>
+<dd><p>Covariates used to split trees in the ensemble. Can be passed as either a matrix or dataframe.</p></dd>
 
 
 <dt>Z_train</dt>
@@ -129,7 +132,7 @@ will be estimated.</p></dd>
 
 
 <dt>X_test</dt>
-<dd><p>(Optional) Test set of covariates used to define "out of sample" evaluation data.</p></dd>
+<dd><p>(Optional) Test set of covariates used to define "out of sample" evaluation data. Can be passed as either a matrix or dataframe.</p></dd>
 
 
 <dt>Z_test</dt>
@@ -150,9 +153,12 @@ that were not in the training set.</p></dd>
 <dd><p>(Optional) Test set basis for "random-slope" regression in additive random effects model.</p></dd>
 
 
-<dt>feature_types</dt>
-<dd><p>Vector of length <code>ncol(X_train)</code> indicating the "type" of each covariates
-(0 = numeric, 1 = ordered categorical, 2 = unordered categorical). Default: <code>rep(0,ncol(X_train))</code>.</p></dd>
+<dt>ordered_cat_vars</dt>
+<dd><p>Vector of names of ordered categorical variables.</p></dd>
+
+
+<dt>unordered_cat_vars</dt>
+<dd><p>Vector of names of unordered categorical variables.</p></dd>
 
 
 <dt>cutpoint_grid_size</dt>
@@ -273,6 +279,14 @@ that were not in the training set.</p></dd>
 
 <dt>random_seed</dt>
 <dd><p>Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to <code>std::random_device</code>.</p></dd>
+
+
+<dt>keep_burnin</dt>
+<dd><p>Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.</p></dd>
+
+
+<dt>keep_gfr</dt>
+<dd><p>Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.</p></dd>
 
 </dl></div>
     <div class="section level2">

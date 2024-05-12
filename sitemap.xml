@@ -76,10 +76,31 @@
     <loc>https://stochastictree.github.io/stochtree-r/reference/computeForestLeafIndices.html</loc>
   </url>
   <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/convertToJson.bcf.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/convertToJson.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createBCFModelFromJson.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createBCFModelFromJsonFile.html</loc>
+  </url>
+  <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/createCppJson.html</loc>
   </url>
   <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createCppJsonFile.html</loc>
+  </url>
+  <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/createForestContainer.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createForestCovariates.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createForestCovariatesFromMetadata.html</loc>
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/createForestDataset.html</loc>
@@ -127,6 +148,24 @@
     <loc>https://stochastictree.github.io/stochtree-r/reference/loadRandomEffectSamplesJson.html</loc>
   </url>
   <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/loadScalarJson.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/loadVectorJson.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/oneHotEncode.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/oneHotInitializeAndEncode.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/orderedCatInitializeAndPreprocess.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/orderedCatPreprocess.html</loc>
+  </url>
+  <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/predict.bartmodel.html</loc>
   </url>
   <url>
@@ -137,6 +176,12 @@
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/sample_tau_one_iteration.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/saveToJsonFile.bcf.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/saveToJsonFile.html</loc>
   </url>
   <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/stochtree-package.html</loc>

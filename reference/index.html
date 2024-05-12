@@ -88,6 +88,26 @@
           <code><a href="predict.bcf.html">predict(<i>&lt;bcf&gt;</i>)</a></code> 
         </dt>
         <dd>Predict from a sampled BCF model on new data</dd>
+      </dl><dl><dt>
+          
+          <code><a href="saveToJsonFile.bcf.html">saveToJsonFile(<i>&lt;bcf&gt;</i>)</a></code> 
+        </dt>
+        <dd>Convert the persistent aspects of a BCF model to (in-memory) JSON and save to a file</dd>
+      </dl><dl><dt>
+          
+          <code><a href="createBCFModelFromJsonFile.html">createBCFModelFromJsonFile()</a></code> 
+        </dt>
+        <dd>Convert a JSON file containing sample information on a trained BCF model to a BCF model object which can be used for prediction, etc...</dd>
+      </dl><dl><dt>
+          
+          <code><a href="convertToJson.bcf.html">convertToJson(<i>&lt;bcf&gt;</i>)</a></code> 
+        </dt>
+        <dd>Convert the persistent aspects of a BCF model to (in-memory) JSON</dd>
+      </dl><dl><dt>
+          
+          <code><a href="createBCFModelFromJson.html">createBCFModelFromJson()</a></code> 
+        </dt>
+        <dd>Convert an (in-memory) JSON representation of a BCF model to a BCF model object which can be used for prediction, etc...</dd>
       </dl></div><div class="section level2">
       <h2 id="low-level-functionality">Low-level functionality<a class="anchor" aria-label="anchor" href="#low-level-functionality"></a></h2>
       
@@ -114,7 +134,7 @@
           
           <code><a href="createCppJson.html">createCppJson()</a></code> 
         </dt>
-        <dd>Create a C++ Json object</dd>
+        <dd>Create a new (empty) C++ Json object</dd>
       </dl><dl><dt>
           
           <code><a href="loadForestContainerJson.html">loadForestContainerJson()</a></code> 
@@ -125,6 +145,31 @@
           <code><a href="loadRandomEffectSamplesJson.html">loadRandomEffectSamplesJson()</a></code> 
         </dt>
         <dd>Load a container of forest samples from json</dd>
+      </dl><dl><dt>
+          
+          <code><a href="loadVectorJson.html">loadVectorJson()</a></code> 
+        </dt>
+        <dd>Load a vector from json</dd>
+      </dl><dl><dt>
+          
+          <code><a href="loadScalarJson.html">loadScalarJson()</a></code> 
+        </dt>
+        <dd>Load a scalar from json</dd>
+      </dl><dl><dt>
+          
+          <code><a href="convertToJson.html">convertToJson()</a></code> 
+        </dt>
+        <dd>Convert a model object (BCF, BART, etc...) to JSON</dd>
+      </dl><dl><dt>
+          
+          <code><a href="createCppJsonFile.html">createCppJsonFile()</a></code> 
+        </dt>
+        <dd>Create a C++ Json object from a Json file</dd>
+      </dl><dl><dt>
+          
+          <code><a href="saveToJsonFile.html">saveToJsonFile()</a></code> 
+        </dt>
+        <dd>Convert a model object (BCF, BART, etc...) to JSON and save it to a file with a json suffix named <code>filename</code></dd>
       </dl></div><div class="section level2">
       
       <h3 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a></h3>
@@ -166,6 +211,36 @@
           <code><a href="createRandomEffectsDataset.html">createRandomEffectsDataset()</a></code> 
         </dt>
         <dd>Create a random effects dataset object</dd>
+      </dl><dl><dt>
+          
+          <code><a href="createForestCovariates.html">createForestCovariates()</a></code> 
+        </dt>
+        <dd>Preprocess a dataframe of covariate values, converting categorical variables to integers and one-hot encoding if need be. Returns a list including a matrix of preprocessed covariate values and associated tracking.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="createForestCovariatesFromMetadata.html">createForestCovariatesFromMetadata()</a></code> 
+        </dt>
+        <dd>Preprocess a dataframe of covariate values, converting categorical variables to integers and one-hot encoding if need be. Returns a list including a matrix of preprocessed covariate values and associated tracking.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="oneHotEncode.html">oneHotEncode()</a></code> 
+        </dt>
+        <dd>Convert a vector of unordered categorical data (either numeric or character labels) to a "one-hot" encoded matrix in which a 1 in a column indicates the presence of the relevant category.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="oneHotInitializeAndEncode.html">oneHotInitializeAndEncode()</a></code> 
+        </dt>
+        <dd>Convert a vector of unordered categorical data (either numeric or character labels) to a "one-hot" encoded matrix in which a 1 in a column indicates the presence of the relevant category.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="orderedCatPreprocess.html">orderedCatPreprocess()</a></code> 
+        </dt>
+        <dd>Run some simple preprocessing of ordered categorical variables, converting ordered levels to integers if necessary, and storing the unique levels of a variable.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="orderedCatInitializeAndPreprocess.html">orderedCatInitializeAndPreprocess()</a></code> 
+        </dt>
+        <dd>Run some simple preprocessing of ordered categorical variables, converting ordered levels to integers if necessary, and storing the unique levels of a variable.</dd>
       </dl></div><div class="section level2">
       
       <h3 id="forest">Forest<a class="anchor" aria-label="anchor" href="#forest"></a></h3>
