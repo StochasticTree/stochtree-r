@@ -814,6 +814,18 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NU
         stop("Random effects basis has a different dimension than the basis used to train this model")
     }
     
+    # Recode group IDs to integer vector (if passed as, for example, a vector of county names, etc...)
+    has_rfx <- F
+    if (!is.null(group_ids_test)) {
+        rfx_unique_group_ids <- bcf$rfx_unique_group_ids
+        group_ids_factor_test <- factor(group_ids_test, levels = rfx_unique_group_ids)
+        if (sum(is.na(group_ids_factor_test)) > 0) {
+            stop("All random effect group labels provided in group_ids_test must be present in group_ids_train")
+        }
+        group_ids_test <- as.integer(group_ids_factor_test)
+        has_rfx <- T
+    }
+
     # Produce basis for the "intercept-only" random effects case
     if ((bcf$model_params$has_rfx) && (is.null(rfx_basis_test))) {
         rfx_basis_test <- matrix(rep(1, nrow(X_test)), ncol = 1)
@@ -1090,6 +1102,7 @@ convertToJson.bcf <- function(object, ...){
     # Add random effects (if present)
     if (bcf_model$model_params$has_rfx) {
         jsonobj$add_random_effects(bcf_model$rfx_samples)
+        jsonobj$add_string_vector("rfx_unique_group_ids", object$rfx_unique_group_ids)
     }
     
     return(jsonobj)
@@ -1295,6 +1308,7 @@ createBCFModelFromJson <- function(json_object){
     
     # Unpack random effects
     if (model_params[["has_rfx"]]) {
+        output[["rfx_unique_group_ids"]] <- json_object$get_string_vector("rfx_unique_group_ids")
         output[["rfx_samples"]] <- loadRandomEffectSamplesJson(json_object, 0)
     }
     
