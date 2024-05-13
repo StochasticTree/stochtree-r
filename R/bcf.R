@@ -15,8 +15,10 @@
 #' We do not currently support (but plan to in the near future), test set evaluation for group labels
 #' that were not in the training set.
 #' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
-#' @param ordered_cat_vars Vector of names of ordered categorical variables.
-#' @param unordered_cat_vars Vector of names of unordered categorical variables.
+#' @param ordered_cat_vars Vector of names (or positional indices) of ordered categorical variables. Default `NULL`.
+#' @param unordered_cat_vars Vector of names (or positional indices) of unordered categorical variables. Default `NULL`.
+#' @param prognostic_forest_vars Vector of names (or positional indices) of variables to be included in the prognostic forest (`mu(X)`). Default `NULL`.
+#' @param treatment_forest_vars Vector of names (or positional indices) of variables to be included in the treatment effect forest (`tau(X)`). Default `NULL`.
 #' @param cutpoint_grid_size Maximum size of the "grid" of potential cutpoints to consider. Default: 100.
 #' @param sigma_leaf_mu Starting value of leaf node scale parameter for the prognostic forest. Calibrated internally as `2/num_trees_mu` if not set here.
 #' @param sigma_leaf_tau Starting value of leaf node scale parameter for the treatment effect forest. Calibrated internally as `1/num_trees_tau` if not set here.
@@ -100,15 +102,16 @@
 bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NULL, 
                 rfx_basis_train = NULL, X_test = NULL, Z_test = NULL, pi_test = NULL, 
                 group_ids_test = NULL, rfx_basis_test = NULL, ordered_cat_vars = NULL, 
-                unordered_cat_vars = NULL, cutpoint_grid_size = 100, 
-                sigma_leaf_mu = NULL, sigma_leaf_tau = NULL, alpha_mu = 0.95, alpha_tau = 0.25, 
-                beta_mu = 2.0, beta_tau = 3.0, min_samples_leaf_mu = 5, min_samples_leaf_tau = 5, 
-                nu = 3, lambda = NULL, a_leaf_mu = 3, a_leaf_tau = 3, b_leaf_mu = NULL, b_leaf_tau = NULL, 
+                unordered_cat_vars = NULL, prognostic_forest_vars = NULL, treatment_forest_vars = NULL, 
+                cutpoint_grid_size = 100,  sigma_leaf_mu = NULL, sigma_leaf_tau = NULL, 
+                alpha_mu = 0.95, alpha_tau = 0.25, beta_mu = 2.0, beta_tau = 3.0, 
+                min_samples_leaf_mu = 5, min_samples_leaf_tau = 5, nu = 3, lambda = NULL, 
+                a_leaf_mu = 3, a_leaf_tau = 3, b_leaf_mu = NULL, b_leaf_tau = NULL, 
                 q = 0.9, sigma2 = NULL, num_trees_mu = 250, num_trees_tau = 50, num_gfr = 5, 
                 num_burnin = 0, num_mcmc = 100, sample_sigma_global = T, sample_sigma_leaf_mu = T, 
                 sample_sigma_leaf_tau = F, propensity_covariate = "mu", adaptive_coding = T,
                 b_0 = -0.5, b_1 = 0.5, random_seed = -1, keep_burnin = F, keep_gfr = F) {
-    # Preprocess covariates
+    # Runtime checks / conversions for the covariates
     if ((is.null(dim(X_train))) && (!is.null(X_train))) {
         X_train <- as.matrix(X_train)
     }
@@ -123,8 +126,83 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
             stop("X_test must be a matrix or dataframe")
         }
     }
+    
+    # Runtime checks on variable lists
+    if (!is.null(ordered_cat_vars)) {
+        if ((!is.character(ordered_cat_vars)) && (sum(abs(as.integer(ordered_cat_vars) - ordered_cat_vars)) > 0)) {
+            stop("ordered_cat_vars must either be a character vector or vector of positional column indices")
+        }
+    }
+    if (!is.null(unordered_cat_vars)) {
+        if ((!is.character(unordered_cat_vars)) && (sum(abs(as.integer(unordered_cat_vars) - unordered_cat_vars)) > 0)) {
+            stop("unordered_cat_vars must either be a character vector or vector of positional column indices")
+        }
+    }
+    if (!is.null(prognostic_forest_vars)) {
+        if ((!is.character(prognostic_forest_vars)) && (sum(abs(as.integer(prognostic_forest_vars) - prognostic_forest_vars)) > 0)) {
+            stop("prognostic_forest_vars must either be a character vector or vector of positional column indices")
+        }
+    }
+    if (!is.null(treatment_forest_vars)) {
+        if ((!is.character(treatment_forest_vars)) && (sum(abs(as.integer(treatment_forest_vars) - treatment_forest_vars)) > 0)) {
+            stop("ordered_cat_vars must either be a character vector or vector of positional column indices")
+        }
+    }
+    
+    # Check that a character vector of variable names can actually be used
+    if ((is.matrix(X_train)) && (is.null(colnames(X_train)))) {
+        if ((is.character(ordered_cat_vars)) || (is.character(unordered_cat_vars)) || 
+            (is.character(prognostic_forest_vars)) || (is.character(treatment_forest_vars))) {
+            stop("Cannot provide a character vector of variable names since X_train is a matrix without column names")
+        }
+    }
+    
+    # Check that all non-NULL variable lists are in a compatible format
+    char_compat <- all(c(
+        (is.null(ordered_cat_vars) || is.character(ordered_cat_vars)), 
+        (is.null(unordered_cat_vars) || is.character(unordered_cat_vars)), 
+        (is.null(prognostic_forest_vars) || is.character(prognostic_forest_vars)), 
+        (is.null(treatment_forest_vars) || is.character(treatment_forest_vars))
+    ))
+    integer_compat <- all(c(
+        (is.null(ordered_cat_vars) || (sum(abs(as.integer(ordered_cat_vars) - ordered_cat_vars)) == 0)), 
+        (is.null(unordered_cat_vars) || (sum(abs(as.integer(unordered_cat_vars) - unordered_cat_vars)) == 0)), 
+        (is.null(prognostic_forest_vars) || (sum(abs(as.integer(prognostic_forest_vars) - prognostic_forest_vars)) == 0)), 
+        (is.null(treatment_forest_vars) || (sum(abs(as.integer(treatment_forest_vars) - treatment_forest_vars)) == 0))
+    ))
+    if ((!char_compat) && (!integer_compat)) stop("All variable lists (ordered_cat_vars, unordered_cat_vars, prognostic_forest_vars, treatment_forest_vars) must either be NULL or passed in a compatible type (character vector of variable names or numeric vector of column indices)")
+
+    # Subset each variable list to variables that are in X_train
+    if (!is.null(ordered_cat_vars)) {
+        if (is.numeric(ordered_cat_vars)) X_column_inds <- 1:ncol(X_train)
+        else X_column_inds <- colnames(X_train)
+        subset_vars_valid <- ordered_cat_vars %in% X_column_inds
+        ordered_cat_vars <- ordered_cat_vars[subset_vars_valid]
+    }
+    if (!is.null(unordered_cat_vars)) {
+        if (is.numeric(unordered_cat_vars)) X_column_inds <- 1:ncol(X_train)
+        else X_column_inds <- colnames(X_train)
+        subset_vars_valid <- unordered_cat_vars %in% X_column_inds
+        unordered_cat_vars <- unordered_cat_vars[subset_vars_valid]
+    }
+    if (!is.null(prognostic_forest_vars)) {
+        if (is.numeric(prognostic_forest_vars)) X_column_inds <- 1:ncol(X_train)
+        else X_column_inds <- colnames(X_train)
+        subset_vars_valid <- prognostic_forest_vars %in% X_column_inds
+        prognostic_forest_vars <- prognostic_forest_vars[subset_vars_valid]
+    }
+    if (!is.null(treatment_forest_vars)) {
+        if (is.numeric(treatment_forest_vars)) X_column_inds <- 1:ncol(X_train)
+        else X_column_inds <- colnames(X_train)
+        subset_vars_valid <- treatment_forest_vars %in% X_column_inds
+        treatment_forest_vars <- treatment_forest_vars[subset_vars_valid]
+    }
+    
+    # Preprocess covariates
     train_cov_preprocess_list <- createForestCovariates(X_train, ordered_cat_vars = ordered_cat_vars, 
-                                                        unordered_cat_vars = unordered_cat_vars)
+                                                        unordered_cat_vars = unordered_cat_vars, 
+                                                        prognostic_forest_vars = prognostic_forest_vars, 
+                                                        treatment_forest_vars = treatment_forest_vars)
     X_train_metadata <- train_cov_preprocess_list$metadata
     X_train <- train_cov_preprocess_list$data
     feature_types <- X_train_metadata$feature_types
@@ -256,41 +334,52 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         if (is.null(pi_test)) stop("Propensity score must be provided for the test set as well")
     }
     
+    # Create X_train_mu, X_train_tau and (optionally) X_test_mu, X_test_tau
+    X_train_mu <- X_train[,X_train_metadata$include_prognostic,drop=F]
+    X_train_tau <- X_train[,X_train_metadata$include_treatment,drop=F]
+    feature_types_mu <- feature_types[X_train_metadata$include_prognostic]
+    feature_types_tau <- feature_types[X_train_metadata$include_treatment]
+    if (has_test) {
+        X_test_mu <- X_test[,X_train_metadata$include_prognostic,drop=F]
+        X_test_tau <- X_test[,X_train_metadata$include_treatment,drop=F]
+    }
+    
+    # Add propensity scores
     if (propensity_covariate == "mu") {
-        feature_types_mu <- as.integer(c(feature_types,0))
-        feature_types_tau <- as.integer(feature_types)
-        X_train_mu <- cbind(X_train, pi_train)
-        X_train_tau <- X_train
+        feature_types_mu <- as.integer(c(feature_types_mu,0))
+        feature_types_tau <- as.integer(feature_types_tau)
+        X_train_mu <- cbind(X_train_mu, pi_train)
+        X_train_tau <- X_train_tau
         if (has_test) {
-            X_test_mu <- cbind(X_test, pi_test)
-            X_test_tau <- X_test
+            X_test_mu <- cbind(X_test_mu, pi_test)
+            X_test_tau <- X_test_tau
         }
     } else if (propensity_covariate == "tau") {
-        feature_types_mu <- as.integer(feature_types)
-        feature_types_tau <- as.integer(c(feature_types,0))
-        X_train_mu <- X_train
-        X_train_tau <- cbind(X_train, pi_train)
+        feature_types_mu <- as.integer(feature_types_mu)
+        feature_types_tau <- as.integer(c(feature_types_tau,0))
+        X_train_mu <- X_train_mu
+        X_train_tau <- cbind(X_train_tau, pi_train)
         if (has_test) {
-            X_test_mu <- X_test
-            X_test_tau <- cbind(X_test, pi_test)
+            X_test_mu <- X_test_mu
+            X_test_tau <- cbind(X_test_tau, pi_test)
         }
     } else if (propensity_covariate == "both") {
-        feature_types_mu <- as.integer(c(feature_types,0))
-        feature_types_tau <- as.integer(c(feature_types,0))
-        X_train_mu <- cbind(X_train, pi_train)
-        X_train_tau <- cbind(X_train, pi_train)
+        feature_types_mu <- as.integer(c(feature_types_mu,0))
+        feature_types_tau <- as.integer(c(feature_types_tau,0))
+        X_train_mu <- cbind(X_train_mu, pi_train)
+        X_train_tau <- cbind(X_train_tau, pi_train)
         if (has_test) {
-            X_test_mu <- cbind(X_test, pi_test)
-            X_test_tau <- cbind(X_test, pi_test)
+            X_test_mu <- cbind(X_test_mu, pi_test)
+            X_test_tau <- cbind(X_test_tau, pi_test)
         }
     } else if (propensity_covariate == "none") {
-        feature_types_mu <- as.integer(feature_types)
-        feature_types_tau <- as.integer(feature_types)
-        X_train_mu <- X_train
-        X_train_tau <- X_train
+        feature_types_mu <- as.integer(feature_types_mu)
+        feature_types_tau <- as.integer(feature_types_tau)
+        X_train_mu <- X_train_mu
+        X_train_tau <- X_train_tau
         if (has_test) {
-            X_test_mu <- X_test
-            X_test_tau <- X_test
+            X_test_mu <- X_test_mu
+            X_test_tau <- X_test_tau
         }
     } else {
         stop("propensity_covariate must equal one of 'none', 'mu', 'tau', or 'both'")
@@ -831,16 +920,20 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NU
         rfx_basis_test <- matrix(rep(1, nrow(X_test)), ncol = 1)
     }
     
+    # Create X_test_mu and X_test_tau
+    X_test_mu <- X_test[,train_set_metadata$include_prognostic,drop=F]
+    X_test_tau <- X_test[,train_set_metadata$include_treatment,drop=F]
+    
     # Add propensities to any covariate set
     if (bcf$model_params$propensity_covariate == "both") {
-        X_test_mu <- cbind(X_test, pi_test)
-        X_test_tau <- cbind(X_test, pi_test)
+        X_test_mu <- cbind(X_test_mu, pi_test)
+        X_test_tau <- cbind(X_test_tau, pi_test)
     } else if (bcf$model_params$propensity_covariate == "mu") {
-        X_test_mu <- cbind(X_test, pi_test)
-        X_test_tau <- X_test
+        X_test_mu <- cbind(X_test_mu, pi_test)
+        X_test_tau <- X_test_tau
     } else if (bcf$model_params$propensity_covariate == "tau") {
-        X_test_mu <- X_test
-        X_test_tau <- cbind(X_test, pi_test)
+        X_test_mu <- X_test_mu
+        X_test_tau <- cbind(X_test_tau, pi_test)
     }
     
     # Create prediction datasets
@@ -1056,6 +1149,8 @@ convertBCFModelToJson <- function(object){
     jsonobj$add_scalar("num_numeric_vars", object$train_set_metadata$num_numeric_vars)
     jsonobj$add_scalar("num_ordered_cat_vars", object$train_set_metadata$num_ordered_cat_vars)
     jsonobj$add_scalar("num_unordered_cat_vars", object$train_set_metadata$num_unordered_cat_vars)
+    jsonobj$add_vector("include_prognostic", object$train_set_metadata$include_prognostic)
+    jsonobj$add_vector("include_treatment", object$train_set_metadata$include_treatment)
     if (object$train_set_metadata$num_numeric_vars > 0) {
         jsonobj$add_string_vector("numeric_vars", object$train_set_metadata$numeric_vars)
     }
@@ -1258,6 +1353,8 @@ createBCFModelFromJson <- function(json_object){
     train_set_metadata[["num_numeric_vars"]] <- json_object$get_scalar("num_numeric_vars")
     train_set_metadata[["num_ordered_cat_vars"]] <- json_object$get_scalar("num_ordered_cat_vars")
     train_set_metadata[["num_unordered_cat_vars"]] <- json_object$get_scalar("num_unordered_cat_vars")
+    train_set_metadata[["include_prognostic"]] <- json_object$get_vector("include_prognostic")
+    train_set_metadata[["include_treatment"]] <- json_object$get_vector("include_treatment")
     if (train_set_metadata[["num_numeric_vars"]] > 0) {
         train_set_metadata[["numeric_vars"]] <- json_object$get_string_vector("numeric_vars")
     }
