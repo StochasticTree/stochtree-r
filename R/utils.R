@@ -6,8 +6,6 @@
 #' categorical variables as factors but it is not necessary.
 #' @param ordered_cat_vars (Optional) Vector of names of ordered categorical variables, or vector of column indices if `input_data` is a matrix.
 #' @param unordered_cat_vars (Optional) Vector of names of unordered categorical variables, or vector of column indices if `input_data` is a matrix.
-#' @param prognostic_forest_vars Vector of names (or positional indices) of variables to be included in the prognostic forest (`mu(X)`). Default `NULL`.
-#' @param treatment_forest_vars Vector of names (or positional indices) of variables to be included in the treatment effect forest (`tau(X)`). Default `NULL`.
 #'
 #' @return List with preprocessed data and details on the number of each type 
 #' of variable, unique categories associated with categorical variables, and the 
@@ -18,38 +16,22 @@
 #' cov_df <- data.frame(x1 = 1:5, x2 = 5:1, x3 = 6:10)
 #' preprocess_list <- createForestCovariates(cov_df)
 #' X <- preprocess_list$X
-createForestCovariates <- function(input_data, ordered_cat_vars = NULL, unordered_cat_vars = NULL, 
-                                   prognostic_forest_vars = NULL, treatment_forest_vars = NULL) {
-    if (is.matrix(input_data) && is.null(colnames(input_data))) {
-        colnames(input_data) <- paste0("x", 1:ncol(input_data))
+createForestCovariates <- function(input_data, ordered_cat_vars = NULL, unordered_cat_vars = NULL) {
+    if (is.matrix(input_data)) {
+        input_df <- as.data.frame(input_data)
+        names(input_df) <- paste0("x", 1:ncol(input_data))
         if (!is.null(ordered_cat_vars)) {
-            ordered_cat_vars <- paste0("x", as.integer(ordered_cat_vars))
+            if (is.numeric(ordered_cat_vars)) ordered_cat_vars <- paste0("x", as.integer(ordered_cat_vars))
         }
         if (!is.null(unordered_cat_vars)) {
-            unordered_cat_vars <- paste0("x", as.integer(unordered_cat_vars))
+            if (is.numeric(unordered_cat_vars)) unordered_cat_vars <- paste0("x", as.integer(unordered_cat_vars))
         }
-        if (!is.null(prognostic_forest_vars)) {
-            prognostic_forest_vars <- paste0("x", as.integer(prognostic_forest_vars))
-        }
-        if (!is.null(treatment_forest_vars)) {
-            treatment_forest_vars <- paste0("x", as.integer(treatment_forest_vars))
-        }
+    } else if (is.data.frame(input_data)) {
+        input_df <- input_data
     } else {
-        data_col_names <- colnames(input_data)
-        if (!is.null(ordered_cat_vars)) {
-            if (is.numeric(ordered_cat_vars)) ordered_cat_vars <- data_col_names[ordered_cat_vars]
-        }
-        if (!is.null(unordered_cat_vars)) {
-            if (is.numeric(unordered_cat_vars)) unordered_cat_vars <- data_col_names[unordered_cat_vars]
-        }
-        if (!is.null(prognostic_forest_vars)) {
-            if (is.numeric(prognostic_forest_vars)) prognostic_forest_vars <- data_col_names[prognostic_forest_vars]
-        }
-        if (!is.null(treatment_forest_vars)) {
-            if (is.numeric(treatment_forest_vars)) treatment_forest_vars <- data_col_names[treatment_forest_vars]
-        }
+        stop("input_data must be either a matrix or a data frame")
     }
-    df_vars <- colnames(input_data)
+    df_vars <- names(input_df)
     if (is.null(ordered_cat_vars)) ordered_cat_matches <- rep(F, length(df_vars))
     else ordered_cat_matches <- df_vars %in% ordered_cat_vars
     if (is.null(unordered_cat_vars)) unordered_cat_matches <- rep(F, length(df_vars))
@@ -61,33 +43,22 @@ createForestCovariates <- function(input_data, ordered_cat_vars = NULL, unordere
     num_ordered_cat_vars <- length(ordered_cat_vars)
     num_unordered_cat_vars <- length(unordered_cat_vars)
     num_numeric_vars <- length(numeric_vars)
-    if (num_ordered_cat_vars > 0) ordered_cat_data <- input_data[,ordered_cat_vars,drop=F]
-    if (num_unordered_cat_vars > 0) unordered_cat_data <- input_data[,unordered_cat_vars,drop=F]
-    if (num_numeric_vars > 0) numeric_data <- input_data[,numeric_vars,drop=F]
+    if (num_ordered_cat_vars > 0) ordered_cat_df <- input_df[,ordered_cat_vars,drop=F]
+    if (num_unordered_cat_vars > 0) unordered_cat_df <- input_df[,unordered_cat_vars,drop=F]
+    if (num_numeric_vars > 0) numeric_df <- input_df[,numeric_vars,drop=F]
     
     # Empty outputs
     X <- double(0)
     unordered_unique_levels <- list()
     ordered_unique_levels <- list()
     feature_types <- integer(0)
-    include_prognostic <- integer(0)
-    include_treatment <- integer(0)
     
     # First, extract the numeric covariates
-    column_counter <- 1
     if (num_numeric_vars > 0) {
-        numeric_col_names <- colnames(numeric_data)
         Xnum <- double(0)
-        for (i in 1:ncol(numeric_data)) {
-            stopifnot(is.numeric(numeric_data[,i]))
-            Xnum <- cbind(Xnum, numeric_data[,i])
-            if (is.null(prognostic_forest_vars) || (numeric_col_names[i] %in% prognostic_forest_vars)) {
-                include_prognostic <- c(include_prognostic, column_counter)
-            }
-            if (is.null(treatment_forest_vars) || (numeric_col_names[i] %in% treatment_forest_vars)) {
-                include_treatment <- c(include_treatment, column_counter)
-            }
-            column_counter <- column_counter + 1
+        for (i in 1:ncol(numeric_df)) {
+            stopifnot(is.numeric(numeric_df[,i]))
+            Xnum <- cbind(Xnum, numeric_df[,i])
         }
         X <- cbind(X, unname(Xnum))
         feature_types <- c(feature_types, rep(0, ncol(Xnum)))
@@ -95,20 +66,12 @@ createForestCovariates <- function(input_data, ordered_cat_vars = NULL, unordere
     
     # Next, run some simple preprocessing on the ordered categorical covariates
     if (num_ordered_cat_vars > 0) {
-        ordered_cat_col_names <- colnames(ordered_cat_data)
         Xordcat <- double(0)
-        for (i in 1:ncol(ordered_cat_data)) {
-            var_name <- colnames(ordered_cat_data)[i]
-            preprocess_list <- orderedCatInitializeAndPreprocess(ordered_cat_data[,i])
+        for (i in 1:ncol(ordered_cat_df)) {
+            var_name <- names(ordered_cat_df)[i]
+            preprocess_list <- orderedCatInitializeAndPreprocess(ordered_cat_df[,i])
             ordered_unique_levels[[var_name]] <- preprocess_list$unique_levels
             Xordcat <- cbind(Xordcat, preprocess_list$x_preprocessed)
-            if (is.null(prognostic_forest_vars) || (ordered_cat_col_names[i] %in% prognostic_forest_vars)) {
-                include_prognostic <- c(include_prognostic, column_counter)
-            }
-            if (is.null(treatment_forest_vars) || (ordered_cat_col_names[i] %in% treatment_forest_vars)) {
-                include_treatment <- c(include_treatment, column_counter)
-            }
-            column_counter <- column_counter + 1
         }
         X <- cbind(X, unname(Xordcat))
         feature_types <- c(feature_types, rep(1, ncol(Xordcat)))
@@ -116,20 +79,12 @@ createForestCovariates <- function(input_data, ordered_cat_vars = NULL, unordere
     
     # Finally, one-hot encode the unordered categorical covariates
     if (num_unordered_cat_vars > 0) {
-        unordered_cat_col_names <- colnames(unordered_cat_data)
         one_hot_mats <- list()
-        for (i in 1:ncol(unordered_cat_data)) {
-            var_name <- colnames(unordered_cat_data)[i]
-            encode_list <- oneHotInitializeAndEncode(unordered_cat_data[,i])
+        for (i in 1:ncol(unordered_cat_df)) {
+            var_name <- names(unordered_cat_df)[i]
+            encode_list <- oneHotInitializeAndEncode(unordered_cat_df[,i])
             unordered_unique_levels[[var_name]] <- encode_list$unique_levels
             one_hot_mats[[var_name]] <- encode_list$Xtilde
-            if (is.null(prognostic_forest_vars) || (unordered_cat_col_names[i] %in% prognostic_forest_vars)) {
-                include_prognostic <- c(include_prognostic, (column_counter:(column_counter+ncol(encode_list$Xtilde)-1)))
-            }
-            if (is.null(treatment_forest_vars) || (unordered_cat_col_names[i] %in% treatment_forest_vars)) {
-                include_treatment <- c(include_treatment, (column_counter:(column_counter+ncol(encode_list$Xtilde)-1)))
-            }
-            column_counter <- column_counter + ncol(encode_list$Xtilde)
         }
         Xcat <- do.call(cbind, one_hot_mats)
         X <- cbind(X, unname(Xcat))
@@ -139,8 +94,6 @@ createForestCovariates <- function(input_data, ordered_cat_vars = NULL, unordere
     # Aggregate results into a list
     metadata <- list(
         feature_types = feature_types, 
-        include_prognostic = include_prognostic, 
-        include_treatment = include_treatment, 
         num_ordered_cat_vars = num_ordered_cat_vars, 
         num_unordered_cat_vars = num_unordered_cat_vars, 
         num_numeric_vars = num_numeric_vars

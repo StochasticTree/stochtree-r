@@ -18,8 +18,6 @@ bcf(
   rfx_basis_test = NULL,
   ordered_cat_vars = NULL,
   unordered_cat_vars = NULL,
-  prognostic_forest_vars = NULL,
-  treatment_forest_vars = NULL,
   cutpoint_grid_size = 100,
   sigma_leaf_mu = NULL,
   sigma_leaf_tau = NULL,
@@ -81,13 +79,9 @@ that were not in the training set.}
 
 \item{rfx_basis_test}{(Optional) Test set basis for "random-slope" regression in additive random effects model.}
 
-\item{ordered_cat_vars}{Vector of names (or positional indices) of ordered categorical variables. Default \code{NULL}.}
+\item{ordered_cat_vars}{Vector of names of ordered categorical variables.}
 
-\item{unordered_cat_vars}{Vector of names (or positional indices) of unordered categorical variables. Default \code{NULL}.}
-
-\item{prognostic_forest_vars}{Vector of names (or positional indices) of variables to be included in the prognostic forest (\code{mu(X)}). Default \code{NULL}.}
-
-\item{treatment_forest_vars}{Vector of names (or positional indices) of variables to be included in the treatment effect forest (\code{tau(X)}). Default \code{NULL}.}
+\item{unordered_cat_vars}{Vector of names of unordered categorical variables.}
 
 \item{cutpoint_grid_size}{Maximum size of the "grid" of potential cutpoints to consider. Default: 100.}
 

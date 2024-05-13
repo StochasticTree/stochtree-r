@@ -9,9 +9,7 @@ matrix of preprocessed covariate values and associated tracking.}
 createForestCovariates(
   input_data,
   ordered_cat_vars = NULL,
-  unordered_cat_vars = NULL,
-  prognostic_forest_vars = NULL,
-  treatment_forest_vars = NULL
+  unordered_cat_vars = NULL
 )
 }
 \arguments{
@@ -21,10 +19,6 @@ categorical variables as factors but it is not necessary.}
 \item{ordered_cat_vars}{(Optional) Vector of names of ordered categorical variables, or vector of column indices if \code{input_data} is a matrix.}
 
 \item{unordered_cat_vars}{(Optional) Vector of names of unordered categorical variables, or vector of column indices if \code{input_data} is a matrix.}
-
-\item{prognostic_forest_vars}{Vector of names (or positional indices) of variables to be included in the prognostic forest (\code{mu(X)}). Default \code{NULL}.}
-
-\item{treatment_forest_vars}{Vector of names (or positional indices) of variables to be included in the treatment effect forest (\code{tau(X)}). Default \code{NULL}.}
 }
 \value{
 List with preprocessed data and details on the number of each type

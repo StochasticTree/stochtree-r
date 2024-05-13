@@ -67,7 +67,7 @@ test_that("Preprocessing of mixed-covariate dataset works", {
         4,2,0,0,0,1,0,0,
         5,1,0,0,0,0,1,0
     ), nrow = 5, byrow = T)
-    preprocess_list <- createForestCovariates(cov_df, ordered_cat_vars = c("x2"), unordered_cat_vars = c("x3"))
+    preprocess_list <- createForestCovariates(cov_df, ordered_cat_vars = c("x2"), unordered_cat_vars = "x3")
     expect_equal(preprocess_list$data, cov_mat)
     expect_equal(preprocess_list$metadata$feature_types, c(0, rep(1,7)))
     expect_equal(preprocess_list$metadata$num_numeric_vars, 1)
@@ -88,7 +88,7 @@ test_that("Preprocessing of mixed-covariate matrix works", {
         4,2,0,0,0,1,0,0,
         5,1,0,0,0,0,1,0
     ), nrow = 5, byrow = T)
-    preprocess_list <- createForestCovariates(cov_input, ordered_cat_vars = c(2), unordered_cat_vars = c(3))
+    preprocess_list <- createForestCovariates(cov_input, ordered_cat_vars = 2, unordered_cat_vars = 3)
     expect_equal(preprocess_list$data, cov_mat)
     expect_equal(preprocess_list$metadata$feature_types, c(0, rep(1,7)))
     expect_equal(preprocess_list$metadata$num_numeric_vars, 1)
@@ -98,6 +98,17 @@ test_that("Preprocessing of mixed-covariate matrix works", {
     expect_equal(preprocess_list$metadata$unordered_cat_vars, c("x3"))
     expect_equal(preprocess_list$metadata$ordered_unique_levels, list(x2=c("1","2","3","4","5")))
     expect_equal(preprocess_list$metadata$unordered_unique_levels, list(x3=c("6","7","8","9","10")))
+    
+    alt_preprocess_list <- createForestCovariates(cov_input, ordered_cat_vars = "x2", unordered_cat_vars = "x3")
+    expect_equal(alt_preprocess_list$data, cov_mat)
+    expect_equal(alt_preprocess_list$metadata$feature_types, c(0, rep(1,7)))
+    expect_equal(alt_preprocess_list$metadata$num_numeric_vars, 1)
+    expect_equal(alt_preprocess_list$metadata$num_ordered_cat_vars, 1)
+    expect_equal(alt_preprocess_list$metadata$num_unordered_cat_vars, 1)
+    expect_equal(alt_preprocess_list$metadata$ordered_cat_vars, c("x2"))
+    expect_equal(alt_preprocess_list$metadata$unordered_cat_vars, c("x3"))
+    expect_equal(alt_preprocess_list$metadata$ordered_unique_levels, list(x2=c("1","2","3","4","5")))
+    expect_equal(alt_preprocess_list$metadata$unordered_unique_levels, list(x3=c("6","7","8","9","10")))
 })
 
 test_that("Preprocessing of out-of-sample mixed-covariate dataset works", {
@@ -105,9 +116,9 @@ test_that("Preprocessing of out-of-sample mixed-covariate dataset works", {
         num_numeric_vars = 1, 
         num_ordered_cat_vars = 1, 
         num_unordered_cat_vars = 1, 
-        numeric_vars = c(1), 
-        ordered_cat_vars = c(2), 
-        unordered_cat_vars = c(3), 
+        numeric_vars = c("x1"), 
+        ordered_cat_vars = c("x2"), 
+        unordered_cat_vars = c("x3"), 
         ordered_unique_levels = list(x2=c("1","2","3","4","5")), 
         unordered_unique_levels = list(x3=c("6","7","8","9","10"))
     )
