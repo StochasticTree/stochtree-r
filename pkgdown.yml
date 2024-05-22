@@ -7,7 +7,7 @@ articles:
   CustomSamplingRoutine: CustomSamplingRoutine.html
   EnsembleKernel: EnsembleKernel.html
   ModelSerialization: ModelSerialization.html
-last_built: 2024-05-13T03:44Z
+last_built: 2024-05-22T18:24Z
 urls:
   reference: https://stochastictree.github.io/stochtree-r/reference
   article: https://stochastictree.github.io/stochtree-r/articles
