@@ -27,7 +27,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: local::.
+          extra-packages: any::testthat, local::.
 
       - name: Run unit tests
         run: testthat::test_local()
