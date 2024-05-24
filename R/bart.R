@@ -18,8 +18,6 @@
 #' We do not currently support (but plan to in the near future), test set evaluation for group labels
 #' that were not in the training set.
 #' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
-#' @param ordered_cat_vars Vector of names of ordered categorical variables.
-#' @param unordered_cat_vars Vector of names of unordered categorical variables.
 #' @param variable_weights Vector of length `ncol(X_train)` indicating a "weight" placed on each 
 #' variable for sampling purposes. Default: `rep(1/ncol(X_train),ncol(X_train))`.
 #' @param cutpoint_grid_size Maximum size of the "grid" of potential cutpoints to consider. Default: 100.
@@ -81,26 +79,19 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
                  num_burnin = 0, num_mcmc = 100, sample_sigma = T, 
                  sample_tau = T, random_seed = -1, keep_burnin = F, keep_gfr = F){
     # Preprocess covariates
-    if ((is.null(dim(X_train))) && (!is.null(X_train))) {
-        X_train <- as.matrix(X_train)
-    }
-    if ((is.null(dim(X_test))) && (!is.null(X_test))) {
-        X_test <- as.matrix(X_test)
-    }
-    if (!is.matrix(X_train) && !is.data.frame(X_train)) {
-        stop("X_train must be a matrix or dataframe")
+    if (!is.data.frame(X_train)) {
+        stop("X_train must be a dataframe")
     }
     if (!is.null(X_test)){
-        if (!is.matrix(X_test) && !is.data.frame(X_test)) {
-            stop("X_test must be a matrix or dataframe")
+        if (!is.data.frame(X_test)) {
+            stop("X_test must be a dataframe")
         }
     }
-    train_cov_preprocess_list <- createForestCovariates(X_train, ordered_cat_vars = ordered_cat_vars, 
-                                                        unordered_cat_vars = unordered_cat_vars)
+    train_cov_preprocess_list <- preprocessTrainDataFrame(X_train)
     X_train_metadata <- train_cov_preprocess_list$metadata
     X_train <- train_cov_preprocess_list$data
     feature_types <- X_train_metadata$feature_types
-    if (!is.null(X_test)) X_test <- createForestCovariatesFromMetadata(X_test, X_train_metadata)
+    if (!is.null(X_test)) X_test <- preprocessPredictionDataFrame(X_test, X_train_metadata)
     
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(W_train))) && (!is.null(W_train))) {
@@ -465,7 +456,7 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
 #' Predict from a sampled BART model on new data
 #'
 #' @param bart Object of type `bart` containing draws of a regression forest and associated sampling outputs.
-#' @param X_test Covariates used to determine tree leaf predictions for each observation.
+#' @param X_test Covariates used to determine tree leaf predictions for each observation. Must be passed as a dataframe.
 #' @param W_test (Optional) Bases used for prediction (by e.g. dot product with leaf values). Default: `NULL`.
 #' @param group_ids_test (Optional) Test set group labels used for an additive random effects model. 
 #' We do not currently support (but plan to in the near future), test set evaluation for group labels
@@ -504,16 +495,11 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
 #' # abline(0,1,col="red",lty=3,lwd=3)
 predict.bartmodel <- function(bart, X_test, W_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL, predict_all = F){
     # Preprocess covariates
-    if ((is.null(dim(X_test))) && (!is.null(X_test))) {
-        X_test <- as.matrix(X_test)
-    }
-    if (!is.null(X_test)){
-        if (!is.matrix(X_test) && !is.data.frame(X_test)) {
-            stop("X_test must be a matrix or dataframe")
-        }
+    if (!is.data.frame(X_test)) {
+        stop("X_test must be a dataframe")
     }
     train_set_metadata <- bart$train_set_metadata
-    if (!is.null(X_test)) X_test <- createForestCovariatesFromMetadata(X_test, train_set_metadata)
+    X_test <- preprocessPredictionDataFrame(X_test, train_set_metadata)
     
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(W_test))) && (!is.null(W_test))) {
