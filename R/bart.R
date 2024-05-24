@@ -71,7 +71,6 @@
 bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL, 
                  rfx_basis_train = NULL, X_test = NULL, W_test = NULL, 
                  group_ids_test = NULL, rfx_basis_test = NULL, 
-                 ordered_cat_vars = NULL, unordered_cat_vars = NULL, 
                  cutpoint_grid_size = 100, tau_init = NULL, alpha = 0.95, 
                  beta = 2.0, min_samples_leaf = 5, leaf_model = 0, 
                  nu = 3, lambda = NULL, a_leaf = 3, b_leaf = NULL, 

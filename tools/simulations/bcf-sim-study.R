@@ -42,6 +42,9 @@ simulation_function = function(n, mu=mu1, tau=tau2, gfr_iter=10, burnin_iter=100
     Z <- rbinom(n,1,pi_x)
     E_XZ <- mu_x + Z*tau_x
     y <- E_XZ + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+    X <- as.data.frame(X)
+    X$x4 <- factor(X$x4, ordered = T)
+    X$x5 <- factor(X$x5, ordered = T)
     
     # Split data into test and train sets
     test_set_pct <- 0.5
@@ -69,7 +72,7 @@ simulation_function = function(n, mu=mu1, tau=tau2, gfr_iter=10, burnin_iter=100
     num_samples <- num_gfr + num_burnin + num_mcmc
     bcf_model_warmstart <- bcf(
         X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-        X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
+        X_test = X_test, Z_test = Z_test, pi_test = pi_test, 
         num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
         sample_sigma_leaf_mu = sample_tau, sample_sigma_leaf_tau = F, 
         num_trees_mu = 200, num_trees_tau = 50
@@ -92,7 +95,7 @@ simulation_function = function(n, mu=mu1, tau=tau2, gfr_iter=10, burnin_iter=100
     num_samples <- num_gfr + num_burnin + num_mcmc
     bcf_model_root <- bcf(
         X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-        X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
+        X_test = X_test, Z_test = Z_test, pi_test = pi_test, 
         num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
         sample_sigma_leaf_mu = sample_tau, sample_sigma_leaf_tau = F, 
         num_trees_mu = 200, num_trees_tau = 50
@@ -117,7 +120,7 @@ simulation_function = function(n, mu=mu1, tau=tau2, gfr_iter=10, burnin_iter=100
     X_test_s_learner <- cbind(X_test, pi_test, Z_test)
     s_learner_warmstart <- stochtree::bart(
         X_train = X_train_s_learner, y_train = y_train, 
-        X_test = X_test_s_learner, ordered_cat_vars = c(4,5), 
+        X_test = X_test_s_learner, 
         num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
         sample_tau = sample_tau, num_trees = 200
     )
@@ -169,12 +172,12 @@ simulation_function = function(n, mu=mu1, tau=tau2, gfr_iter=10, burnin_iter=100
     y_train_control <- y_train[Z_train==0]
     t_learner_warmstart_treated <- bart(
         X_train = X_train_treated, y_train = y_train_treated, 
-        ordered_cat_vars = c(4,5), num_gfr = num_gfr, num_trees = 200, 
+        num_gfr = num_gfr, num_trees = 200, 
         num_burnin = num_burnin, num_mcmc = num_mcmc, sample_tau = sample_tau
     )
     t_learner_warmstart_control <- bart(
         X_train = X_train_control, y_train = y_train_control, 
-        ordered_cat_vars = c(4,5), num_gfr = num_gfr, num_trees = 200, 
+        num_gfr = num_gfr, num_trees = 200, 
         num_burnin = num_burnin, num_mcmc = num_mcmc, sample_tau = sample_tau
     )
     sample_inds <- (num_gfr + num_burnin + 1):num_samples

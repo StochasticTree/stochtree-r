@@ -28,6 +28,9 @@ rfx_coefs <- matrix(c(-1, -1, 1, 1),nrow=2,byrow=T)
 rfx_basis <- cbind(1, runif(n, -1, 1))
 rfx_term <- rowSums(rfx_coefs[group_ids,] * rfx_basis)
 y <- E_XZ + rfx_term + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+X <- as.data.frame(X)
+X$x4 <- factor(X$x4, ordered = T)
+X$x5 <- factor(X$x5, ordered = T)
 
 # Split data into test and train sets
 test_set_pct <- 0.2
@@ -61,7 +64,7 @@ num_mcmc <- 1000
 num_samples <- num_gfr + num_burnin + num_mcmc
 bcf_model_warmstart_no_rfx <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-    X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5), 
+    X_test = X_test, Z_test = Z_test, pi_test = pi_test, 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F
 )
@@ -94,7 +97,7 @@ bcf_model_warmstart_rfx <- bcf(
     X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
     group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train, 
     X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-    rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
+    rfx_basis_test = rfx_basis_test, 
     num_gfr = num_gfr, num_burnin = num_burnin, num_mcmc = num_mcmc, 
     sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F
 )
