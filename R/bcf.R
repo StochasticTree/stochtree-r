@@ -1,6 +1,6 @@
 #' Run the Bayesian Causal Forest (BCF) algorithm for regularized causal effect estimation. 
 #'
-#' @param X_train Covariates used to split trees in the ensemble. Can be passed as either a matrix or dataframe.
+#' @param X_train Covariates used to split trees in the ensemble. Must be passed as a dataframe.
 #' @param Z_train Vector of (continuous or binary) treatment assignments.
 #' @param y_train Outcome to be modeled by the ensemble.
 #' @param pi_train (Optional) Vector of propensity scores. If not provided, this will be estimated from the data.
@@ -15,8 +15,6 @@
 #' We do not currently support (but plan to in the near future), test set evaluation for group labels
 #' that were not in the training set.
 #' @param rfx_basis_test (Optional) Test set basis for "random-slope" regression in additive random effects model.
-#' @param ordered_cat_vars Vector of names of ordered categorical variables.
-#' @param unordered_cat_vars Vector of names of unordered categorical variables.
 #' @param cutpoint_grid_size Maximum size of the "grid" of potential cutpoints to consider. Default: 100.
 #' @param sigma_leaf_mu Starting value of leaf node scale parameter for the prognostic forest. Calibrated internally as `2/num_trees_mu` if not set here.
 #' @param sigma_leaf_tau Starting value of leaf node scale parameter for the treatment effect forest. Calibrated internally as `1/num_trees_tau` if not set here.
@@ -74,6 +72,9 @@
 #' E_XZ <- mu_x + Z*tau_x
 #' snr <- 4
 #' y <- E_XZ + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+#' X <- as.data.frame(X)
+#' X$x4 <- factor(X$x4, ordered = T)
+#' X$x5 <- factor(X$x5, ordered = T)
 #' test_set_pct <- 0.2
 #' n_test <- round(test_set_pct*n)
 #' n_train <- n - n_test
@@ -92,15 +93,14 @@
 #' tau_test <- tau_x[test_inds]
 #' tau_train <- tau_x[train_inds]
 #' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5))
+#'                  X_test = X_test, Z_test = Z_test, pi_test = pi_test)
 #' # plot(rowMeans(bcf_model$mu_hat_test), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")
 #' # abline(0,1,col="red",lty=3,lwd=3)
 #' # plot(rowMeans(bcf_model$tau_hat_test), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")
 #' # abline(0,1,col="red",lty=3,lwd=3)
 bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NULL, 
                 rfx_basis_train = NULL, X_test = NULL, Z_test = NULL, pi_test = NULL, 
-                group_ids_test = NULL, rfx_basis_test = NULL, ordered_cat_vars = NULL, 
-                unordered_cat_vars = NULL, cutpoint_grid_size = 100, 
+                group_ids_test = NULL, rfx_basis_test = NULL, cutpoint_grid_size = 100, 
                 sigma_leaf_mu = NULL, sigma_leaf_tau = NULL, alpha_mu = 0.95, alpha_tau = 0.25, 
                 beta_mu = 2.0, beta_tau = 3.0, min_samples_leaf_mu = 5, min_samples_leaf_tau = 5, 
                 nu = 3, lambda = NULL, a_leaf_mu = 3, a_leaf_tau = 3, b_leaf_mu = NULL, b_leaf_tau = NULL, 
@@ -109,26 +109,21 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
                 sample_sigma_leaf_tau = F, propensity_covariate = "mu", adaptive_coding = T,
                 b_0 = -0.5, b_1 = 0.5, random_seed = -1, keep_burnin = F, keep_gfr = F) {
     # Preprocess covariates
-    if ((is.null(dim(X_train))) && (!is.null(X_train))) {
-        X_train <- as.matrix(X_train)
-    }
-    if ((is.null(dim(X_test))) && (!is.null(X_test))) {
-        X_test <- as.matrix(X_test)
-    }
-    if (!is.matrix(X_train) && !is.data.frame(X_train)) {
-        stop("X_train must be a matrix or dataframe")
+    if (!is.data.frame(X_train)) {
+        stop("X_train must be a dataframe")
     }
     if (!is.null(X_test)){
-        if (!is.matrix(X_test) && !is.data.frame(X_test)) {
-            stop("X_test must be a matrix or dataframe")
+        if (!is.data.frame(X_test)) {
+            stop("X_test must be a dataframe")
         }
     }
-    train_cov_preprocess_list <- createForestCovariates(X_train, ordered_cat_vars = ordered_cat_vars, 
-                                                        unordered_cat_vars = unordered_cat_vars)
+    train_cov_preprocess_list <- preprocessTrainDataFrame(X_train)
     X_train_metadata <- train_cov_preprocess_list$metadata
+    X_train_raw <- X_train
     X_train <- train_cov_preprocess_list$data
     feature_types <- X_train_metadata$feature_types
-    if (!is.null(X_test)) X_test <- createForestCovariatesFromMetadata(X_test, X_train_metadata)
+    X_test_raw <- X_test
+    if (!is.null(X_test)) X_test <- preprocessPredictionDataFrame(X_test, X_train_metadata)
     
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(Z_train))) && (!is.null(Z_train))) {
@@ -244,10 +239,8 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         # Estimate using the last of several iterations of GFR BART
         num_burnin <- 10
         num_total <- 50
-        bart_model_propensity <- bart(X_train = X_train, y_train = as.numeric(Z_train), X_test = X_test, 
-                                      num_gfr = num_total, num_burnin = 0, num_mcmc = 0, 
-                                      ordered_cat_vars = ordered_cat_vars, 
-                                      unordered_cat_vars = unordered_cat_vars)
+        bart_model_propensity <- bart(X_train = X_train_raw, y_train = as.numeric(Z_train), X_test = X_test_raw, 
+                                      num_gfr = num_total, num_burnin = 0, num_mcmc = 0)
         pi_train <- rowMeans(bart_model_propensity$y_hat_train[(num_burnin+1):num_total])
         if (has_test) pi_test <- rowMeans(bart_model_propensity$y_hat_test[,(num_burnin+1):num_total])
     }
@@ -714,7 +707,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' Predict from a sampled BCF model on new data
 #'
 #' @param bcf Object of type `bcf` containing draws of a Bayesian causal forest model and associated sampling outputs.
-#' @param X_test Covariates used to determine tree leaf predictions for each observation.
+#' @param X_test Covariates used to determine tree leaf predictions for each observation. Must be passed as a dataframe.
 #' @param Z_test Treatments used for prediction.
 #' @param pi_test (Optional) Propensities used for prediction.
 #' @param group_ids_test (Optional) Test set group labels used for an additive random effects model. 
@@ -747,6 +740,9 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' E_XZ <- mu_x + Z*tau_x
 #' snr <- 4
 #' y <- E_XZ + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+#' X <- as.data.frame(X)
+#' X$x4 <- factor(X$x4, ordered = T)
+#' X$x5 <- factor(X$x5, ordered = T)
 #' test_set_pct <- 0.2
 #' n_test <- round(test_set_pct*n)
 #' n_train <- n - n_test
@@ -764,7 +760,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' mu_train <- mu_x[train_inds]
 #' tau_test <- tau_x[test_inds]
 #' tau_train <- tau_x[train_inds]
-#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, ordered_cat_vars = c(4,5))
+#' bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train)
 #' preds <- predict(bcf_model, X_test, Z_test, pi_test)
 #' # plot(rowMeans(preds$mu_hat), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")
 #' # abline(0,1,col="red",lty=3,lwd=3)
@@ -772,16 +768,11 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' # abline(0,1,col="red",lty=3,lwd=3)
 predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL, predict_all = F){
     # Preprocess covariates
-    if ((is.null(dim(X_test))) && (!is.null(X_test))) {
-        X_test <- as.matrix(X_test)
-    }
-    if (!is.null(X_test)){
-        if (!is.matrix(X_test) && !is.data.frame(X_test)) {
-            stop("X_test must be a matrix or dataframe")
-        }
+    if (!is.data.frame(X_test)) {
+        stop("X_test must be a dataframe")
     }
     train_set_metadata <- bcf$train_set_metadata
-    if (!is.null(X_test)) X_test <- createForestCovariatesFromMetadata(X_test, train_set_metadata)
+    X_test <- preprocessPredictionDataFrame(X_test, train_set_metadata)
     
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(Z_test))) && (!is.null(Z_test))) {
@@ -927,6 +918,9 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NU
 #' rfx_basis <- cbind(1, runif(n, -1, 1))
 #' rfx_term <- rowSums(rfx_coefs[group_ids,] * rfx_basis)
 #' y <- E_XZ + rfx_term + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+#' X <- as.data.frame(X)
+#' X$x4 <- factor(X$x4, ordered = T)
+#' X$x5 <- factor(X$x5, ordered = T)
 #' test_set_pct <- 0.2
 #' n_test <- round(test_set_pct*n)
 #' n_train <- n - n_test
@@ -954,7 +948,7 @@ predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NU
 #'                  pi_train = pi_train, group_ids_train = group_ids_train, 
 #'                  rfx_basis_train = rfx_basis_train, X_test = X_test, 
 #'                  Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-#'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
+#'                  rfx_basis_test = rfx_basis_test, 
 #'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
 #'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
 #' rfx_samples <- getRandomEffectSamples(bcf_model)
@@ -1010,6 +1004,9 @@ getRandomEffectSamples.bcf <- function(object, ...){
 #' rfx_basis <- cbind(1, runif(n, -1, 1))
 #' rfx_term <- rowSums(rfx_coefs[group_ids,] * rfx_basis)
 #' y <- E_XZ + rfx_term + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+#' X <- as.data.frame(X)
+#' X$x4 <- factor(X$x4, ordered = T)
+#' X$x5 <- factor(X$x5, ordered = T)
 #' test_set_pct <- 0.2
 #' n_test <- round(test_set_pct*n)
 #' n_train <- n - n_test
@@ -1037,7 +1034,7 @@ getRandomEffectSamples.bcf <- function(object, ...){
 #'                  pi_train = pi_train, group_ids_train = group_ids_train, 
 #'                  rfx_basis_train = rfx_basis_train, X_test = X_test, 
 #'                  Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,
-#'                  rfx_basis_test = rfx_basis_test, ordered_cat_vars = c(4,5), 
+#'                  rfx_basis_test = rfx_basis_test, 
 #'                  num_gfr = 100, num_burnin = 0, num_mcmc = 100, 
 #'                  sample_sigma_leaf_mu = T, sample_sigma_leaf_tau = F)
 #' # bcf_json <- convertBCFModelToJson(bcf_model)

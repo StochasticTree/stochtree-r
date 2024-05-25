@@ -126,9 +126,9 @@ createForestKernel <- function() {
 #' same leaf.
 #'
 #' @param bart_model Object of type `bartmodel` corresponding to a BART model with at least one sample
-#' @param X_train Matrix of "training" data. In a traditional Gaussian process kriging context, this 
+#' @param X_train "Training" dataframe. In a traditional Gaussian process kriging context, this 
 #' corresponds to the observations for which outcomes are observed.
-#' @param X_test (Optional) Matrix of "test" data. In a traditional Gaussian process kriging context, this 
+#' @param X_test (Optional) "Test" dataframe. In a traditional Gaussian process kriging context, this 
 #' corresponds to the observations for which outcomes are unobserved and must be estimated 
 #' based on the kernels k(X_test,X_test), k(X_test,X_train), and k(X_train,X_train). If not provided, 
 #' this function will only compute k(X_train, X_train).
@@ -143,6 +143,23 @@ createForestKernel <- function() {
 #' @export
 computeForestKernels <- function(bart_model, X_train, X_test=NULL, forest_num=NULL) {
     stopifnot(class(bart_model)=="bartmodel")
+    
+    # Preprocess covariates
+    if (!is.data.frame(X_train)) {
+        stop("X_train must be a dataframe")
+    }
+    if (!is.data.frame(X_test)) {
+        stop("X_test must be a dataframe")
+    }
+    train_set_metadata <- bart_model$train_set_metadata
+    X_train <- preprocessPredictionDataFrame(X_train, train_set_metadata)
+    X_test <- preprocessPredictionDataFrame(X_test, train_set_metadata)
+    
+    # Data checks
+    stopifnot(bart_model$model_params$num_covariates == ncol(X_train))
+    stopifnot(bart_model$model_params$num_covariates == ncol(X_test))
+
+    # Initialize and compute kernel
     forest_kernel <- createForestKernel()
     num_samples <- bart_model$model_params$num_samples
     stopifnot(forest_num <= num_samples)
