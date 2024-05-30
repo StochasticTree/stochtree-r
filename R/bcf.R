@@ -290,6 +290,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
     }
     
     # Set variable weights for the prognostic and treatment effect forests
+    variable_selection_splits  = NULL
     variable_weights_mu = rep(1/ncol(X_train_mu), ncol(X_train_mu))
     variable_weights_tau = rep(1/ncol(X_train_tau), ncol(X_train_tau))
     
@@ -404,7 +405,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
             # Sample the prognostic forest
             forest_model_mu$sample_one_iteration(
                 forest_dataset_mu_train, outcome_train, forest_samples_mu, rng, feature_types_mu, 
-                0, current_leaf_scale_mu, variable_weights_mu, 
+                0, current_leaf_scale_mu, variable_weights_mu, variable_selection_splits, 
                 current_sigma2, cutpoint_grid_size, gfr = T, pre_initialized = T
             )
             
@@ -421,7 +422,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
             # Sample the treatment forest
             forest_model_tau$sample_one_iteration(
                 forest_dataset_tau_train, outcome_train, forest_samples_tau, rng, feature_types_tau, 
-                1, current_leaf_scale_tau, variable_weights_tau, 
+                1, current_leaf_scale_tau, variable_weights_tau, variable_selection_splits,  
                 current_sigma2, cutpoint_grid_size, gfr = T, pre_initialized = T
             )
             
@@ -488,7 +489,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
             # Sample the prognostic forest
             forest_model_mu$sample_one_iteration(
                 forest_dataset_mu_train, outcome_train, forest_samples_mu, rng, feature_types_mu, 
-                0, current_leaf_scale_mu, variable_weights_mu, 
+                0, current_leaf_scale_mu, variable_weights_mu, variable_selection_splits, 
                 current_sigma2, cutpoint_grid_size, gfr = F, pre_initialized = T
             )
             
@@ -505,7 +506,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
             # Sample the treatment forest
             forest_model_tau$sample_one_iteration(
                 forest_dataset_tau_train, outcome_train, forest_samples_tau, rng, feature_types_tau, 
-                1, current_leaf_scale_tau, variable_weights_tau, 
+                1, current_leaf_scale_tau, variable_weights_tau, variable_selection_splits, 
                 current_sigma2, cutpoint_grid_size, gfr = F, pre_initialized = T
             )
             
