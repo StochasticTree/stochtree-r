@@ -11,10 +11,10 @@ computeForestKernels(bart_model, X_train, X_test = NULL, forest_num = NULL)
 \arguments{
 \item{bart_model}{Object of type \code{bartmodel} corresponding to a BART model with at least one sample}
 
-\item{X_train}{Matrix of "training" data. In a traditional Gaussian process kriging context, this
+\item{X_train}{"Training" dataframe. In a traditional Gaussian process kriging context, this
 corresponds to the observations for which outcomes are observed.}
 
-\item{X_test}{(Optional) Matrix of "test" data. In a traditional Gaussian process kriging context, this
+\item{X_test}{(Optional) "Test" dataframe. In a traditional Gaussian process kriging context, this
 corresponds to the observations for which outcomes are unobserved and must be estimated
 based on the kernels k(X_test,X_test), k(X_test,X_train), and k(X_train,X_train). If not provided,
 this function will only compute k(X_train, X_train).}
