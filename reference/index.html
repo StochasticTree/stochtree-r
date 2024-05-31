@@ -145,7 +145,7 @@
           
           <code><a href="loadRandomEffectSamplesJson.html">loadRandomEffectSamplesJson()</a></code> 
         </dt>
-        <dd>Load a container of forest samples from json</dd>
+        <dd>Load a container of random effect samples from json</dd>
       </dl><dl><dt>
           
           <code><a href="loadVectorJson.html">loadVectorJson()</a></code> 
@@ -202,6 +202,36 @@
           <code><a href="createRandomEffectsDataset.html">createRandomEffectsDataset()</a></code> 
         </dt>
         <dd>Create a random effects dataset object</dd>
+      </dl><dl><dt>
+          
+          <code><a href="preprocessTrainData.html">preprocessTrainData()</a></code> 
+        </dt>
+        <dd>Preprocess covariates. DataFrames will be preprocessed based on their column types. Matrices will be passed through assuming all columns are numeric.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="preprocessPredictionData.html">preprocessPredictionData()</a></code> 
+        </dt>
+        <dd>Preprocess covariates. DataFrames will be preprocessed based on their column types. Matrices will be passed through assuming all columns are numeric.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="preprocessTrainDataFrame.html">preprocessTrainDataFrame()</a></code> 
+        </dt>
+        <dd>Preprocess a dataframe of covariate values, converting categorical variables to integers and one-hot encoding if need be. Returns a list including a matrix of preprocessed covariate values and associated tracking.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="preprocessPredictionDataFrame.html">preprocessPredictionDataFrame()</a></code> 
+        </dt>
+        <dd>Preprocess a dataframe of covariate values, converting categorical variables to integers and one-hot encoding if need be.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="preprocessTrainMatrix.html">preprocessTrainMatrix()</a></code> 
+        </dt>
+        <dd>Preprocess a matrix of covariate values, assuming all columns are numeric. Returns a list including a matrix of preprocessed covariate values and associated tracking.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="preprocessPredictionMatrix.html">preprocessPredictionMatrix()</a></code> 
+        </dt>
+        <dd>Preprocess a matrix of covariate values, assuming all columns are numeric.</dd>
       </dl><dl><dt>
           
           <code><a href="createForestCovariates.html">createForestCovariates()</a></code> 

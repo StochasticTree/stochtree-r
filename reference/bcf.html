@@ -67,8 +67,6 @@
 <span>  pi_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_ids_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  rfx_basis_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  ordered_cat_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  unordered_cat_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cutpoint_grid_size <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  sigma_leaf_mu <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sigma_leaf_tau <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -107,7 +105,11 @@
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>X_train</dt>
-<dd><p>Covariates used to split trees in the ensemble. Can be passed as either a matrix or dataframe.</p></dd>
+<dd><p>Covariates used to split trees in the ensemble. May be provided either as a dataframe or a matrix.
+Matrix covariates will be assumed to be all numeric. Covariates passed as a dataframe will be
+preprocessed based on the variable types (e.g. categorical columns stored as unordered factors will be one-hot encoded,
+categorical columns stored as ordered factors will passed as integers to the core algorithm, along with the metadata
+that the column is ordered categorical).</p></dd>
 
 
 <dt>Z_train</dt>
@@ -133,7 +135,9 @@ will be estimated.</p></dd>
 
 
 <dt>X_test</dt>
-<dd><p>(Optional) Test set of covariates used to define "out of sample" evaluation data. Can be passed as either a matrix or dataframe.</p></dd>
+<dd><p>(Optional) Test set of covariates used to define "out of sample" evaluation data.
+May be provided either as a dataframe or a matrix, but the format of <code>X_test</code> must be consistent with
+that of <code>X_train</code>.</p></dd>
 
 
 <dt>Z_test</dt>
@@ -152,14 +156,6 @@ that were not in the training set.</p></dd>
 
 <dt>rfx_basis_test</dt>
 <dd><p>(Optional) Test set basis for "random-slope" regression in additive random effects model.</p></dd>
-
-
-<dt>ordered_cat_vars</dt>
-<dd><p>Vector of names of ordered categorical variables.</p></dd>
-
-
-<dt>unordered_cat_vars</dt>
-<dd><p>Vector of names of unordered categorical variables.</p></dd>
 
 
 <dt>cutpoint_grid_size</dt>
@@ -263,7 +259,7 @@ that were not in the training set.</p></dd>
 
 
 <dt>propensity_covariate</dt>
-<dd><p>Whether to include the propensity score as a covariate in either or both of the forests. Enter "none" for neither, "mu" for the prognostic forest, "tau" for the treatment forest, and "both" for both forests. If this is not "none" and a propensity score is not provided, it will be estimated from (<code>X_train</code>, <code>Z_train</code>) using <code>xgboost</code>. Default: "mu".</p></dd>
+<dd><p>Whether to include the propensity score as a covariate in either or both of the forests. Enter "none" for neither, "mu" for the prognostic forest, "tau" for the treatment forest, and "both" for both forests. If this is not "none" and a propensity score is not provided, it will be estimated from (<code>X_train</code>, <code>Z_train</code>) using <code><a href="BART.html">stochtree::bart()</a></code>. Default: "mu".</p></dd>
 
 
 <dt>adaptive_coding</dt>
@@ -319,6 +315,9 @@ that were not in the training set.</p></dd>
 <span class="r-in"><span><span class="va">E_XZ</span> <span class="op">&lt;-</span> <span class="va">mu_x</span> <span class="op">+</span> <span class="va">Z</span><span class="op">*</span><span class="va">tau_x</span></span></span>
 <span class="r-in"><span><span class="va">snr</span> <span class="op">&lt;-</span> <span class="fl">4</span></span></span>
 <span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">E_XZ</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">*</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">E_XZ</span><span class="op">)</span><span class="op">/</span><span class="va">snr</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">X</span><span class="op">$</span><span class="va">x4</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">X</span><span class="op">$</span><span class="va">x4</span>, ordered <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">X</span><span class="op">$</span><span class="va">x5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">X</span><span class="op">$</span><span class="va">x5</span>, ordered <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">test_set_pct</span> <span class="op">&lt;-</span> <span class="fl">0.2</span></span></span>
 <span class="r-in"><span><span class="va">n_test</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">test_set_pct</span><span class="op">*</span><span class="va">n</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">n_train</span> <span class="op">&lt;-</span> <span class="va">n</span> <span class="op">-</span> <span class="va">n_test</span></span></span>
@@ -337,8 +336,7 @@ that were not in the training set.</p></dd>
 <span class="r-in"><span><span class="va">tau_test</span> <span class="op">&lt;-</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">tau_train</span> <span class="op">&lt;-</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">train_inds</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">bcf_model</span> <span class="op">&lt;-</span> <span class="fu">bcf</span><span class="op">(</span>X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span></span>
-<span class="r-in"><span>                 X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, ordered_cat_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>,<span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in bcf(X_train = X_train, Z_train = Z_train, y_train = y_train,     pi_train = pi_train, X_test = X_test, Z_test = Z_test, pi_test = pi_test,     ordered_cat_vars = c(4, 5)):</span> unused argument (ordered_cat_vars = c(4, 5))</span>
+<span class="r-in"><span>                 X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># plot(rowMeans(bcf_model$mu_hat_test), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")</span></span></span>
 <span class="r-in"><span><span class="co"># abline(0,1,col="red",lty=3,lwd=3)</span></span></span>
 <span class="r-in"><span><span class="co"># plot(rowMeans(bcf_model$tau_hat_test), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")</span></span></span>

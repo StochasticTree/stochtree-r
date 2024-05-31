@@ -172,6 +172,24 @@
     <loc>https://stochastictree.github.io/stochtree-r/reference/predict.bcf.html</loc>
   </url>
   <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessPredictionData.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessPredictionDataFrame.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessPredictionMatrix.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessTrainData.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessTrainDataFrame.html</loc>
+  </url>
+  <url>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessTrainMatrix.html</loc>
+  </url>
+  <url>
     <loc>https://stochastictree.github.io/stochtree-r/reference/sample_sigma2_one_iteration.html</loc>
   </url>
   <url>
