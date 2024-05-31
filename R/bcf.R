@@ -1,6 +1,10 @@
 #' Run the Bayesian Causal Forest (BCF) algorithm for regularized causal effect estimation. 
 #'
-#' @param X_train Covariates used to split trees in the ensemble. Must be passed as a dataframe.
+#' @param X_train Covariates used to split trees in the ensemble. May be provided either as a dataframe or a matrix. 
+#' Matrix covariates will be assumed to be all numeric. Covariates passed as a dataframe will be 
+#' preprocessed based on the variable types (e.g. categorical columns stored as unordered factors will be one-hot encoded, 
+#' categorical columns stored as ordered factors will passed as integers to the core algorithm, along with the metadata 
+#' that the column is ordered categorical).
 #' @param Z_train Vector of (continuous or binary) treatment assignments.
 #' @param y_train Outcome to be modeled by the ensemble.
 #' @param pi_train (Optional) Vector of propensity scores. If not provided, this will be estimated from the data.
@@ -8,7 +12,9 @@
 #' @param rfx_basis_train (Optional) Basis for "random-slope" regression in an additive random effects model.
 #' If `group_ids_train` is provided with a regression basis, an intercept-only random effects model 
 #' will be estimated.
-#' @param X_test (Optional) Test set of covariates used to define "out of sample" evaluation data. Can be passed as either a matrix or dataframe.
+#' @param X_test (Optional) Test set of covariates used to define "out of sample" evaluation data. 
+#' May be provided either as a dataframe or a matrix, but the format of `X_test` must be consistent with 
+#' that of `X_train`.
 #' @param Z_test (Optional) Test set of (continuous or binary) treatment assignments.
 #' @param pi_test (Optional) Vector of propensity scores. If not provided, this will be estimated from the data.
 #' @param group_ids_test (Optional) Test set group labels used for an additive random effects model. 
@@ -109,21 +115,21 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
                 sample_sigma_leaf_tau = F, propensity_covariate = "mu", adaptive_coding = T,
                 b_0 = -0.5, b_1 = 0.5, random_seed = -1, keep_burnin = F, keep_gfr = F) {
     # Preprocess covariates
-    if (!is.data.frame(X_train)) {
-        stop("X_train must be a dataframe")
+    if ((!is.data.frame(X_train)) && (!is.matrix(X_train))) {
+        stop("X_train must be a matrix or dataframe")
     }
     if (!is.null(X_test)){
-        if (!is.data.frame(X_test)) {
-            stop("X_test must be a dataframe")
+        if ((!is.data.frame(X_test)) && (!is.matrix(X_test))) {
+            stop("X_test must be a matrix or dataframe")
         }
     }
-    train_cov_preprocess_list <- preprocessTrainDataFrame(X_train)
+    train_cov_preprocess_list <- preprocessTrainData(X_train)
     X_train_metadata <- train_cov_preprocess_list$metadata
     X_train_raw <- X_train
     X_train <- train_cov_preprocess_list$data
     feature_types <- X_train_metadata$feature_types
     X_test_raw <- X_test
-    if (!is.null(X_test)) X_test <- preprocessPredictionDataFrame(X_test, X_train_metadata)
+    if (!is.null(X_test)) X_test <- preprocessPredictionData(X_test, X_train_metadata)
     
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(Z_train))) && (!is.null(Z_train))) {
@@ -707,7 +713,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' Predict from a sampled BCF model on new data
 #'
 #' @param bcf Object of type `bcf` containing draws of a Bayesian causal forest model and associated sampling outputs.
-#' @param X_test Covariates used to determine tree leaf predictions for each observation. Must be passed as a dataframe.
+#' @param X_test Covariates used to determine tree leaf predictions for each observation. Must be passed as a matrix or dataframe.
 #' @param Z_test Treatments used for prediction.
 #' @param pi_test (Optional) Propensities used for prediction.
 #' @param group_ids_test (Optional) Test set group labels used for an additive random effects model. 
@@ -768,11 +774,11 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
 #' # abline(0,1,col="red",lty=3,lwd=3)
 predict.bcf <- function(bcf, X_test, Z_test, pi_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL, predict_all = F){
     # Preprocess covariates
-    if (!is.data.frame(X_test)) {
-        stop("X_test must be a dataframe")
+    if ((!is.data.frame(X_test)) && (!is.matrix(X_test))) {
+        stop("X_test must be a matrix or dataframe")
     }
     train_set_metadata <- bcf$train_set_metadata
-    X_test <- preprocessPredictionDataFrame(X_test, train_set_metadata)
+    X_test <- preprocessPredictionData(X_test, train_set_metadata)
     
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(Z_test))) && (!is.null(Z_test))) {

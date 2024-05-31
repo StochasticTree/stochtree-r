@@ -45,6 +45,12 @@ reference:
   - createOutcome
   - RandomEffectsDataset
   - createRandomEffectsDataset
+  - preprocessTrainData
+  - preprocessPredictionData
+  - preprocessTrainDataFrame
+  - preprocessPredictionDataFrame
+  - preprocessTrainMatrix
+  - preprocessPredictionMatrix
   - createForestCovariates
   - createForestCovariatesFromMetadata
   - oneHotEncode

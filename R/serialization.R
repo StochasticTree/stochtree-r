@@ -307,7 +307,7 @@ loadForestContainerJson <- function(json_object, json_forest_label) {
     return(output)
 }
 
-#' Load a container of forest samples from json
+#' Load a container of random effect samples from json
 #'
 #' @param json_object Object of class `CppJson`
 #' @param json_rfx_num Integer index indicating the position of the random effects term to be unpacked

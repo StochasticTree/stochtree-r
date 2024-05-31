@@ -17,7 +17,7 @@
 \arguments{
 \item{bcf}{Object of type \code{bcf} containing draws of a Bayesian causal forest model and associated sampling outputs.}
 
-\item{X_test}{Covariates used to determine tree leaf predictions for each observation.}
+\item{X_test}{Covariates used to determine tree leaf predictions for each observation. Must be passed as a matrix or dataframe.}
 
 \item{Z_test}{Treatments used for prediction.}
 
@@ -58,6 +58,9 @@ Z <- rbinom(n,1,pi_x)
 E_XZ <- mu_x + Z*tau_x
 snr <- 4
 y <- E_XZ + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+X <- as.data.frame(X)
+X$x4 <- factor(X$x4, ordered = T)
+X$x5 <- factor(X$x5, ordered = T)
 test_set_pct <- 0.2
 n_test <- round(test_set_pct*n)
 n_train <- n - n_test
@@ -75,7 +78,7 @@ mu_test <- mu_x[test_inds]
 mu_train <- mu_x[train_inds]
 tau_test <- tau_x[test_inds]
 tau_train <- tau_x[train_inds]
-bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, ordered_cat_vars = c(4,5))
+bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train)
 preds <- predict(bcf_model, X_test, Z_test, pi_test)
 # plot(rowMeans(preds$mu_hat), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")
 # abline(0,1,col="red",lty=3,lwd=3)
