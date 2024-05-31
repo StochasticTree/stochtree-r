@@ -16,8 +16,6 @@ bcf(
   pi_test = NULL,
   group_ids_test = NULL,
   rfx_basis_test = NULL,
-  ordered_cat_vars = NULL,
-  unordered_cat_vars = NULL,
   cutpoint_grid_size = 100,
   sigma_leaf_mu = NULL,
   sigma_leaf_tau = NULL,
@@ -53,7 +51,11 @@ bcf(
 )
 }
 \arguments{
-\item{X_train}{Covariates used to split trees in the ensemble. Can be passed as either a matrix or dataframe.}
+\item{X_train}{Covariates used to split trees in the ensemble. May be provided either as a dataframe or a matrix.
+Matrix covariates will be assumed to be all numeric. Covariates passed as a dataframe will be
+preprocessed based on the variable types (e.g. categorical columns stored as unordered factors will be one-hot encoded,
+categorical columns stored as ordered factors will passed as integers to the core algorithm, along with the metadata
+that the column is ordered categorical).}
 
 \item{Z_train}{Vector of (continuous or binary) treatment assignments.}
 
@@ -67,7 +69,9 @@ bcf(
 If \code{group_ids_train} is provided with a regression basis, an intercept-only random effects model
 will be estimated.}
 
-\item{X_test}{(Optional) Test set of covariates used to define "out of sample" evaluation data. Can be passed as either a matrix or dataframe.}
+\item{X_test}{(Optional) Test set of covariates used to define "out of sample" evaluation data.
+May be provided either as a dataframe or a matrix, but the format of \code{X_test} must be consistent with
+that of \code{X_train}.}
 
 \item{Z_test}{(Optional) Test set of (continuous or binary) treatment assignments.}
 
@@ -78,10 +82,6 @@ We do not currently support (but plan to in the near future), test set evaluatio
 that were not in the training set.}
 
 \item{rfx_basis_test}{(Optional) Test set basis for "random-slope" regression in additive random effects model.}
-
-\item{ordered_cat_vars}{Vector of names of ordered categorical variables.}
-
-\item{unordered_cat_vars}{Vector of names of unordered categorical variables.}
 
 \item{cutpoint_grid_size}{Maximum size of the "grid" of potential cutpoints to consider. Default: 100.}
 
@@ -133,7 +133,7 @@ that were not in the training set.}
 
 \item{sample_sigma_leaf_tau}{Whether or not to update the \code{sigma_leaf_tau} leaf scale variance parameter in the treatment effect forest based on \code{IG(a_leaf_tau, b_leaf_tau)}. Default: T.}
 
-\item{propensity_covariate}{Whether to include the propensity score as a covariate in either or both of the forests. Enter "none" for neither, "mu" for the prognostic forest, "tau" for the treatment forest, and "both" for both forests. If this is not "none" and a propensity score is not provided, it will be estimated from (\code{X_train}, \code{Z_train}) using \code{xgboost}. Default: "mu".}
+\item{propensity_covariate}{Whether to include the propensity score as a covariate in either or both of the forests. Enter "none" for neither, "mu" for the prognostic forest, "tau" for the treatment forest, and "both" for both forests. If this is not "none" and a propensity score is not provided, it will be estimated from (\code{X_train}, \code{Z_train}) using \code{stochtree::bart()}. Default: "mu".}
 
 \item{adaptive_coding}{Whether or not to use an "adaptive coding" scheme in which a binary treatment variable is not coded manually as (0,1) or (-1,1) but learned via parameters \code{b_0} and \code{b_1} that attach to the outcome model \verb{[b_0 (1-Z) + b_1 Z] tau(X)}. This is ignored when Z is not binary. Default: T.}
 
@@ -174,6 +174,9 @@ Z <- rbinom(n,1,pi_x)
 E_XZ <- mu_x + Z*tau_x
 snr <- 4
 y <- E_XZ + rnorm(n, 0, 1)*(sd(E_XZ)/snr)
+X <- as.data.frame(X)
+X$x4 <- factor(X$x4, ordered = T)
+X$x5 <- factor(X$x5, ordered = T)
 test_set_pct <- 0.2
 n_test <- round(test_set_pct*n)
 n_train <- n - n_test
@@ -192,7 +195,7 @@ mu_train <- mu_x[train_inds]
 tau_test <- tau_x[test_inds]
 tau_train <- tau_x[train_inds]
 bcf_model <- bcf(X_train = X_train, Z_train = Z_train, y_train = y_train, pi_train = pi_train, 
-                 X_test = X_test, Z_test = Z_test, pi_test = pi_test, ordered_cat_vars = c(4,5))
+                 X_test = X_test, Z_test = Z_test, pi_test = pi_test)
 # plot(rowMeans(bcf_model$mu_hat_test), mu_test, xlab = "predicted", ylab = "actual", main = "Prognostic function")
 # abline(0,1,col="red",lty=3,lwd=3)
 # plot(rowMeans(bcf_model$tau_hat_test), tau_test, xlab = "predicted", ylab = "actual", main = "Treatment effect")

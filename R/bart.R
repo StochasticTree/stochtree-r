@@ -1,6 +1,10 @@
 #' Run the BART algorithm for supervised learning. 
 #'
-#' @param X_train Covariates used to split trees in the ensemble.
+#' @param X_train Covariates used to split trees in the ensemble. May be provided either as a dataframe or a matrix. 
+#' Matrix covariates will be assumed to be all numeric. Covariates passed as a dataframe will be 
+#' preprocessed based on the variable types (e.g. categorical columns stored as unordered factors will be one-hot encoded, 
+#' categorical columns stored as ordered factors will passed as integers to the core algorithm, along with the metadata 
+#' that the column is ordered categorical).
 #' @param y_train Outcome to be modeled by the ensemble.
 #' @param W_train (Optional) Bases used to define a regression model `y ~ W` in 
 #' each leaf of each regression tree. By default, BART assumes constant leaf node 
@@ -9,7 +13,9 @@
 #' @param rfx_basis_train (Optional) Basis for "random-slope" regression in an additive random effects model.
 #' If `group_ids_train` is provided with a regression basis, an intercept-only random effects model 
 #' will be estimated.
-#' @param X_test (Optional) Test set of covariates used to define "out of sample" evaluation data.
+#' @param X_test (Optional) Test set of covariates used to define "out of sample" evaluation data. 
+#' May be provided either as a dataframe or a matrix, but the format of `X_test` must be consistent with 
+#' that of `X_train`.
 #' @param W_test (Optional) Test set of bases used to define "out of sample" evaluation data. 
 #' While a test set is optional, the structure of any provided test set must match that 
 #' of the training set (i.e. if both X_train and W_train are provided, then a test set must 
@@ -78,19 +84,19 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
                  num_burnin = 0, num_mcmc = 100, sample_sigma = T, 
                  sample_tau = T, random_seed = -1, keep_burnin = F, keep_gfr = F){
     # Preprocess covariates
-    if (!is.data.frame(X_train)) {
-        stop("X_train must be a dataframe")
+    if ((!is.data.frame(X_train)) && (!is.matrix(X_train))) {
+        stop("X_train must be a matrix or dataframe")
     }
     if (!is.null(X_test)){
-        if (!is.data.frame(X_test)) {
-            stop("X_test must be a dataframe")
+        if ((!is.data.frame(X_test)) && (!is.matrix(X_test))) {
+            stop("X_test must be a matrix or dataframe")
         }
     }
-    train_cov_preprocess_list <- preprocessTrainDataFrame(X_train)
+    train_cov_preprocess_list <- preprocessTrainData(X_train)
     X_train_metadata <- train_cov_preprocess_list$metadata
     X_train <- train_cov_preprocess_list$data
     feature_types <- X_train_metadata$feature_types
-    if (!is.null(X_test)) X_test <- preprocessPredictionDataFrame(X_test, X_train_metadata)
+    if (!is.null(X_test)) X_test <- preprocessPredictionData(X_test, X_train_metadata)
     
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(W_train))) && (!is.null(W_train))) {
@@ -455,7 +461,7 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
 #' Predict from a sampled BART model on new data
 #'
 #' @param bart Object of type `bart` containing draws of a regression forest and associated sampling outputs.
-#' @param X_test Covariates used to determine tree leaf predictions for each observation. Must be passed as a dataframe.
+#' @param X_test Covariates used to determine tree leaf predictions for each observation. Must be passed as a matrix or dataframe.
 #' @param W_test (Optional) Bases used for prediction (by e.g. dot product with leaf values). Default: `NULL`.
 #' @param group_ids_test (Optional) Test set group labels used for an additive random effects model. 
 #' We do not currently support (but plan to in the near future), test set evaluation for group labels
@@ -494,11 +500,11 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
 #' # abline(0,1,col="red",lty=3,lwd=3)
 predict.bartmodel <- function(bart, X_test, W_test = NULL, group_ids_test = NULL, rfx_basis_test = NULL, predict_all = F){
     # Preprocess covariates
-    if (!is.data.frame(X_test)) {
-        stop("X_test must be a dataframe")
+    if ((!is.data.frame(X_test)) && (!is.matrix(X_test))) {
+        stop("X_test must be a matrix or dataframe")
     }
     train_set_metadata <- bart$train_set_metadata
-    X_test <- preprocessPredictionDataFrame(X_test, train_set_metadata)
+    X_test <- preprocessPredictionData(X_test, train_set_metadata)
     
     # Convert all input data to matrices if not already converted
     if ((is.null(dim(W_test))) && (!is.null(W_test))) {

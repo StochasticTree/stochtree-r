@@ -1,3 +1,136 @@
+#' Preprocess covariates. DataFrames will be preprocessed based on their column 
+#' types. Matrices will be passed through assuming all columns are numeric.
+#'
+#' @param input_data Covariates, provided as either a dataframe or a matrix
+#'
+#' @return List with preprocessed (unmodified) data and details on the number of each type 
+#' of variable, unique categories associated with categorical variables, and the 
+#' vector of feature types needed for calls to BART and BCF.
+#' @export
+#'
+#' @examples
+#' cov_mat <- matrix(1:12, ncol = 3)
+#' preprocess_list <- preprocessTrainData(cov_mat)
+#' X <- preprocess_list$X
+preprocessTrainData <- function(input_data) {
+    # Input checks
+    if ((!is.matrix(input_data)) && (!is.data.frame(input_data))) {
+        stop("Covariates provided must be a dataframe or matrix")
+    }
+    
+    # Routing the correct preprocessing function
+    if (is.matrix(input_data)) {
+        output <- preprocessTrainMatrix(input_data)
+    } else {
+        output <- preprocessTrainDataFrame(input_data)
+    }
+    
+    return(output)
+}
+
+#' Preprocess covariates. DataFrames will be preprocessed based on their column 
+#' types. Matrices will be passed through assuming all columns are numeric.
+#'
+#' @param input_data Covariates, provided as either a dataframe or a matrix
+#' @param metadata List containing information on variables, including train set 
+#' categories for categorical variables
+#'
+#' @return Preprocessed data with categorical variables appropriately handled
+#' @export
+#'
+#' @examples
+#' cov_df <- data.frame(x1 = 1:5, x2 = 5:1, x3 = 6:10)
+#' metadata <- list(num_ordered_cat_vars = 0, num_unordered_cat_vars = 0, num_numeric_vars = 3)
+#' X_preprocessed <- preprocessPredictionData(cov_df, metadata)
+preprocessPredictionData <- function(input_data, metadata) {
+    # Input checks
+    if ((!is.matrix(input_data)) && (!is.data.frame(input_data))) {
+        stop("Covariates provided must be a dataframe or matrix")
+    }
+    
+    # Routing the correct preprocessing function
+    if (is.matrix(input_data)) {
+        X <- preprocessPredictionMatrix(input_data, metadata)
+    } else {
+        X <- preprocessPredictionDataFrame(input_data, metadata)
+    }
+    
+    return(X)
+}
+
+#' Preprocess a matrix of covariate values, assuming all columns are numeric.
+#' Returns a list including a matrix of preprocessed covariate values and associated tracking.
+#'
+#' @param input_matrix Covariate matrix.
+#'
+#' @return List with preprocessed (unmodified) data and details on the number of each type 
+#' of variable, unique categories associated with categorical variables, and the 
+#' vector of feature types needed for calls to BART and BCF.
+#' @export
+#'
+#' @examples
+#' cov_mat <- matrix(1:12, ncol = 3)
+#' preprocess_list <- preprocessTrainMatrix(cov_mat)
+#' X <- preprocess_list$X
+preprocessTrainMatrix <- function(input_matrix) {
+    # Input checks
+    if (!is.matrix(input_matrix)) {
+        stop("covariates provided must be a matrix")
+    }
+    
+    # Unpack metadata (assuming all variables are numeric)
+    names(input_matrix) <- paste0("x", 1:ncol(input_matrix))
+    df_vars <- names(input_matrix)
+    num_ordered_cat_vars <- 0
+    num_unordered_cat_vars <- 0
+    num_numeric_vars <- ncol(input_matrix)
+    numeric_vars <- names(input_matrix)
+    feature_types <- rep(0, ncol(input_matrix))
+
+    # Unpack data
+    X <- input_matrix
+
+    # Aggregate results into a list
+    metadata <- list(
+        feature_types = feature_types, 
+        num_ordered_cat_vars = num_ordered_cat_vars, 
+        num_unordered_cat_vars = num_unordered_cat_vars, 
+        num_numeric_vars = num_numeric_vars, 
+        numeric_vars = numeric_vars
+    )
+    output <- list(
+        data = X, 
+        metadata = metadata
+    )
+    
+    return(output)
+}
+
+#' Preprocess a matrix of covariate values, assuming all columns are numeric.
+#'
+#' @param input_df Covariate matrix.
+#' @param metadata List containing information on variables, including train set 
+#' categories for categorical variables
+#'
+#' @return Preprocessed data with categorical variables appropriately preprocessed
+#' @export
+#'
+#' @examples
+#' cov_df <- data.frame(x1 = 1:5, x2 = 5:1, x3 = 6:10)
+#' metadata <- list(num_ordered_cat_vars = 0, num_unordered_cat_vars = 0, num_numeric_vars = 3)
+#' X_preprocessed <- preprocessPredictionDataFrame(cov_df, metadata)
+preprocessPredictionMatrix <- function(input_matrix, metadata) {
+    # Input checks
+    if (!is.matrix(input_matrix)) {
+        stop("covariates provided must be a matrix")
+    }
+    if (!(ncol(input_matrix) == metadata$num_numeric_vars)) {
+        stop("Prediction set covariates have inconsistent dimension from train set covariates")
+    }
+    
+    return(input_matrix)
+}
+
 #' Preprocess a dataframe of covariate values, converting categorical variables 
 #' to integers and one-hot encoding if need be. Returns a list including a 
 #' matrix of preprocessed covariate values and associated tracking.
@@ -17,7 +150,7 @@
 preprocessTrainDataFrame <- function(input_df) {
     # Input checks / details
     if (!is.data.frame(input_df)) {
-        stop("input_data must be a data frame")
+        stop("covariates provided must be a data frame")
     }
     df_vars <- names(input_df)
     
@@ -116,8 +249,7 @@ preprocessTrainDataFrame <- function(input_df) {
 }
 
 #' Preprocess a dataframe of covariate values, converting categorical variables 
-#' to integers and one-hot encoding if need be. Returns a list including a 
-#' matrix of preprocessed covariate values and associated tracking.
+#' to integers and one-hot encoding if need be.
 #'
 #' @param input_df Dataframe of covariates. Users must pre-process any 
 #' categorical variables as factors (ordered for ordered categorical).
@@ -133,7 +265,7 @@ preprocessTrainDataFrame <- function(input_df) {
 #' X_preprocessed <- preprocessPredictionDataFrame(cov_df, metadata)
 preprocessPredictionDataFrame <- function(input_df, metadata) {
     if (!is.data.frame(input_df)) {
-        stop("input_data must be either a data frame")
+        stop("covariates provided must be a data frame")
     }
     df_vars <- names(input_df)
     num_ordered_cat_vars <- metadata$num_ordered_cat_vars

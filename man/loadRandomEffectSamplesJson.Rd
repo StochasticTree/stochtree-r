@@ -2,7 +2,7 @@
 % Please edit documentation in R/serialization.R
 \name{loadRandomEffectSamplesJson}
 \alias{loadRandomEffectSamplesJson}
-\title{Load a container of forest samples from json}
+\title{Load a container of random effect samples from json}
 \usage{
 loadRandomEffectSamplesJson(json_object, json_rfx_num)
 }
@@ -15,5 +15,5 @@ loadRandomEffectSamplesJson(json_object, json_rfx_num)
 \code{RandomEffectSamples} object
 }
 \description{
-Load a container of forest samples from json
+Load a container of random effect samples from json
 }

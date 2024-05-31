@@ -14,8 +14,6 @@ bart(
   W_test = NULL,
   group_ids_test = NULL,
   rfx_basis_test = NULL,
-  ordered_cat_vars = NULL,
-  unordered_cat_vars = NULL,
   cutpoint_grid_size = 100,
   tau_init = NULL,
   alpha = 0.95,
@@ -40,7 +38,11 @@ bart(
 )
 }
 \arguments{
-\item{X_train}{Covariates used to split trees in the ensemble.}
+\item{X_train}{Covariates used to split trees in the ensemble. May be provided either as a dataframe or a matrix.
+Matrix covariates will be assumed to be all numeric. Covariates passed as a dataframe will be
+preprocessed based on the variable types (e.g. categorical columns stored as unordered factors will be one-hot encoded,
+categorical columns stored as ordered factors will passed as integers to the core algorithm, along with the metadata
+that the column is ordered categorical).}
 
 \item{y_train}{Outcome to be modeled by the ensemble.}
 
@@ -54,7 +56,9 @@ parameters, implicitly regressing on a constant basis of ones (i.e. \code{y ~ 1}
 If \code{group_ids_train} is provided with a regression basis, an intercept-only random effects model
 will be estimated.}
 
-\item{X_test}{(Optional) Test set of covariates used to define "out of sample" evaluation data.}
+\item{X_test}{(Optional) Test set of covariates used to define "out of sample" evaluation data.
+May be provided either as a dataframe or a matrix, but the format of \code{X_test} must be consistent with
+that of \code{X_train}.}
 
 \item{W_test}{(Optional) Test set of bases used to define "out of sample" evaluation data.
 While a test set is optional, the structure of any provided test set must match that
@@ -66,10 +70,6 @@ We do not currently support (but plan to in the near future), test set evaluatio
 that were not in the training set.}
 
 \item{rfx_basis_test}{(Optional) Test set basis for "random-slope" regression in additive random effects model.}
-
-\item{ordered_cat_vars}{Vector of names of ordered categorical variables.}
-
-\item{unordered_cat_vars}{Vector of names of unordered categorical variables.}
 
 \item{cutpoint_grid_size}{Maximum size of the "grid" of potential cutpoints to consider. Default: 100.}
 
