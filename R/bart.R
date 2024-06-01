@@ -292,7 +292,7 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
     variable_weights <- rep(1/ncol(X_train), ncol(X_train))
     
     #Variable Selection Splits
-    variable_count_splits <- rep(0, ncol(X_train))
+    variable_count_splits <- as.integer(c(0,0))
     
     
     # Run GFR (warm start) if specified
