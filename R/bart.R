@@ -292,7 +292,7 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
     variable_weights <- rep(1/ncol(X_train), ncol(X_train))
     
     #Variable Selection Splits
-    variable_selection_splits <- NULL
+    variable_count_splits <- rep(0, ncol(X_train))
     
     
     # Run GFR (warm start) if specified
@@ -301,7 +301,7 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
         for (i in 1:num_gfr) {
             forest_model$sample_one_iteration(
                 forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
-                leaf_model, current_leaf_scale, variable_weights, variable_selection_splits, 
+                leaf_model, current_leaf_scale, variable_weights, variable_count_splits, 
                 current_sigma2, cutpoint_grid_size, gfr = T, pre_initialized = F
             )
             if (sample_sigma) {
@@ -329,7 +329,7 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
         for (i in (num_gfr+1):num_samples) {
             forest_model$sample_one_iteration(
                 forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
-                leaf_model, current_leaf_scale, variable_weights, variable_selection_splits, 
+                leaf_model, current_leaf_scale, variable_weights, variable_count_splits, 
                 current_sigma2, cutpoint_grid_size, gfr = F, pre_initialized = F
             )
             if (sample_sigma) {
