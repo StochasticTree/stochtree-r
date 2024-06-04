@@ -273,7 +273,7 @@ sample_gfr_one_iteration_cpp <- function(data, residual, forest_samples, tracker
 }
 
 sample_mcmc_one_iteration_cpp <- function(data, residual, forest_samples, tracker, split_prior, rng, feature_types, cutpoint_grid_size, leaf_model_scale_input, variable_weights, variable_count_splits, global_variance, leaf_model_int, pre_initialized) {
-  invisible(.Call(`_stochtree_sample_mcmc_one_iteration_cpp`, data, residual, forest_samples, tracker, split_prior, rng, feature_types, cutpoint_grid_size, leaf_model_scale_input, variable_weights, variable_count_splits, global_variance, leaf_model_int, pre_initialized))
+  .Call(`_stochtree_sample_mcmc_one_iteration_cpp`, data, residual, forest_samples, tracker, split_prior, rng, feature_types, cutpoint_grid_size, leaf_model_scale_input, variable_weights, variable_count_splits, global_variance, leaf_model_int, pre_initialized)
 }
 
 sample_sigma2_one_iteration_cpp <- function(residual, rng, nu, lambda) {

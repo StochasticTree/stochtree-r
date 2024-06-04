@@ -75,7 +75,7 @@ void sample_gfr_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestDatas
 }
 
 [[cpp11::register]]
-void sample_mcmc_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestDataset> data, 
+cpp11::writable::integers sample_mcmc_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestDataset> data, 
                                    cpp11::external_pointer<StochTree::ColumnVector> residual, 
                                    cpp11::external_pointer<StochTree::ForestContainer> forest_samples, 
                                    cpp11::external_pointer<StochTree::ForestTracker> tracker, 
@@ -84,7 +84,7 @@ void sample_mcmc_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestData
                                    cpp11::integers feature_types, int cutpoint_grid_size, 
                                    cpp11::doubles_matrix<> leaf_model_scale_input, 
                                    cpp11::doubles variable_weights,
-                                   cpp11::integers variable_count_splits, 
+                                   cpp11::writable::integers variable_count_splits, 
                                    double global_variance, int leaf_model_int, 
                                    bool pre_initialized = false
 ) {
@@ -143,6 +143,12 @@ void sample_mcmc_one_iteration_cpp(cpp11::external_pointer<StochTree::ForestData
         StochTree::MCMCForestSampler<StochTree::GaussianMultivariateRegressionLeafModel> sampler = StochTree::MCMCForestSampler<StochTree::GaussianMultivariateRegressionLeafModel>();
         sampler.SampleOneIter(*tracker, *forest_samples, leaf_model, *data, *residual, *split_prior, *rng, var_weights_vector, variable_count_splits_cpp, global_variance, pre_initialized);
     }
+    
+    for(int i =0; i<variable_count_splits.size();i++){
+      variable_count_splits.at(i) = variable_count_splits_cpp.at(i);
+    }
+    
+    return variable_count_splits;
 }
 
 [[cpp11::register]]

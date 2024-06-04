@@ -40,7 +40,8 @@
 #' @param random_seed Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to `std::random_device`.
 #' @param keep_burnin Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.
 #' @param keep_gfr Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.
-#'
+#' @param Sparse Whether you want to turn on the dirichilet prior.
+#' @param Theta_Update Whether or not update the theta of the dirichilet prior. 
 #' @return List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).
 #' @export
 #'
@@ -76,7 +77,9 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
                  nu = 3, lambda = NULL, a_leaf = 3, b_leaf = NULL, 
                  q = 0.9, sigma2_init = NULL, num_trees = 200, num_gfr = 5, 
                  num_burnin = 0, num_mcmc = 100, sample_sigma = T, 
-                 sample_tau = T, random_seed = -1, keep_burnin = F, keep_gfr = F){
+                 sample_tau = T, random_seed = -1, keep_burnin = F, keep_gfr = F,
+                 Sparse = F,
+                 Theta_Update = F){
     # Preprocess covariates
     if (!is.data.frame(X_train)) {
         stop("X_train must be a dataframe")
@@ -292,8 +295,8 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
     variable_weights <- rep(1/ncol(X_train), ncol(X_train))
     
     #Variable Selection Splits
-    variable_count_splits <- as.integer(c(0,0))
-    
+    variable_count_splits <- as.integer(rep(0, ncol(X_train)))
+    var_count_matrix = matrix(NA, nrow = num_samples, ncol =  ncol(X_train))
     
     # Run GFR (warm start) if specified
     if (num_gfr > 0){
@@ -318,6 +321,9 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
         }
     }
     
+    #Dirichlet Initialization
+    theta = 1
+    
     # Run MCMC
     if (num_burnin + num_mcmc > 0) {
         if (num_burnin > 0) {
@@ -327,11 +333,20 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
             mcmc_indices = (num_gfr+num_burnin+1):(num_gfr+num_burnin+num_mcmc)
         }
         for (i in (num_gfr+1):num_samples) {
-            forest_model$sample_one_iteration(
+          variable_count_splits = forest_model$sample_one_iteration(
                 forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
                 leaf_model, current_leaf_scale, variable_weights, variable_count_splits, 
                 current_sigma2, cutpoint_grid_size, gfr = F, pre_initialized = F
             )
+          if(Sparse == T){
+            lpv              = draw_s(variable_count_splits, theta)
+            variable_weights = exp(lpv)
+            if(Theta_Update == T){
+              theta = draw_theta0(theta, lpv, 0.5, 1, rho = length(lpv))  
+            }
+            
+          }
+          var_count_matrix[i,] = variable_count_splits
             if (sample_sigma) {
                 global_var_samples[i] <- sample_sigma2_one_iteration(outcome_train, rng, nu, lambda)
                 current_sigma2 <- global_var_samples[i]
@@ -343,6 +358,7 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
             if (has_rfx) {
                 rfx_model$sample_random_effect(rfx_dataset_train, outcome_train, rfx_tracker_train, rfx_samples, current_sigma2, rng)
             }
+          
         }
     }
     
@@ -424,7 +440,8 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
         "has_rfx_basis" = has_basis_rfx, 
         "num_rfx_basis" = num_basis_rfx, 
         "sample_sigma" = sample_sigma,
-        "sample_tau" = sample_tau
+        "sample_tau" = sample_tau,
+        "variable_count_splits" =var_count_matrix
     )
     result <- list(
         "forests" = forest_samples, 
@@ -648,3 +665,87 @@ getRandomEffectSamples.bartmodel <- function(object, ...){
     
     return(result)
 }
+
+
+
+
+
+log_sum_exp = function(v){
+  n = length(v)
+  mx = max(v)
+  sm = 0
+  for(i in 1:n){
+    sm = sm + exp(v[i] - mx)
+  }
+  return(mx + log(sm))
+}
+
+log_gamma = function(shape){
+  y = log(rgamma(1, shape+ 1))
+  z = log(runif(1))/shape
+  return(y+z)
+}
+
+log_dirichilet = function(alpha){
+  k = length(alpha)
+  draw = rep(0,k)
+  for(j in 1:k){
+    draw[j] = log_gamma(alpha[j])
+  }
+  lse = log_sum_exp(draw)
+  for(j in 1:k){
+    draw[j] = draw[j] - lse
+  }
+  return(draw)
+}
+
+
+draw_s = function(nv,theta = 1){
+  n   = length(nv)
+  theta_ = rep(0, n)
+  for(i in 1:n){
+    theta_[i] = theta/n + nv[i]
+  }
+  lpv = log_dirichilet(theta_)
+  return(lpv)
+}
+
+
+
+discrete = function(wts) {
+  p <- length(wts)
+  x <- 0
+  vOut <- rep(0, p)
+  vOut <- rmultinom(1, size = 1, prob = wts)
+  if (vOut[1] == 0) {
+    for (j in 2:p) {
+      x <- x + j * vOut[j]
+    }
+  }
+  return(x)
+}
+
+draw_theta0 = function(theta, lpv, a , b, rho) {
+  p      = length(lpv)
+  sumlpv = sum(lpv)
+  lambda_g <- seq(1 / 1001, 1000 / 1001, length.out = 1000)
+  theta_g <- lambda_g * rho / (1 - lambda_g)
+  lwt_g    = rep(0, 1000)
+  
+  for (k in 1:1000) {
+    theta_log_lik = lgamma(theta_g[k]) - p * lgamma(theta_g[k] / p) + (theta_g[k] / p) * sumlpv
+    beta_log_prior = (a - 1) * log(lambda_g[k]) + (b - 1) * log(1 - lambda_g[k])
+    lwt_g[k] = theta_log_lik + beta_log_prior
+  }
+  
+  lse <- log_sum_exp(lwt_g)
+  lwt_g <- exp(lwt_g - lse)
+  weights <- lwt_g / sum(lwt_g)
+  theta <- theta_g[discrete(weights)]
+  
+  return(theta)
+}
+
+
+
+

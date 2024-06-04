@@ -34,7 +34,9 @@ bart(
   sample_tau = T,
   random_seed = -1,
   keep_burnin = F,
-  keep_gfr = F
+  keep_gfr = F,
+  Sparse = F,
+  Theta_Update = F
 )
 }
 \arguments{
@@ -104,6 +106,10 @@ that were not in the training set.}
 \item{keep_burnin}{Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.}
 
 \item{keep_gfr}{Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.}
+
+\item{Sparse}{Whether you want to turn on the dirichilet prior.}
+
+\item{Theta_Update}{Whether or not update the theta of the dirichilet prior.}
 
 \item{variable_weights}{Vector of length \code{ncol(X_train)} indicating a "weight" placed on each
 variable for sampling purposes. Default: \code{rep(1/ncol(X_train),ncol(X_train))}.}
