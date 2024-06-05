@@ -52,8 +52,7 @@ r_version <-
     }
 cat("r-version=", r_version, "\n", sep = "", append = TRUE)
 needs <- sprintf("Config/Needs/%s", strsplit("", "[[:space:],]+")[[1]])
-deps <- strsplit("deps::., any::sessioninfo", "[[:space:],]+")[[1]]
-# extra_deps <- strsplit("any::testthat, any::decor, local::.", "[[:space:],]+")[[1]]
+deps <- strsplit("any::cpp11, any::R6, any::knitr, any::rmarkdown, any::Matrix, any::tgp, any::MASS, any::mvtnorm, any::ggplot2, any::latex2exp, any::testthat, any::sessioninfo", "[[:space:],]+")[[1]]
 extra_deps <- strsplit("any::testthat, any::decor, github::StochasticTree/stochtree-r", "[[:space:],]+")[[1]]
 dir.create("install_temp", showWarnings=FALSE)
 Sys.setenv("PKGCACHE_HTTP_VERSION" = "2")
