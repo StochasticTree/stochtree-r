@@ -98,7 +98,8 @@
 <span>  b_1 <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  random_seed <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
 <span>  keep_burnin <span class="op">=</span> <span class="cn">F</span>,</span>
-<span>  keep_gfr <span class="op">=</span> <span class="cn">F</span></span>
+<span>  keep_gfr <span class="op">=</span> <span class="cn">F</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">F</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -284,6 +285,10 @@ that were not in the training set.</p></dd>
 
 <dt>keep_gfr</dt>
 <dd><p>Whether or not "grow-from-root" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.</p></dd>
+
+
+<dt>verbose</dt>
+<dd><p>Whether or not to print progress during the sampling loops. Default: FALSE.</p></dd>
 
 </dl></div>
     <div class="section level2">
