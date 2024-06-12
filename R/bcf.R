@@ -53,6 +53,7 @@
 #' @param random_seed Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to `std::random_device`.
 #' @param keep_burnin Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.
 #' @param keep_gfr Whether or not "grow-from-root" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.
+#' @param verbose Whether or not to print progress during the sampling loops. Default: FALSE.
 #'
 #' @return List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).
 #' @export
@@ -113,7 +114,7 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
                 q = 0.9, sigma2 = NULL, num_trees_mu = 250, num_trees_tau = 50, num_gfr = 5, 
                 num_burnin = 0, num_mcmc = 100, sample_sigma_global = T, sample_sigma_leaf_mu = T, 
                 sample_sigma_leaf_tau = F, propensity_covariate = "mu", adaptive_coding = T,
-                b_0 = -0.5, b_1 = 0.5, random_seed = -1, keep_burnin = F, keep_gfr = F) {
+                b_0 = -0.5, b_1 = 0.5, random_seed = -1, keep_burnin = F, keep_gfr = F, verbose = F) {
     # Preprocess covariates
     if ((!is.data.frame(X_train)) && (!is.matrix(X_train))) {
         stop("X_train must be a matrix or dataframe")
@@ -168,6 +169,13 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         }
     }
     
+    # Check that outcome and treatment are numeric
+    if (!is.numeric(y_train)) stop("y_train must be numeric")
+    if (!is.numeric(Z_train)) stop("Z_train must be numeric")
+    if (!is.null(Z_test)) {
+        if (!is.numeric(Z_test)) stop("Z_test must be numeric")
+    }
+
     # Data consistency checks
     if ((!is.null(X_test)) && (ncol(X_test) != ncol(X_train))) {
         stop("X_train and X_test must have the same number of columns")
@@ -223,6 +231,11 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
             rfx_basis_test <- matrix(rep(1,nrow(X_test)), nrow = nrow(X_test), ncol = 1)
         }
     }
+    
+    # Check that number of samples are all nonnegative
+    stopifnot(num_gfr >= 0)
+    stopifnot(num_burnin >= 0)
+    stopifnot(num_mcmc >= 0)
 
     # Determine whether a test set is provided
     has_test = !is.null(X_test)
@@ -232,8 +245,9 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
         y_train <- as.matrix(y_train)
     }
     
-    # Check whether treatment is binary
+    # Check whether treatment is binary (specifically 0-1 binary)
     binary_treatment <- length(unique(Z_train)) == 2
+    if (!(all(sort(unique(Z_train)) == c(0,1)))) binary_treatment <- F
     
     # Adaptive coding will be ignored for continuous / ordered categorical treatments
     if ((!binary_treatment) && (adaptive_coding)) {
@@ -402,11 +416,18 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
     update_residual_forest_container_cpp(forest_dataset_tau_train$data_ptr, outcome_train$data_ptr, 
                                          forest_samples_tau$forest_container_ptr, forest_model_tau$tracker_ptr, 
                                          T, 0, F)
-    
+
     # Run GFR (warm start) if specified
     if (num_gfr > 0){
         gfr_indices = 1:num_gfr
         for (i in 1:num_gfr) {
+            # Print progress
+            if (verbose) {
+                if ((i %% 10 == 0) || (i == num_gfr)) {
+                    cat("Sampling", i, "out of", num_gfr, "XBCF (grow-from-root) draws\n")
+                }
+            }
+            
             # Sample the prognostic forest
             forest_model_mu$sample_one_iteration(
                 forest_dataset_mu_train, outcome_train, forest_samples_mu, rng, feature_types_mu, 
@@ -491,6 +512,20 @@ bcf <- function(X_train, Z_train, y_train, pi_train = NULL, group_ids_train = NU
             mcmc_indices = (num_gfr+num_burnin+1):(num_gfr+num_burnin+num_mcmc)
         }
         for (i in (num_gfr+1):num_samples) {
+            # Print progress
+            if (verbose) {
+                if (num_burnin > 0) {
+                    if (((i - num_gfr) %% 100 == 0) || ((i - num_gfr) == num_burnin)) {
+                        cat("Sampling", i - num_gfr, "out of", num_gfr, "BCF burn-in draws\n")
+                    }
+                }
+                if (num_mcmc > 0) {
+                    if (((i - num_gfr - num_burnin) %% 100 == 0) || (i == num_samples)) {
+                        cat("Sampling", i - num_burnin - num_gfr, "out of", num_mcmc, "BCF MCMC draws\n")
+                    }
+                }
+            }
+            
             # Sample the prognostic forest
             forest_model_mu$sample_one_iteration(
                 forest_dataset_mu_train, outcome_train, forest_samples_mu, rng, feature_types_mu, 

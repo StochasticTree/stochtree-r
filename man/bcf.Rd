@@ -47,7 +47,8 @@ bcf(
   b_1 = 0.5,
   random_seed = -1,
   keep_burnin = F,
-  keep_gfr = F
+  keep_gfr = F,
+  verbose = F
 )
 }
 \arguments{
@@ -146,6 +147,8 @@ that were not in the training set.}
 \item{keep_burnin}{Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.}
 
 \item{keep_gfr}{Whether or not "grow-from-root" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.}
+
+\item{verbose}{Whether or not to print progress during the sampling loops. Default: FALSE.}
 }
 \value{
 List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).

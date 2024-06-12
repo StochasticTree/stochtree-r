@@ -34,7 +34,8 @@ bart(
   sample_tau = T,
   random_seed = -1,
   keep_burnin = F,
-  keep_gfr = F
+  keep_gfr = F,
+  verbose = F
 )
 }
 \arguments{
@@ -110,6 +111,8 @@ that were not in the training set.}
 \item{keep_burnin}{Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.}
 
 \item{keep_gfr}{Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.}
+
+\item{verbose}{Whether or not to print progress during the sampling loops. Default: FALSE.}
 
 \item{variable_weights}{Vector of length \code{ncol(X_train)} indicating a "weight" placed on each
 variable for sampling purposes. Default: \code{rep(1/ncol(X_train),ncol(X_train))}.}

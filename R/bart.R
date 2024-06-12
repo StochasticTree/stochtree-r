@@ -46,6 +46,7 @@
 #' @param random_seed Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to `std::random_device`.
 #' @param keep_burnin Whether or not "burnin" samples should be included in cached predictions. Default FALSE. Ignored if num_mcmc = 0.
 #' @param keep_gfr Whether or not "grow-from-root" samples should be included in cached predictions. Default TRUE. Ignored if num_mcmc = 0.
+#' @param verbose Whether or not to print progress during the sampling loops. Default: FALSE.
 #'
 #' @return List of sampling outputs and a wrapper around the sampled forests (which can be used for in-memory prediction on new data, or serialized to JSON on disk).
 #' @export
@@ -82,7 +83,8 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
                  nu = 3, lambda = NULL, a_leaf = 3, b_leaf = NULL, 
                  q = 0.9, sigma2_init = NULL, num_trees = 200, num_gfr = 5, 
                  num_burnin = 0, num_mcmc = 100, sample_sigma = T, 
-                 sample_tau = T, random_seed = -1, keep_burnin = F, keep_gfr = F){
+                 sample_tau = T, random_seed = -1, keep_burnin = F, 
+                 keep_gfr = F, verbose = F){
     # Preprocess covariates
     if ((!is.data.frame(X_train)) && (!is.matrix(X_train))) {
         stop("X_train must be a matrix or dataframe")
@@ -301,6 +303,13 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
     if (num_gfr > 0){
         gfr_indices = 1:num_gfr
         for (i in 1:num_gfr) {
+            # Print progress
+            if (verbose) {
+                if ((i %% 10 == 0) || (i == num_gfr)) {
+                    cat("Sampling", i, "out of", num_gfr, "XBART (grow-from-root) draws\n")
+                }
+            }
+            
             forest_model$sample_one_iteration(
                 forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
                 leaf_model, current_leaf_scale, variable_weights, 
@@ -329,6 +338,20 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
             mcmc_indices = (num_gfr+num_burnin+1):(num_gfr+num_burnin+num_mcmc)
         }
         for (i in (num_gfr+1):num_samples) {
+            # Print progress
+            if (verbose) {
+                if (num_burnin > 0) {
+                    if (((i - num_gfr) %% 100 == 0) || ((i - num_gfr) == num_burnin)) {
+                        cat("Sampling", i - num_gfr, "out of", num_gfr, "BART burn-in draws\n")
+                    }
+                }
+                if (num_mcmc > 0) {
+                    if (((i - num_gfr - num_burnin) %% 100 == 0) || (i == num_samples)) {
+                        cat("Sampling", i - num_burnin - num_gfr, "out of", num_mcmc, "BART MCMC draws\n")
+                    }
+                }
+            }
+            
             forest_model$sample_one_iteration(
                 forest_dataset_train, outcome_train, forest_samples, rng, feature_types, 
                 leaf_model, current_leaf_scale, variable_weights, 
