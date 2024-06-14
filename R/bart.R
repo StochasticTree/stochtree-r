@@ -338,10 +338,10 @@ bart <- function(X_train, y_train, W_train = NULL, group_ids_train = NULL,
                 leaf_model, current_leaf_scale, variable_weights, variable_count_splits, 
                 current_sigma2, cutpoint_grid_size, gfr = F, pre_initialized = F
             )
-          if(Sparse == T){
+          if(Sparse == TRUE){
             lpv              = draw_s(variable_count_splits, theta)
             variable_weights = exp(lpv)
-            if(Theta_Update == T){
+            if(Theta_Update == TRUE){
               theta = draw_theta0(theta, lpv, 0.5, 1, rho = length(lpv))  
             }
             
