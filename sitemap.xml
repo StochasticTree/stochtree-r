@@ -1,204 +1,204 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>/404.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/404.html</loc>
   </url>
   <url>
-    <loc>/LICENSE-text.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>/LICENSE.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/LICENSE.html</loc>
   </url>
   <url>
-    <loc>/articles/BayesianSupervisedLearning.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/articles/BayesianSupervisedLearning.html</loc>
   </url>
   <url>
-    <loc>/articles/CausalInference.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/articles/CausalInference.html</loc>
   </url>
   <url>
-    <loc>/articles/CustomSamplingRoutine.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/articles/CustomSamplingRoutine.html</loc>
   </url>
   <url>
-    <loc>/articles/EnsembleKernel.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/articles/EnsembleKernel.html</loc>
   </url>
   <url>
-    <loc>/articles/ModelSerialization.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/articles/ModelSerialization.html</loc>
   </url>
   <url>
-    <loc>/articles/index.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/articles/index.html</loc>
   </url>
   <url>
-    <loc>/authors.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/authors.html</loc>
   </url>
   <url>
-    <loc>/index.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/index.html</loc>
   </url>
   <url>
-    <loc>/reference/CppJson.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/CppJson.html</loc>
   </url>
   <url>
-    <loc>/reference/CppRNG.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/CppRNG.html</loc>
   </url>
   <url>
-    <loc>/reference/ForestDataset.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/ForestDataset.html</loc>
   </url>
   <url>
-    <loc>/reference/ForestKernel.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/ForestKernel.html</loc>
   </url>
   <url>
-    <loc>/reference/ForestModel.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/ForestModel.html</loc>
   </url>
   <url>
-    <loc>/reference/ForestSamples.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/ForestSamples.html</loc>
   </url>
   <url>
-    <loc>/reference/Outcome.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/Outcome.html</loc>
   </url>
   <url>
-    <loc>/reference/RandomEffectSamples.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/RandomEffectSamples.html</loc>
   </url>
   <url>
-    <loc>/reference/RandomEffectsDataset.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/RandomEffectsDataset.html</loc>
   </url>
   <url>
-    <loc>/reference/RandomEffectsModel.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/RandomEffectsModel.html</loc>
   </url>
   <url>
-    <loc>/reference/RandomEffectsTracker.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/RandomEffectsTracker.html</loc>
   </url>
   <url>
-    <loc>/reference/bart.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/bart.html</loc>
   </url>
   <url>
-    <loc>/reference/bcf.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/bcf.html</loc>
   </url>
   <url>
-    <loc>/reference/computeForestKernels.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/computeForestKernels.html</loc>
   </url>
   <url>
-    <loc>/reference/computeForestLeafIndices.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/computeForestLeafIndices.html</loc>
   </url>
   <url>
-    <loc>/reference/convertBCFModelToJson.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/convertBCFModelToJson.html</loc>
   </url>
   <url>
-    <loc>/reference/createBCFModelFromJson.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createBCFModelFromJson.html</loc>
   </url>
   <url>
-    <loc>/reference/createBCFModelFromJsonFile.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createBCFModelFromJsonFile.html</loc>
   </url>
   <url>
-    <loc>/reference/createCppJson.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createCppJson.html</loc>
   </url>
   <url>
-    <loc>/reference/createCppJsonFile.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createCppJsonFile.html</loc>
   </url>
   <url>
-    <loc>/reference/createForestContainer.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createForestContainer.html</loc>
   </url>
   <url>
-    <loc>/reference/createForestCovariates.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createForestCovariates.html</loc>
   </url>
   <url>
-    <loc>/reference/createForestCovariatesFromMetadata.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createForestCovariatesFromMetadata.html</loc>
   </url>
   <url>
-    <loc>/reference/createForestDataset.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createForestDataset.html</loc>
   </url>
   <url>
-    <loc>/reference/createForestKernel.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createForestKernel.html</loc>
   </url>
   <url>
-    <loc>/reference/createForestModel.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createForestModel.html</loc>
   </url>
   <url>
-    <loc>/reference/createOutcome.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createOutcome.html</loc>
   </url>
   <url>
-    <loc>/reference/createRNG.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createRNG.html</loc>
   </url>
   <url>
-    <loc>/reference/createRandomEffectSamples.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createRandomEffectSamples.html</loc>
   </url>
   <url>
-    <loc>/reference/createRandomEffectsDataset.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createRandomEffectsDataset.html</loc>
   </url>
   <url>
-    <loc>/reference/createRandomEffectsModel.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createRandomEffectsModel.html</loc>
   </url>
   <url>
-    <loc>/reference/createRandomEffectsTracker.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/createRandomEffectsTracker.html</loc>
   </url>
   <url>
-    <loc>/reference/getRandomEffectSamples.bartmodel.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/getRandomEffectSamples.bartmodel.html</loc>
   </url>
   <url>
-    <loc>/reference/getRandomEffectSamples.bcf.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/getRandomEffectSamples.bcf.html</loc>
   </url>
   <url>
-    <loc>/reference/getRandomEffectSamples.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/getRandomEffectSamples.html</loc>
   </url>
   <url>
-    <loc>/reference/index.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/loadForestContainerJson.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/loadForestContainerJson.html</loc>
   </url>
   <url>
-    <loc>/reference/loadRandomEffectSamplesJson.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/loadRandomEffectSamplesJson.html</loc>
   </url>
   <url>
-    <loc>/reference/loadScalarJson.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/loadScalarJson.html</loc>
   </url>
   <url>
-    <loc>/reference/loadVectorJson.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/loadVectorJson.html</loc>
   </url>
   <url>
-    <loc>/reference/oneHotEncode.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/oneHotEncode.html</loc>
   </url>
   <url>
-    <loc>/reference/oneHotInitializeAndEncode.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/oneHotInitializeAndEncode.html</loc>
   </url>
   <url>
-    <loc>/reference/orderedCatInitializeAndPreprocess.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/orderedCatInitializeAndPreprocess.html</loc>
   </url>
   <url>
-    <loc>/reference/orderedCatPreprocess.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/orderedCatPreprocess.html</loc>
   </url>
   <url>
-    <loc>/reference/predict.bartmodel.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/predict.bartmodel.html</loc>
   </url>
   <url>
-    <loc>/reference/predict.bcf.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/predict.bcf.html</loc>
   </url>
   <url>
-    <loc>/reference/preprocessPredictionData.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessPredictionData.html</loc>
   </url>
   <url>
-    <loc>/reference/preprocessPredictionDataFrame.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessPredictionDataFrame.html</loc>
   </url>
   <url>
-    <loc>/reference/preprocessPredictionMatrix.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessPredictionMatrix.html</loc>
   </url>
   <url>
-    <loc>/reference/preprocessTrainData.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessTrainData.html</loc>
   </url>
   <url>
-    <loc>/reference/preprocessTrainDataFrame.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessTrainDataFrame.html</loc>
   </url>
   <url>
-    <loc>/reference/preprocessTrainMatrix.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/preprocessTrainMatrix.html</loc>
   </url>
   <url>
-    <loc>/reference/sample_sigma2_one_iteration.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/sample_sigma2_one_iteration.html</loc>
   </url>
   <url>
-    <loc>/reference/sample_tau_one_iteration.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/sample_tau_one_iteration.html</loc>
   </url>
   <url>
-    <loc>/reference/saveBCFModelToJsonFile.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/saveBCFModelToJsonFile.html</loc>
   </url>
   <url>
-    <loc>/reference/stochtree-package.html</loc>
+    <loc>https://stochastictree.github.io/stochtree-r/reference/stochtree-package.html</loc>
   </url>
 </urlset>
