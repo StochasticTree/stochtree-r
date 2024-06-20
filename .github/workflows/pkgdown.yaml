@@ -35,6 +35,8 @@ jobs:
       - name: Build doc site
         run: |
           Rscript cran-bootstrap.R
+          cp _pkgdown.yml stochtree_cran/_pkgdown.yml
+          cp R_README.md stochtree_cran/README.md
           Rscript -e 'pkgdown::build_site_github_pages("stochtree_cran", install = TRUE)'
 
       - name: Deploy to GitHub pages 🚀
