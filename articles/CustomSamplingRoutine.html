@@ -1067,7 +1067,7 @@ leaf scale parameters) with an MCMC sampler</p>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_xbcf_plot-3.png" width="700"></p>
 <div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">tau_hat</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="va">num_gfr</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="va">tau_x</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.2827006</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.4746396</span></span></code></pre></div>
 <p>Inspect the warm start BART results</p>
 <div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sigma_samples</span><span class="op">[</span><span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span>, ylab<span class="op">=</span><span class="st">"sigma^2"</span><span class="op">)</span></span></code></pre></div>
@@ -1084,7 +1084,7 @@ leaf scale parameters) with an MCMC sampler</p>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_warm_start_plot-3.png" width="700"></p>
 <div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">tau_hat</span><span class="op">[</span>,<span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="va">tau_x</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.3012734</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.375283</span></span></code></pre></div>
 <p>Inspect the “adaptive coding” parameters <span class="math inline">\(b_0\)</span> and <span class="math inline">\(b_1\)</span>.</p>
 <div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">b_0_samples</span>, col <span class="op">=</span> <span class="st">"blue"</span>, ylab <span class="op">=</span> <span class="st">"Coding parameter draws"</span>, </span>
