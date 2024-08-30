@@ -1,5 +1,5 @@
 pandoc: 3.1.11
-pkgdown: 2.0.9
+pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
   BayesianSupervisedLearning: BayesianSupervisedLearning.html
@@ -7,8 +7,8 @@ articles:
   CustomSamplingRoutine: CustomSamplingRoutine.html
   EnsembleKernel: EnsembleKernel.html
   ModelSerialization: ModelSerialization.html
-last_built: 2024-07-05T04:00Z
+  PriorCalibration: PriorCalibration.html
+last_built: 2024-08-30T07:51Z
 urls:
   reference: https://stochastictree.github.io/stochtree-r/reference
   article: https://stochastictree.github.io/stochtree-r/articles
-
