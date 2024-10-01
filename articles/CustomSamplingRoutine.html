@@ -761,7 +761,232 @@ considering the random effect predictions)</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="demo-4-causal-inference">Demo 4: Causal Inference<a class="anchor" aria-label="anchor" href="#demo-4-causal-inference"></a>
+<h2 id="demo-4-supervised-learning-with-additive-linear-model">Demo 4: Supervised Learning with Additive Linear Model<a class="anchor" aria-label="anchor" href="#demo-4-supervised-learning-with-additive-linear-model"></a>
+</h2>
+<p>Instead of group random effects, here we show how to combine a
+stochastic forest with an additive linear regression term. The model
+corresponds broadly to</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mi>y</mi></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>W</mi><mi>β</mi><mo>+</mo><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mi>ϵ</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mtext mathvariant="normal">BART</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mi>β</mi></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mi>𝒩</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mi>τ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mi>ϵ</mi></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mi>𝒩</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><msup><mi>σ</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msup><mi>σ</mi><mn>2</mn></msup></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mtext mathvariant="normal">IG</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>a</mi><mo>,</mo><mi>b</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{equation*}
+\begin{aligned}
+y &amp;= W\beta + f(X) + \epsilon\\
+f(X) &amp;\sim \text{BART}(c,d)\\
+\beta &amp;\sim \mathcal{N}(0, \tau)\\
+\epsilon &amp;\sim \mathcal{N}\left(0,\sigma^2\right)\\
+\sigma^2 &amp;\sim \text{IG}(a,b)
+\end{aligned}
+\end{equation*}</annotation></semantics></math></p>
+<div class="section level3">
+<h3 id="simulation-3">Simulation<a class="anchor" aria-label="anchor" href="#simulation-3"></a>
+</h3>
+<p>Simulate a partitioned linear model with a simple additive group
+random effect structure</p>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Generate the data</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
+<span><span class="va">p_X</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">p_W</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span><span class="op">*</span><span class="va">p_X</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="va">p_X</span><span class="op">)</span></span>
+<span><span class="va">W</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span><span class="op">*</span><span class="va">p_W</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="va">p_W</span><span class="op">)</span></span>
+<span><span class="va">beta_W</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span></span>
+<span><span class="va">f_XW</span> <span class="op">&lt;-</span> <span class="op">(</span></span>
+<span>    <span class="op">(</span><span class="op">(</span><span class="fl">0</span> <span class="op">&lt;=</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span><span class="fl">0.25</span> <span class="op">&gt;</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="op">-</span><span class="fl">3</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="op">(</span><span class="op">(</span><span class="fl">0.25</span> <span class="op">&lt;=</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span><span class="fl">0.5</span> <span class="op">&gt;</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="op">(</span><span class="op">(</span><span class="fl">0.5</span> <span class="op">&lt;=</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span><span class="fl">0.75</span> <span class="op">&gt;</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="op">(</span><span class="op">(</span><span class="fl">0.75</span> <span class="op">&lt;=</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span><span class="fl">1</span> <span class="op">&gt;</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">lm_term</span> <span class="op">&lt;-</span> <span class="va">W</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta_W</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">lm_term</span> <span class="op">+</span> <span class="va">f_XW</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Standardize outcome</span></span>
+<span><span class="va">y_bar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span>
+<span><span class="va">y_std</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span>
+<span><span class="va">resid</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">y</span><span class="op">-</span><span class="va">y_bar</span><span class="op">)</span><span class="op">/</span><span class="va">y_std</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="sampling-3">Sampling<a class="anchor" aria-label="anchor" href="#sampling-3"></a>
+</h3>
+<p>Set some parameters that inform the forest and variance parameter
+samplers</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">alpha_bart</span> <span class="op">&lt;-</span> <span class="fl">0.9</span></span>
+<span><span class="va">beta_bart</span> <span class="op">&lt;-</span> <span class="fl">1.25</span></span>
+<span><span class="va">min_samples_leaf</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
+<span><span class="va">max_depth</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">num_trees</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
+<span><span class="va">cutpoint_grid_size</span> <span class="op">=</span> <span class="fl">100</span></span>
+<span><span class="va">global_variance_init</span> <span class="op">=</span> <span class="fl">1.</span></span>
+<span><span class="va">tau_init</span> <span class="op">=</span> <span class="fl">0.5</span></span>
+<span><span class="va">leaf_prior_scale</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">tau_init</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">nu</span> <span class="op">&lt;-</span> <span class="fl">4</span></span>
+<span><span class="va">lambda</span> <span class="op">&lt;-</span> <span class="fl">0.5</span></span>
+<span><span class="va">a_leaf</span> <span class="op">&lt;-</span> <span class="fl">2.</span></span>
+<span><span class="va">b_leaf</span> <span class="op">&lt;-</span> <span class="fl">0.5</span></span>
+<span><span class="va">leaf_regression</span> <span class="op">&lt;-</span> <span class="cn">F</span></span>
+<span><span class="va">feature_types</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">p_X</span><span class="op">)</span><span class="op">)</span> <span class="co"># 0 = numeric</span></span>
+<span><span class="va">var_weights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="va">p_X</span>, <span class="va">p_X</span><span class="op">)</span></span>
+<span><span class="va">beta_tau</span> <span class="op">&lt;-</span> <span class="fl">20</span></span></code></pre></div>
+<p>Initialize R-level access to the C++ classes needed to sample our
+model</p>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Data</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">leaf_regression</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">forest_dataset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestDataset.html">createForestDataset</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">W</span><span class="op">)</span></span>
+<span>    <span class="va">outcome_model_type</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>    <span class="va">forest_dataset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestDataset.html">createForestDataset</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
+<span>    <span class="va">outcome_model_type</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">outcome</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createOutcome.html">createOutcome</a></span><span class="op">(</span><span class="va">resid</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Random number generator (std::mt19937)</span></span>
+<span><span class="va">rng</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createRNG.html">createRNG</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Sampling data structures</span></span>
+<span><span class="va">forest_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestModel.html">createForestModel</a></span><span class="op">(</span><span class="va">forest_dataset</span>, <span class="va">feature_types</span>, </span>
+<span>                                  <span class="va">num_trees</span>, <span class="va">n</span>, <span class="va">alpha_bart</span>, <span class="va">beta_bart</span>, </span>
+<span>                                  <span class="va">min_samples_leaf</span>, <span class="va">max_depth</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Container of forest samples</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">leaf_regression</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">forest_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>    <span class="va">forest_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Prepare to run the sampler</p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">num_warmstart</span> <span class="op">&lt;-</span> <span class="fl">20</span></span>
+<span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
+<span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_warmstart</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">beta_init</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span><span class="va">global_var_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">global_variance_init</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">num_samples</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">leaf_scale_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">tau_init</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">num_samples</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">beta_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">beta_init</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">num_samples</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Run the grow-from-root sampler to “warm-start” BART</p>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_warmstart</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="co"># Initialize vectors needed for posterior sampling</span></span>
+<span>    <span class="kw">if</span> <span class="op">(</span><span class="va">i</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="va">beta_hat</span> <span class="op">&lt;-</span> <span class="va">beta_init</span></span>
+<span>        <span class="va">yhat_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">n</span><span class="op">)</span></span>
+<span>        <span class="va">partial_res</span> <span class="op">&lt;-</span> <span class="va">resid</span> <span class="op">-</span> <span class="va">yhat_forest</span></span>
+<span>    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>        <span class="va">yhat_forest</span> <span class="op">&lt;-</span> <span class="va">forest_samples</span><span class="op">$</span><span class="fu">predict_raw_single_forest</span><span class="op">(</span><span class="va">forest_dataset</span>, <span class="op">(</span><span class="va">i</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span>        <span class="va">partial_res</span> <span class="op">&lt;-</span> <span class="va">resid</span> <span class="op">-</span> <span class="va">yhat_forest</span></span>
+<span>        <span class="va">outcome</span><span class="op">$</span><span class="fu">add_vector</span><span class="op">(</span><span class="va">W</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta_hat</span><span class="op">)</span></span>
+<span>    <span class="op">}</span></span>
+<span>    <span class="co"># Sample beta from bayesian linear model with gaussian prior</span></span>
+<span>    <span class="va">sigma2</span> <span class="op">&lt;-</span> <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span>    <span class="va">beta_posterior_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">partial_res</span><span class="op">*</span><span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">/</span><span class="op">(</span><span class="va">sigma2</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">*</span><span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="va">beta_posterior_var</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">sigma2</span><span class="op">*</span><span class="va">beta_tau</span><span class="op">)</span><span class="op">/</span><span class="op">(</span><span class="va">sigma2</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">*</span><span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="va">beta_hat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">beta_posterior_mean</span>, <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">beta_posterior_var</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="va">beta_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">beta_hat</span></span>
+<span>    <span class="co"># Update partial residual before sampling forest</span></span>
+<span>    <span class="va">outcome</span><span class="op">$</span><span class="fu">subtract_vector</span><span class="op">(</span><span class="va">W</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta_hat</span><span class="op">)</span></span>
+<span>    </span>
+<span>    <span class="co"># Sample forest</span></span>
+<span>    <span class="va">forest_model</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
+<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
+<span>        <span class="va">outcome_model_type</span>, <span class="va">leaf_prior_scale</span>, <span class="va">var_weights</span>, </span>
+<span>        <span class="va">sigma2</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">T</span></span>
+<span>    <span class="op">)</span></span>
+<span>    </span>
+<span>    <span class="co"># Sample global variance parameter</span></span>
+<span>    <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_sigma2_one_iteration.html">sample_sigma2_one_iteration</a></span><span class="op">(</span></span>
+<span>        <span class="va">outcome</span>, <span class="va">rng</span>, <span class="va">nu</span>, <span class="va">lambda</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Pick up from the last GFR forest (and associated global variance /
+leaf scale parameters) with an MCMC sampler</p>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="va">num_warmstart</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="co"># Initialize vectors needed for posterior sampling</span></span>
+<span>    <span class="kw">if</span> <span class="op">(</span><span class="va">i</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="va">beta_hat</span> <span class="op">&lt;-</span> <span class="va">beta_init</span></span>
+<span>        <span class="va">yhat_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">n</span><span class="op">)</span></span>
+<span>        <span class="va">partial_res</span> <span class="op">&lt;-</span> <span class="va">resid</span> <span class="op">-</span> <span class="va">yhat_forest</span></span>
+<span>    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>        <span class="va">yhat_forest</span> <span class="op">&lt;-</span> <span class="va">forest_samples</span><span class="op">$</span><span class="fu">predict_raw_single_forest</span><span class="op">(</span><span class="va">forest_dataset</span>, <span class="op">(</span><span class="va">i</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span>        <span class="va">partial_res</span> <span class="op">&lt;-</span> <span class="va">resid</span> <span class="op">-</span> <span class="va">yhat_forest</span></span>
+<span>        <span class="va">outcome</span><span class="op">$</span><span class="fu">add_vector</span><span class="op">(</span><span class="va">W</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta_hat</span><span class="op">)</span></span>
+<span>    <span class="op">}</span></span>
+<span>    <span class="co"># Sample beta from bayesian linear model with gaussian prior</span></span>
+<span>    <span class="va">sigma2</span> <span class="op">&lt;-</span> <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span>    <span class="va">beta_posterior_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">partial_res</span><span class="op">*</span><span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">/</span><span class="op">(</span><span class="va">sigma2</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">*</span><span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="va">beta_posterior_var</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">sigma2</span><span class="op">*</span><span class="va">beta_tau</span><span class="op">)</span><span class="op">/</span><span class="op">(</span><span class="va">sigma2</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">*</span><span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="va">beta_hat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">beta_posterior_mean</span>, <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">beta_posterior_var</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="va">beta_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">beta_hat</span></span>
+<span>    <span class="co"># Update partial residual before sampling forest</span></span>
+<span>    <span class="va">outcome</span><span class="op">$</span><span class="fu">subtract_vector</span><span class="op">(</span><span class="va">W</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta_hat</span><span class="op">)</span></span>
+<span>    </span>
+<span>    <span class="co"># Sample forest</span></span>
+<span>    <span class="va">forest_model</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
+<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
+<span>        <span class="va">outcome_model_type</span>, <span class="va">leaf_prior_scale</span>, <span class="va">var_weights</span>, </span>
+<span>        <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">F</span></span>
+<span>    <span class="op">)</span></span>
+<span>    </span>
+<span>    <span class="co"># Sample global variance parameter</span></span>
+<span>    <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_sigma2_one_iteration.html">sample_sigma2_one_iteration</a></span><span class="op">(</span></span>
+<span>        <span class="va">outcome</span>, <span class="va">rng</span>, <span class="va">nu</span>, <span class="va">lambda</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Predict and rescale samples</p>
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Linear model predictions</span></span>
+<span><span class="va">lm_preds</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">num_samples</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">W</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">*</span><span class="va">beta_samples</span><span class="op">[</span><span class="va">x</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">*</span><span class="va">y_std</span></span>
+<span></span>
+<span><span class="co"># Forest predictions</span></span>
+<span><span class="va">forest_preds</span> <span class="op">&lt;-</span> <span class="va">forest_samples</span><span class="op">$</span><span class="fu">predict</span><span class="op">(</span><span class="va">forest_dataset</span><span class="op">)</span><span class="op">*</span><span class="va">y_std</span> <span class="op">+</span> <span class="va">y_bar</span></span>
+<span></span>
+<span><span class="co"># Overall predictions</span></span>
+<span><span class="va">preds</span> <span class="op">&lt;-</span> <span class="va">forest_preds</span> <span class="op">+</span> <span class="va">lm_preds</span></span>
+<span></span>
+<span><span class="co"># Global error variance</span></span>
+<span><span class="va">sigma_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">global_var_samples</span><span class="op">)</span><span class="op">*</span><span class="va">y_std</span></span>
+<span></span>
+<span><span class="co"># Regression parameter</span></span>
+<span><span class="va">beta_samples</span> <span class="op">&lt;-</span> <span class="va">beta_samples</span><span class="op">*</span><span class="va">y_std</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="results-3">Results<a class="anchor" aria-label="anchor" href="#results-3"></a>
+</h3>
+<p>Inspect the initial samples obtained via grow-from-root and an
+additive random effects model</p>
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sigma_samples</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="va">num_warmstart</span><span class="op">]</span>, ylab<span class="op">=</span><span class="st">"sigma"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="CustomSamplingRoutine_files/figure-html/unnamed-chunk-32-1.png" width="700"></p>
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">beta_samples</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="va">num_warmstart</span><span class="op">]</span>, ylab<span class="op">=</span><span class="st">"beta"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="CustomSamplingRoutine_files/figure-html/unnamed-chunk-32-2.png" width="700"></p>
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">preds</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="va">num_warmstart</span><span class="op">]</span><span class="op">)</span>, <span class="va">y</span>, pch<span class="op">=</span><span class="fl">16</span>, </span>
+<span>     cex<span class="op">=</span><span class="fl">0.75</span>, xlab <span class="op">=</span> <span class="st">"pred"</span>, ylab <span class="op">=</span> <span class="st">"actual"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lty<span class="op">=</span><span class="fl">2</span>,lwd<span class="op">=</span><span class="fl">2.5</span><span class="op">)</span></span></code></pre></div>
+<p><img src="CustomSamplingRoutine_files/figure-html/unnamed-chunk-32-3.png" width="700"></p>
+<p>Inspect the BART samples obtained after “warm-starting” plus an
+additive random effects model</p>
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sigma_samples</span><span class="op">[</span><span class="op">(</span><span class="va">num_warmstart</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span>, ylab<span class="op">=</span><span class="st">"sigma"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="CustomSamplingRoutine_files/figure-html/unnamed-chunk-33-1.png" width="700"></p>
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">beta_samples</span><span class="op">[</span><span class="op">(</span><span class="va">num_warmstart</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span>, ylab<span class="op">=</span><span class="st">"beta"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="CustomSamplingRoutine_files/figure-html/unnamed-chunk-33-2.png" width="700"></p>
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">preds</span><span class="op">[</span>,<span class="op">(</span><span class="va">num_warmstart</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span><span class="op">)</span>, <span class="va">y</span>, pch<span class="op">=</span><span class="fl">16</span>, </span>
+<span>     cex<span class="op">=</span><span class="fl">0.75</span>, xlab <span class="op">=</span> <span class="st">"pred"</span>, ylab <span class="op">=</span> <span class="st">"actual"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lty<span class="op">=</span><span class="fl">2</span>,lwd<span class="op">=</span><span class="fl">2.5</span><span class="op">)</span></span></code></pre></div>
+<p><img src="CustomSamplingRoutine_files/figure-html/unnamed-chunk-33-3.png" width="700"></p>
+<p>Now inspect the samples from the BART forest alone (without
+considering the additive linear model predictions)</p>
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">forest_preds</span><span class="op">[</span>,<span class="op">(</span><span class="va">num_warmstart</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span><span class="op">)</span>, <span class="va">y</span>, pch<span class="op">=</span><span class="fl">16</span>, </span>
+<span>     cex<span class="op">=</span><span class="fl">0.75</span>, xlab <span class="op">=</span> <span class="st">"pred"</span>, ylab <span class="op">=</span> <span class="st">"actual"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lty<span class="op">=</span><span class="fl">2</span>,lwd<span class="op">=</span><span class="fl">2.5</span><span class="op">)</span></span></code></pre></div>
+<p><img src="CustomSamplingRoutine_files/figure-html/unnamed-chunk-34-1.png" width="700"></p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="demo-5-causal-inference">Demo 5: Causal Inference<a class="anchor" aria-label="anchor" href="#demo-5-causal-inference"></a>
 </h2>
 <p>Here we show how to implement the Bayesian Causal Forest (BCF) model
 of <span class="citation">Hahn, Murray, and Carvalho (2020)</span> using
@@ -890,12 +1115,12 @@ and
 </div>
 </div>
 <div class="section level3">
-<h3 id="simulation-3">Simulation<a class="anchor" aria-label="anchor" href="#simulation-3"></a>
+<h3 id="simulation-4">Simulation<a class="anchor" aria-label="anchor" href="#simulation-4"></a>
 </h3>
 <p>The simulated causal DGP mirrors the nonlinear, heterogeneous
 treatment effect DGP presented in <span class="citation">Hahn, Murray,
 and Carvalho (2020)</span>.</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
 <span><span class="va">x1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
 <span><span class="va">x2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
@@ -923,11 +1148,11 @@ and Carvalho (2020)</span>.</p>
 <span><span class="va">resid</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">y</span><span class="op">-</span><span class="va">y_bar</span><span class="op">)</span><span class="op">/</span><span class="va">y_std</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="sampling-3">Sampling<a class="anchor" aria-label="anchor" href="#sampling-3"></a>
+<h3 id="sampling-4">Sampling<a class="anchor" aria-label="anchor" href="#sampling-4"></a>
 </h3>
 <p>Set some parameters that inform the forest and variance parameter
 samplers</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Mu forest</span></span>
 <span><span class="va">alpha_mu</span> <span class="op">&lt;-</span> <span class="fl">0.95</span></span>
 <span><span class="va">beta_mu</span> <span class="op">&lt;-</span> <span class="fl">2.0</span></span>
@@ -970,7 +1195,7 @@ samplers</p>
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>1</mn></msub><annotation encoding="application/x-tex">b_1</annotation></semantics></math>,
 for which we choose -1/2 and 1/2 instead of 0 and 1).</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Sampling composition</span></span>
 <span><span class="va">num_gfr</span> <span class="op">&lt;-</span> <span class="fl">20</span></span>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
@@ -990,7 +1215,7 @@ for which we choose -1/2 and 1/2 instead of 0 and 1).</p>
 <span><span class="va">tau_basis</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fl">1</span><span class="op">-</span><span class="va">Z</span><span class="op">)</span><span class="op">*</span><span class="va">current_b_0</span> <span class="op">+</span> <span class="va">Z</span><span class="op">*</span><span class="va">current_b_1</span></span></code></pre></div>
 <p>Initialize R-level access to the C++ classes needed to sample our
 model</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Data</span></span>
 <span><span class="va">X_mu</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">pi_x</span><span class="op">)</span></span>
 <span><span class="va">X_tau</span> <span class="op">&lt;-</span> <span class="va">X</span></span>
@@ -1036,7 +1261,7 @@ the adaptive coding parameter
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>0</mn></msub><annotation encoding="application/x-tex">b_0</annotation></semantics></math>
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>1</mn></msub><annotation encoding="application/x-tex">b_1</annotation></semantics></math></p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="va">num_gfr</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">{</span></span>
 <span>    <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_gfr</span><span class="op">)</span> <span class="op">{</span></span>
 <span>        <span class="co"># Sample the prognostic forest</span></span>
@@ -1083,7 +1308,7 @@ and
 <span><span class="op">}</span></span></code></pre></div>
 <p>Pick up from the last GFR forest (and associated global variance /
 leaf scale parameters) with an MCMC sampler</p>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">)</span> <span class="op">{</span></span>
 <span>        <span class="co"># Sample the prognostic forest</span></span>
@@ -1127,7 +1352,7 @@ leaf scale parameters) with an MCMC sampler</p>
 <span>    <span class="op">}</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Predict and rescale samples</p>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Forest predictions</span></span>
 <span><span class="va">mu_hat</span> <span class="op">&lt;-</span> <span class="va">forest_samples_mu</span><span class="op">$</span><span class="fu">predict</span><span class="op">(</span><span class="va">forest_dataset_mu</span><span class="op">)</span><span class="op">*</span><span class="va">y_std</span> <span class="op">+</span> <span class="va">y_bar</span></span>
 <span><span class="va">tau_hat_raw</span> <span class="op">&lt;-</span> <span class="va">forest_samples_tau</span><span class="op">$</span><span class="fu">predict_raw</span><span class="op">(</span><span class="va">forest_dataset_tau</span><span class="op">)</span></span>
@@ -1138,47 +1363,47 @@ leaf scale parameters) with an MCMC sampler</p>
 <span><span class="va">sigma2_samples</span> <span class="op">&lt;-</span> <span class="va">global_var_samples</span><span class="op">*</span><span class="op">(</span><span class="va">y_std</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="results-3">Results<a class="anchor" aria-label="anchor" href="#results-3"></a>
+<h3 id="results-4">Results<a class="anchor" aria-label="anchor" href="#results-4"></a>
 </h3>
 <p>Inspect the XBART results</p>
-<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sigma2_samples</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="va">num_gfr</span><span class="op">]</span>, ylab<span class="op">=</span><span class="st">"sigma^2"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_xbcf_plot-1.png" width="700"></p>
-<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">mu_hat</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="va">num_gfr</span><span class="op">]</span><span class="op">)</span>, <span class="va">mu_x</span>, pch<span class="op">=</span><span class="fl">16</span>, cex<span class="op">=</span><span class="fl">0.75</span>, </span>
 <span>     xlab <span class="op">=</span> <span class="st">"pred"</span>, ylab <span class="op">=</span> <span class="st">"actual"</span>, main <span class="op">=</span> <span class="st">"prognostic term"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lty<span class="op">=</span><span class="fl">2</span>,lwd<span class="op">=</span><span class="fl">2.5</span><span class="op">)</span></span></code></pre></div>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_xbcf_plot-2.png" width="700"></p>
-<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">tau_hat</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="va">num_gfr</span><span class="op">]</span><span class="op">)</span>, <span class="va">tau_x</span>, pch<span class="op">=</span><span class="fl">16</span>, cex<span class="op">=</span><span class="fl">0.75</span>, </span>
 <span>     xlab <span class="op">=</span> <span class="st">"pred"</span>, ylab <span class="op">=</span> <span class="st">"actual"</span>, main <span class="op">=</span> <span class="st">"treatment effect term"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lty<span class="op">=</span><span class="fl">2</span>,lwd<span class="op">=</span><span class="fl">2.5</span><span class="op">)</span></span></code></pre></div>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_xbcf_plot-3.png" width="700"></p>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">tau_hat</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="va">num_gfr</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="va">tau_x</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.3989882</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.3793576</span></span></code></pre></div>
 <p>Inspect the warm start BART results</p>
-<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sigma_samples</span><span class="op">[</span><span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span>, ylab<span class="op">=</span><span class="st">"sigma^2"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_warm_start_plot-1.png" width="700"></p>
-<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">mu_hat</span><span class="op">[</span>,<span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span><span class="op">)</span>, <span class="va">mu_x</span>, pch<span class="op">=</span><span class="fl">16</span>, cex<span class="op">=</span><span class="fl">0.75</span>, </span>
 <span>     xlab <span class="op">=</span> <span class="st">"pred"</span>, ylab <span class="op">=</span> <span class="st">"actual"</span>, main <span class="op">=</span> <span class="st">"prognostic term"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lty<span class="op">=</span><span class="fl">2</span>,lwd<span class="op">=</span><span class="fl">2.5</span><span class="op">)</span></span></code></pre></div>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_warm_start_plot-2.png" width="700"></p>
-<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">tau_hat</span><span class="op">[</span>,<span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span><span class="op">)</span>, <span class="va">tau_x</span>, pch<span class="op">=</span><span class="fl">16</span>, cex<span class="op">=</span><span class="fl">0.75</span>, </span>
 <span>     xlab <span class="op">=</span> <span class="st">"pred"</span>, ylab <span class="op">=</span> <span class="st">"actual"</span>, main <span class="op">=</span> <span class="st">"treatment effect term"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lty<span class="op">=</span><span class="fl">2</span>,lwd<span class="op">=</span><span class="fl">2.5</span><span class="op">)</span></span></code></pre></div>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_warm_start_plot-3.png" width="700"></p>
-<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">tau_hat</span><span class="op">[</span>,<span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="va">tau_x</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.3066648</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.3524096</span></span></code></pre></div>
 <p>Inspect the “adaptive coding” parameters
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>0</mn></msub><annotation encoding="application/x-tex">b_0</annotation></semantics></math>
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>1</mn></msub><annotation encoding="application/x-tex">b_1</annotation></semantics></math>.</p>
-<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">b_0_samples</span>, col <span class="op">=</span> <span class="st">"blue"</span>, ylab <span class="op">=</span> <span class="st">"Coding parameter draws"</span>, </span>
 <span>     ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">b_0_samples</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">b_1_samples</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">b_0_samples</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">b_1_samples</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/points.html" class="external-link">points</a></span><span class="op">(</span><span class="va">b_1_samples</span>, col <span class="op">=</span> <span class="st">"orange"</span><span class="op">)</span></span>
@@ -1234,7 +1459,7 @@ Statistics</em> 29 (2): 405–17.
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>

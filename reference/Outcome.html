@@ -82,6 +82,8 @@ of the outcome minus the predictions of every other model term
 
 <ul><li><p><a href="#method-Outcome-new"><code>Outcome$new()</code></a></p></li>
 <li><p><a href="#method-Outcome-get_data"><code>Outcome$get_data()</code></a></p></li>
+<li><p><a href="#method-Outcome-add_vector"><code>Outcome$add_vector()</code></a></p></li>
+<li><p><a href="#method-Outcome-subtract_vector"><code>Outcome$subtract_vector()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-Outcome-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a new Outcome object.</p><div class="section">
@@ -114,6 +116,46 @@ of the outcome minus the predictions of every other model term
 <p>R vector containing (copy of) the values in <code>Outcome</code> object</p>
 </div>
 
+</div><p></p><hr><a id="method-Outcome-add_vector"></a><div class="section">
+<h3 id="method-add-vector-">Method <code>add_vector()</code><a class="anchor" aria-label="anchor" href="#method-add-vector-"></a></h3>
+<p>Update the current state of the outcome (i.e. partial residual) data by adding the values of <code>update_vector</code></p><div class="section">
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Outcome</span><span class="op">$</span><span class="fu">add_vector</span><span class="op">(</span><span class="va">update_vector</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>update_vector</code></dt>
+<dd><p>Vector to be added to outcome</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<p>NULL</p>
+</div>
+
+</div><p></p><hr><a id="method-Outcome-subtract_vector"></a><div class="section">
+<h3 id="method-subtract-vector-">Method <code>subtract_vector()</code><a class="anchor" aria-label="anchor" href="#method-subtract-vector-"></a></h3>
+<p>Update the current state of the outcome (i.e. partial residual) data by subtracting the values of <code>update_vector</code></p><div class="section">
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Outcome</span><span class="op">$</span><span class="fu">subtract_vector</span><span class="op">(</span><span class="va">update_vector</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>update_vector</code></dt>
+<dd><p>Vector to be subtracted from outcome</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<p>NULL</p>
+</div>
+
 </div>
 
     </div>
@@ -127,7 +169,7 @@ of the outcome minus the predictions of every other model term
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>
