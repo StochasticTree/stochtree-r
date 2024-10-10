@@ -22,8 +22,10 @@
     <li><h6 class="dropdown-header" data-toc-skip>High-Level Model Fitting</h6></li>
     <li><a class="dropdown-item" href="../articles/BayesianSupervisedLearning.html">Bayesian Supervised Learning in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/CausalInference.html">Causal Machine Learning in StochTree</a></li>
+    <li><a class="dropdown-item" href="../articles/Heteroskedasticity.html">Bayesian Supervised Learning with Heteroskedasticity in StochTree</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Advanced Model Interface</h6></li>
+    <li><a class="dropdown-item" href="../articles/MultiChain.html">Running Multiple Chains (Sequentially or in Parallel) in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/ModelSerialization.html">Model Serialization in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/PriorCalibration.html">Prior Calibration Approaches for Parametric Components of Stochastic Tree Ensembles</a></li>
     <li><a class="dropdown-item" href="../articles/EnsembleKernel.html">Kernel Methods from Tree Ensembles in StochTree</a></li>
@@ -52,7 +54,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sample_sigma2_one_iteration</span><span class="op">(</span><span class="va">residual</span>, <span class="va">rng</span>, <span class="va">a</span>, <span class="va">b</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sample_sigma2_one_iteration</span><span class="op">(</span><span class="va">residual</span>, <span class="va">dataset</span>, <span class="va">rng</span>, <span class="va">a</span>, <span class="va">b</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -61,6 +63,10 @@
 
 <dl><dt id="arg-residual">residual<a class="anchor" aria-label="anchor" href="#arg-residual"></a></dt>
 <dd><p>Outcome class</p></dd>
+
+
+<dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
+<dd><p>ForestDataset class</p></dd>
 
 
 <dt id="arg-rng">rng<a class="anchor" aria-label="anchor" href="#arg-rng"></a></dt>

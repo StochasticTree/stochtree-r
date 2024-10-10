@@ -22,8 +22,10 @@
     <li><h6 class="dropdown-header" data-toc-skip>High-Level Model Fitting</h6></li>
     <li><a class="dropdown-item" href="../articles/BayesianSupervisedLearning.html">Bayesian Supervised Learning in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/CausalInference.html">Causal Machine Learning in StochTree</a></li>
+    <li><a class="dropdown-item" href="../articles/Heteroskedasticity.html">Bayesian Supervised Learning with Heteroskedasticity in StochTree</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Advanced Model Interface</h6></li>
+    <li><a class="dropdown-item" href="../articles/MultiChain.html">Running Multiple Chains (Sequentially or in Parallel) in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/ModelSerialization.html">Model Serialization in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/PriorCalibration.html">Prior Calibration Approaches for Parametric Components of Stochastic Tree Ensembles</a></li>
     <li><a class="dropdown-item" href="../articles/EnsembleKernel.html">Kernel Methods from Tree Ensembles in StochTree</a></li>
@@ -104,6 +106,12 @@
         <dd>Convert a JSON file containing sample information on a trained BCF model to a BCF model object which can be used for prediction, etc...</dd>
       </dl><dl><dt>
 
+          <code><a href="createBCFModelFromJsonString.html">createBCFModelFromJsonString()</a></code>
+
+        </dt>
+        <dd>Convert a JSON string containing sample information on a trained BCF model to a BCF model object which can be used for prediction, etc...</dd>
+      </dl><dl><dt>
+
           <code><a href="convertBCFModelToJson.html">convertBCFModelToJson()</a></code>
 
         </dt>
@@ -145,10 +153,34 @@
         <dd>Create a new (empty) C++ Json object</dd>
       </dl><dl><dt>
 
+          <code><a href="createCppJsonFile.html">createCppJsonFile()</a></code>
+
+        </dt>
+        <dd>Create a C++ Json object from a Json file</dd>
+      </dl><dl><dt>
+
+          <code><a href="createCppJsonString.html">createCppJsonString()</a></code>
+
+        </dt>
+        <dd>Create a C++ Json object from a Json string</dd>
+      </dl><dl><dt>
+
           <code><a href="loadForestContainerJson.html">loadForestContainerJson()</a></code>
 
         </dt>
         <dd>Load a container of forest samples from json</dd>
+      </dl><dl><dt>
+
+          <code><a href="loadForestContainerCombinedJson.html">loadForestContainerCombinedJson()</a></code>
+
+        </dt>
+        <dd>Combine multiple JSON model objects containing forests (with the same hierarchy / schema) into a single forest_container</dd>
+      </dl><dl><dt>
+
+          <code><a href="loadForestContainerCombinedJsonString.html">loadForestContainerCombinedJsonString()</a></code>
+
+        </dt>
+        <dd>Combine multiple JSON strings representing model objects containing forests (with the same hierarchy / schema) into a single forest_container</dd>
       </dl><dl><dt>
 
           <code><a href="loadRandomEffectSamplesJson.html">loadRandomEffectSamplesJson()</a></code>
@@ -169,10 +201,70 @@
         <dd>Load a scalar from json</dd>
       </dl><dl><dt>
 
-          <code><a href="createCppJsonFile.html">createCppJsonFile()</a></code>
+          <code><a href="convertBARTModelToJson.html">convertBARTModelToJson()</a></code>
 
         </dt>
-        <dd>Create a C++ Json object from a Json file</dd>
+        <dd>Convert the persistent aspects of a BART model to (in-memory) JSON</dd>
+      </dl><dl><dt>
+
+          <code><a href="createBARTModelFromCombinedJson.html">createBARTModelFromCombinedJson()</a></code>
+
+        </dt>
+        <dd>Convert a list of (in-memory) JSON representations of a BART model to a single combined BART model object which can be used for prediction, etc...</dd>
+      </dl><dl><dt>
+
+          <code><a href="createBARTModelFromCombinedJsonString.html">createBARTModelFromCombinedJsonString()</a></code>
+
+        </dt>
+        <dd>Convert a list of (in-memory) JSON strings that represent BART models to a single combined BART model object which can be used for prediction, etc...</dd>
+      </dl><dl><dt>
+
+          <code><a href="createBARTModelFromJson.html">createBARTModelFromJson()</a></code>
+
+        </dt>
+        <dd>Convert an (in-memory) JSON representation of a BART model to a BART model object which can be used for prediction, etc...</dd>
+      </dl><dl><dt>
+
+          <code><a href="createBARTModelFromJsonFile.html">createBARTModelFromJsonFile()</a></code>
+
+        </dt>
+        <dd>Convert a JSON file containing sample information on a trained BART model to a BART model object which can be used for prediction, etc...</dd>
+      </dl><dl><dt>
+
+          <code><a href="createBARTModelFromJsonString.html">createBARTModelFromJsonString()</a></code>
+
+        </dt>
+        <dd>Convert a JSON string containing sample information on a trained BART model to a BART model object which can be used for prediction, etc...</dd>
+      </dl><dl><dt>
+
+          <code><a href="loadRandomEffectSamplesCombinedJson.html">loadRandomEffectSamplesCombinedJson()</a></code>
+
+        </dt>
+        <dd>Combine multiple JSON model objects containing random effects (with the same hierarchy / schema) into a single container</dd>
+      </dl><dl><dt>
+
+          <code><a href="loadRandomEffectSamplesCombinedJsonString.html">loadRandomEffectSamplesCombinedJsonString()</a></code>
+
+        </dt>
+        <dd>Combine multiple JSON strings representing model objects containing random effects (with the same hierarchy / schema) into a single container</dd>
+      </dl><dl><dt>
+
+          <code><a href="saveBARTModelToJsonFile.html">saveBARTModelToJsonFile()</a></code>
+
+        </dt>
+        <dd>Convert the persistent aspects of a BART model to (in-memory) JSON and save to a file</dd>
+      </dl><dl><dt>
+
+          <code><a href="saveBARTModelToJsonString.html">saveBARTModelToJsonString()</a></code>
+
+        </dt>
+        <dd>Convert the persistent aspects of a BART model to (in-memory) JSON string</dd>
+      </dl><dl><dt>
+
+          <code><a href="saveBCFModelToJsonString.html">saveBCFModelToJsonString()</a></code>
+
+        </dt>
+        <dd>Convert the persistent aspects of a BCF model to (in-memory) JSON string</dd>
       </dl></div><div class="section level2">
 
       <h3 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a></h3>
@@ -357,6 +449,18 @@
 
         </dt>
         <dd>Calibrate the scale parameter on an inverse gamma prior for the global error variance as in Chipman et al (2022) 1</dd>
+      </dl><dl><dt>
+
+          <code><a href="preprocessBartParams.html">preprocessBartParams()</a></code>
+
+        </dt>
+        <dd>Preprocess BART parameter list. Override defaults with any provided parameters.</dd>
+      </dl><dl><dt>
+
+          <code><a href="preprocessBcfParams.html">preprocessBcfParams()</a></code>
+
+        </dt>
+        <dd>Preprocess BCF parameter list. Override defaults with any provided parameters.</dd>
       </dl></div><div class="section level2">
 
       <h3 id="random-effects">Random Effects<a class="anchor" aria-label="anchor" href="#random-effects"></a></h3>

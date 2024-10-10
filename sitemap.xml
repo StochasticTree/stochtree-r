@@ -6,7 +6,9 @@
 <url><loc>https://stochastictree.github.io/stochtree-r/articles/CausalInference.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/articles/CustomSamplingRoutine.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/articles/EnsembleKernel.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/articles/Heteroskedasticity.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/articles/ModelSerialization.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/articles/MultiChain.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/articles/PriorCalibration.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/articles/index.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/authors.html</loc></url>
@@ -27,11 +29,19 @@
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/calibrate_inverse_gamma_error_variance.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/computeForestKernels.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/computeForestLeafIndices.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/convertBARTModelToJson.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/convertBCFModelToJson.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/createBARTModelFromCombinedJson.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/createBARTModelFromCombinedJsonString.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/createBARTModelFromJson.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/createBARTModelFromJsonFile.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/createBARTModelFromJsonString.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createBCFModelFromJson.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createBCFModelFromJsonFile.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/createBCFModelFromJsonString.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createCppJson.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createCppJsonFile.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/createCppJsonString.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createForestContainer.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createForestCovariates.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createForestCovariatesFromMetadata.html</loc></url>
@@ -48,7 +58,11 @@
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/getRandomEffectSamples.bcf.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/getRandomEffectSamples.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/index.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/loadForestContainerCombinedJson.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/loadForestContainerCombinedJsonString.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/loadForestContainerJson.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/loadRandomEffectSamplesCombinedJson.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/loadRandomEffectSamplesCombinedJsonString.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/loadRandomEffectSamplesJson.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/loadScalarJson.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/loadVectorJson.html</loc></url>
@@ -58,6 +72,8 @@
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/orderedCatPreprocess.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/predict.bartmodel.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/predict.bcf.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/preprocessBartParams.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/preprocessBcfParams.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/preprocessPredictionData.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/preprocessPredictionDataFrame.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/preprocessPredictionMatrix.html</loc></url>
@@ -66,7 +82,10 @@
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/preprocessTrainMatrix.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/sample_sigma2_one_iteration.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/sample_tau_one_iteration.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/saveBARTModelToJsonFile.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/saveBARTModelToJsonString.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/saveBCFModelToJsonFile.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/saveBCFModelToJsonString.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/stochtree-package.html</loc></url>
 </urlset>
 

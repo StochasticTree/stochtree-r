@@ -37,8 +37,10 @@
     <li><h6 class="dropdown-header" data-toc-skip>High-Level Model Fitting</h6></li>
     <li><a class="dropdown-item" href="../articles/BayesianSupervisedLearning.html">Bayesian Supervised Learning in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/CausalInference.html">Causal Machine Learning in StochTree</a></li>
+    <li><a class="dropdown-item" href="../articles/Heteroskedasticity.html">Bayesian Supervised Learning with Heteroskedasticity in StochTree</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Advanced Model Interface</h6></li>
+    <li><a class="dropdown-item" href="../articles/MultiChain.html">Running Multiple Chains (Sequentially or in Parallel) in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/ModelSerialization.html">Model Serialization in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/PriorCalibration.html">Prior Calibration Approaches for Parametric Components of Stochastic Tree Ensembles</a></li>
     <li><a class="dropdown-item" href="../articles/EnsembleKernel.html">Kernel Methods from Tree Ensembles in StochTree</a></li>
@@ -153,13 +155,14 @@ in <span class="citation">Hahn, Murray, and Carvalho (2020)</span>.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    group_ids_train <span class="op">=</span> <span class="va">group_ids_train</span>, rfx_basis_train <span class="op">=</span> <span class="va">rfx_basis_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, group_ids_test <span class="op">=</span> <span class="va">group_ids_test</span>, </span>
 <span>    rfx_basis_test <span class="op">=</span> <span class="va">rfx_basis_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -193,6 +196,92 @@ model.</p>
 <span>     xlab <span class="op">=</span> <span class="st">"Original"</span>, ylab <span class="op">=</span> <span class="st">"Deserialized"</span>, main <span class="op">=</span> <span class="st">"Overall outcome"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lwd<span class="op">=</span><span class="fl">3</span>,lty<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ModelSerialization_files/figure-html/bcf_roundtrip-3.png" width="700"></p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="demo-2-bart">Demo 2: BART<a class="anchor" aria-label="anchor" href="#demo-2-bart"></a>
+</h2>
+<p>BART models are initially sampled and constructed using the
+<code><a href="../reference/bart.html">bart()</a></code> function. Here we show how to save and reload models
+from JSON files on disk.</p>
+<div class="section level3">
+<h3 id="model-building-1">Model Building<a class="anchor" aria-label="anchor" href="#model-building-1"></a>
+</h3>
+<p>Draw from a relatively straightforward heteroskedastic supervised
+learning DGP.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Generate the data</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
+<span><span class="va">p_x</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span><span class="op">*</span><span class="va">p_x</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="va">p_x</span><span class="op">)</span></span>
+<span><span class="va">f_XW</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span><span class="va">s_XW</span> <span class="op">&lt;-</span> <span class="op">(</span></span>
+<span>    <span class="op">(</span><span class="op">(</span><span class="fl">0</span> <span class="op">&lt;=</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span><span class="fl">0.25</span> <span class="op">&gt;</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">0.5</span><span class="op">*</span><span class="va">X</span><span class="op">[</span>,<span class="fl">3</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="op">(</span><span class="op">(</span><span class="fl">0.25</span> <span class="op">&lt;=</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span><span class="fl">0.5</span> <span class="op">&gt;</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span><span class="op">*</span><span class="va">X</span><span class="op">[</span>,<span class="fl">3</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="op">(</span><span class="op">(</span><span class="fl">0.5</span> <span class="op">&lt;=</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span><span class="fl">0.75</span> <span class="op">&gt;</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">2</span><span class="op">*</span><span class="va">X</span><span class="op">[</span>,<span class="fl">3</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="op">(</span><span class="op">(</span><span class="fl">0.75</span> <span class="op">&lt;=</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span><span class="fl">1</span> <span class="op">&gt;</span> <span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">3</span><span class="op">*</span><span class="va">X</span><span class="op">[</span>,<span class="fl">3</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">f_XW</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">*</span><span class="va">s_XW</span></span>
+<span></span>
+<span><span class="co"># Split data into test and train sets</span></span>
+<span><span class="va">test_set_pct</span> <span class="op">&lt;-</span> <span class="fl">0.2</span></span>
+<span><span class="va">n_test</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">test_set_pct</span><span class="op">*</span><span class="va">n</span><span class="op">)</span></span>
+<span><span class="va">n_train</span> <span class="op">&lt;-</span> <span class="va">n</span> <span class="op">-</span> <span class="va">n_test</span></span>
+<span><span class="va">test_inds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span>, <span class="va">n_test</span>, replace <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">train_inds</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span><span class="op">)</span><span class="op">[</span><span class="op">!</span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">test_inds</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">X_test</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">X</span><span class="op">[</span><span class="va">test_inds</span>,<span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">X_train</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">X</span><span class="op">[</span><span class="va">train_inds</span>,<span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">W_test</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span><span class="va">W_train</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span><span class="va">y_test</span> <span class="op">&lt;-</span> <span class="va">y</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span></span>
+<span><span class="va">y_train</span> <span class="op">&lt;-</span> <span class="va">y</span><span class="op">[</span><span class="va">train_inds</span><span class="op">]</span></span>
+<span><span class="va">f_x_test</span> <span class="op">&lt;-</span> <span class="va">f_XW</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span></span>
+<span><span class="va">f_x_train</span> <span class="op">&lt;-</span> <span class="va">f_XW</span><span class="op">[</span><span class="va">train_inds</span><span class="op">]</span></span>
+<span><span class="va">s_x_test</span> <span class="op">&lt;-</span> <span class="va">s_XW</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span></span>
+<span><span class="va">s_x_train</span> <span class="op">&lt;-</span> <span class="va">s_XW</span><span class="op">[</span><span class="va">train_inds</span><span class="op">]</span></span></code></pre></div>
+<p>Sample a BART model.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">num_gfr</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
+<span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bart_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num_trees_mean <span class="op">=</span> <span class="fl">100</span>, num_trees_variance <span class="op">=</span> <span class="fl">50</span>, </span>
+<span>                    alpha_mean <span class="op">=</span> <span class="fl">0.95</span>, beta_mean <span class="op">=</span> <span class="fl">2</span>, min_samples_leaf_mean <span class="op">=</span> <span class="fl">5</span>, </span>
+<span>                    alpha_variance <span class="op">=</span> <span class="fl">0.95</span>, beta_variance <span class="op">=</span> <span class="fl">1.25</span>, </span>
+<span>                    min_samples_leaf_variance <span class="op">=</span> <span class="fl">1</span>, </span>
+<span>                    sample_sigma_global <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
+<span><span class="va">bart_model</span> <span class="op">&lt;-</span> <span class="fu">stochtree</span><span class="fu">::</span><span class="fu"><a href="../reference/bart.html">bart</a></span><span class="op">(</span></span>
+<span>    X_train <span class="op">=</span> <span class="va">X_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, X_test <span class="op">=</span> <span class="va">X_test</span>, </span>
+<span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
+<span>    params <span class="op">=</span> <span class="va">bart_params</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="serialization-1">Serialization<a class="anchor" aria-label="anchor" href="#serialization-1"></a>
+</h3>
+<p>Save the BART model to disk.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/saveBARTModelToJsonFile.html">saveBARTModelToJsonFile</a></span><span class="op">(</span><span class="va">bart_model</span>, <span class="st">"bart.json"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="deserialization-1">Deserialization<a class="anchor" aria-label="anchor" href="#deserialization-1"></a>
+</h3>
+<p>Reload the BART model from disk.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bart_model_reload</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createBARTModelFromJsonFile.html">createBARTModelFromJsonFile</a></span><span class="op">(</span><span class="st">"bart.json"</span><span class="op">)</span></span></code></pre></div>
+<p>Check that the predictions align with those of the original
+model.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bart_preds_reload</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">bart_model_reload</span>, <span class="va">X_train</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bart_model</span><span class="op">$</span><span class="va">y_hat_train</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bart_preds_reload</span><span class="op">$</span><span class="va">y_hat</span><span class="op">)</span>, </span>
+<span>     xlab <span class="op">=</span> <span class="st">"Original"</span>, ylab <span class="op">=</span> <span class="st">"Deserialized"</span>, main <span class="op">=</span> <span class="st">"Conditional Mean Estimates"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lwd<span class="op">=</span><span class="fl">3</span>,lty<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ModelSerialization_files/figure-html/bart_roundtrip-1.png" width="700"></p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bart_model</span><span class="op">$</span><span class="va">sigma_x_hat_train</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bart_preds_reload</span><span class="op">$</span><span class="va">variance_forest_predictions</span><span class="op">)</span>, </span>
+<span>     xlab <span class="op">=</span> <span class="st">"Original"</span>, ylab <span class="op">=</span> <span class="st">"Deserialized"</span>, main <span class="op">=</span> <span class="st">"Conditional Variance Estimates"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lwd<span class="op">=</span><span class="fl">3</span>,lty<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ModelSerialization_files/figure-html/bart_roundtrip-2.png" width="700"></p>
 </div>
 </div>
 <div class="section level2">

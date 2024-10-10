@@ -26,8 +26,10 @@ trees, and exposes functionality to run a forest sampler
     <li><h6 class="dropdown-header" data-toc-skip>High-Level Model Fitting</h6></li>
     <li><a class="dropdown-item" href="../articles/BayesianSupervisedLearning.html">Bayesian Supervised Learning in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/CausalInference.html">Causal Machine Learning in StochTree</a></li>
+    <li><a class="dropdown-item" href="../articles/Heteroskedasticity.html">Bayesian Supervised Learning with Heteroskedasticity in StochTree</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Advanced Model Interface</h6></li>
+    <li><a class="dropdown-item" href="../articles/MultiChain.html">Running Multiple Chains (Sequentially or in Parallel) in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/ModelSerialization.html">Model Serialization in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/PriorCalibration.html">Prior Calibration Approaches for Parametric Components of Stochastic Tree Ensembles</a></li>
     <li><a class="dropdown-item" href="../articles/EnsembleKernel.html">Kernel Methods from Tree Ensembles in StochTree</a></li>
@@ -147,6 +149,8 @@ trees, and exposes functionality to run a forest sampler
 <span>  <span class="va">leaf_model_int</span>,</span>
 <span>  <span class="va">leaf_model_scale</span>,</span>
 <span>  <span class="va">variable_weights</span>,</span>
+<span>  <span class="va">a_forest</span>,</span>
+<span>  <span class="va">b_forest</span>,</span>
 <span>  <span class="va">global_scale</span>,</span>
 <span>  cutpoint_grid_size <span class="op">=</span> <span class="fl">500</span>,</span>
 <span>  gfr <span class="op">=</span> <span class="cn">T</span>,</span>
@@ -186,6 +190,14 @@ trees, and exposes functionality to run a forest sampler
 
 <dt><code>variable_weights</code></dt>
 <dd><p>Vector specifying sampling probability for all p covariates in <code>forest_dataset</code></p></dd>
+
+
+<dt><code>a_forest</code></dt>
+<dd><p>Shape parameter on variance forest model (if applicable)</p></dd>
+
+
+<dt><code>b_forest</code></dt>
+<dd><p>Scale parameter on variance forest model (if applicable)</p></dd>
 
 
 <dt><code>global_scale</code></dt>

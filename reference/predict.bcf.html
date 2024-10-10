@@ -22,8 +22,10 @@
     <li><h6 class="dropdown-header" data-toc-skip>High-Level Model Fitting</h6></li>
     <li><a class="dropdown-item" href="../articles/BayesianSupervisedLearning.html">Bayesian Supervised Learning in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/CausalInference.html">Causal Machine Learning in StochTree</a></li>
+    <li><a class="dropdown-item" href="../articles/Heteroskedasticity.html">Bayesian Supervised Learning with Heteroskedasticity in StochTree</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Advanced Model Interface</h6></li>
+    <li><a class="dropdown-item" href="../articles/MultiChain.html">Running Multiple Chains (Sequentially or in Parallel) in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/ModelSerialization.html">Model Serialization in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/PriorCalibration.html">Prior Calibration Approaches for Parametric Components of Stochastic Tree Ensembles</a></li>
     <li><a class="dropdown-item" href="../articles/EnsembleKernel.html">Kernel Methods from Tree Ensembles in StochTree</a></li>
@@ -59,8 +61,7 @@
 <span>  <span class="va">Z_test</span>,</span>
 <span>  pi_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_ids_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  rfx_basis_test <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  predict_all <span class="op">=</span> <span class="cn">F</span></span>
+<span>  rfx_basis_test <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -93,14 +94,10 @@ that were not in the training set.</p></dd>
 <dt id="arg-rfx-basis-test">rfx_basis_test<a class="anchor" aria-label="anchor" href="#arg-rfx-basis-test"></a></dt>
 <dd><p>(Optional) Test set basis for "random-slope" regression in additive random effects model.</p></dd>
 
-
-<dt id="arg-predict-all">predict_all<a class="anchor" aria-label="anchor" href="#arg-predict-all"></a></dt>
-<dd><p>(Optional) Whether to predict the model for all of the samples in the stored objects or the subset of burnt-in / GFR samples as specified at training time. Default FALSE.</p></dd>
-
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>List of three (or four) <code>nrow(X_test)</code> by <code>bcf$num_samples</code> matrices: prognostic function estimates, treatment effect estimates, (possibly) random effects predictions, and outcome predictions.</p>
+    <p>List of 3-5 <code>nrow(X_test)</code> by <code>bcf$num_samples</code> matrices: prognostic function estimates, treatment effect estimates, (optionally) random effects predictions, (optionally) variance forest predictions, and outcome predictions.</p>
     </div>
 
     <div class="section level2">

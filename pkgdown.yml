@@ -6,9 +6,11 @@ articles:
   CausalInference: CausalInference.html
   CustomSamplingRoutine: CustomSamplingRoutine.html
   EnsembleKernel: EnsembleKernel.html
+  Heteroskedasticity: Heteroskedasticity.html
   ModelSerialization: ModelSerialization.html
+  MultiChain: MultiChain.html
   PriorCalibration: PriorCalibration.html
-last_built: 2024-10-01T19:54Z
+last_built: 2024-10-10T09:02Z
 urls:
   reference: https://stochastictree.github.io/stochtree-r/reference
   article: https://stochastictree.github.io/stochtree-r/articles

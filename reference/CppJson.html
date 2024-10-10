@@ -22,8 +22,10 @@
     <li><h6 class="dropdown-header" data-toc-skip>High-Level Model Fitting</h6></li>
     <li><a class="dropdown-item" href="../articles/BayesianSupervisedLearning.html">Bayesian Supervised Learning in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/CausalInference.html">Causal Machine Learning in StochTree</a></li>
+    <li><a class="dropdown-item" href="../articles/Heteroskedasticity.html">Bayesian Supervised Learning with Heteroskedasticity in StochTree</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Advanced Model Interface</h6></li>
+    <li><a class="dropdown-item" href="../articles/MultiChain.html">Running Multiple Chains (Sequentially or in Parallel) in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/ModelSerialization.html">Model Serialization in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/PriorCalibration.html">Prior Calibration Approaches for Parametric Components of Stochastic Tree Ensembles</a></li>
     <li><a class="dropdown-item" href="../articles/EnsembleKernel.html">Kernel Methods from Tree Ensembles in StochTree</a></li>
@@ -106,8 +108,10 @@
 <li><p><a href="#method-CppJson-get_string_vector"><code>CppJson$get_string_vector()</code></a></p></li>
 <li><p><a href="#method-CppJson-get_numeric_list"><code>CppJson$get_numeric_list()</code></a></p></li>
 <li><p><a href="#method-CppJson-get_string_list"><code>CppJson$get_string_list()</code></a></p></li>
+<li><p><a href="#method-CppJson-return_json_string"><code>CppJson$return_json_string()</code></a></p></li>
 <li><p><a href="#method-CppJson-save_file"><code>CppJson$save_file()</code></a></p></li>
 <li><p><a href="#method-CppJson-load_from_file"><code>CppJson$load_from_file()</code></a></p></li>
+<li><p><a href="#method-CppJson-load_from_string"><code>CppJson$load_from_string()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-CppJson-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a new CppJson object.</p><div class="section">
@@ -516,10 +520,22 @@
 <p>NULL</p>
 </div>
 
+</div><p></p><hr><a id="method-CppJson-return_json_string"></a><div class="section">
+<h3 id="method-return-json-string-">Method <code>return_json_string()</code><a class="anchor" aria-label="anchor" href="#method-return-json-string-"></a></h3>
+<p>Convert a JSON object to in-memory string</p><div class="section">
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CppJson</span><span class="op">$</span><span class="fu">return_json_string</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-17">Returns<a class="anchor" aria-label="anchor" href="#returns-17"></a></h4>
+<p>JSON string</p>
+</div>
+
 </div><p></p><hr><a id="method-CppJson-save_file"></a><div class="section">
 <h3 id="method-save-file-">Method <code>save_file()</code><a class="anchor" aria-label="anchor" href="#method-save-file-"></a></h3>
 <p>Save a json object to file</p><div class="section">
-<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
+<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CppJson</span><span class="op">$</span><span class="fu">save_file</span><span class="op">(</span><span class="va">filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -532,14 +548,14 @@
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-17">Returns<a class="anchor" aria-label="anchor" href="#returns-17"></a></h4>
+<h4 id="returns-18">Returns<a class="anchor" aria-label="anchor" href="#returns-18"></a></h4>
 <p>NULL</p>
 </div>
 
 </div><p></p><hr><a id="method-CppJson-load_from_file"></a><div class="section">
 <h3 id="method-load-from-file-">Method <code>load_from_file()</code><a class="anchor" aria-label="anchor" href="#method-load-from-file-"></a></h3>
 <p>Load a json object from file</p><div class="section">
-<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
+<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CppJson</span><span class="op">$</span><span class="fu">load_from_file</span><span class="op">(</span><span class="va">filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -552,7 +568,27 @@
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-18">Returns<a class="anchor" aria-label="anchor" href="#returns-18"></a></h4>
+<h4 id="returns-19">Returns<a class="anchor" aria-label="anchor" href="#returns-19"></a></h4>
+<p>NULL</p>
+</div>
+
+</div><p></p><hr><a id="method-CppJson-load_from_string"></a><div class="section">
+<h3 id="method-load-from-string-">Method <code>load_from_string()</code><a class="anchor" aria-label="anchor" href="#method-load-from-string-"></a></h3>
+<p>Load a json object from string</p><div class="section">
+<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CppJson</span><span class="op">$</span><span class="fu">load_from_string</span><span class="op">(</span><span class="va">json_string</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-18">Arguments<a class="anchor" aria-label="anchor" href="#arguments-18"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>json_string</code></dt>
+<dd><p>JSON string dump</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-20">Returns<a class="anchor" aria-label="anchor" href="#returns-20"></a></h4>
 <p>NULL</p>
 </div>
 

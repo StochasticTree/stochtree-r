@@ -22,8 +22,10 @@
     <li><h6 class="dropdown-header" data-toc-skip>High-Level Model Fitting</h6></li>
     <li><a class="dropdown-item" href="../articles/BayesianSupervisedLearning.html">Bayesian Supervised Learning in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/CausalInference.html">Causal Machine Learning in StochTree</a></li>
+    <li><a class="dropdown-item" href="../articles/Heteroskedasticity.html">Bayesian Supervised Learning with Heteroskedasticity in StochTree</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Advanced Model Interface</h6></li>
+    <li><a class="dropdown-item" href="../articles/MultiChain.html">Running Multiple Chains (Sequentially or in Parallel) in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/ModelSerialization.html">Model Serialization in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/PriorCalibration.html">Prior Calibration Approaches for Parametric Components of Stochastic Tree Ensembles</a></li>
     <li><a class="dropdown-item" href="../articles/EnsembleKernel.html">Kernel Methods from Tree Ensembles in StochTree</a></li>
@@ -134,7 +136,9 @@ The sigma array has dimension (<code>num_components</code>, <code>num_samples</c
 <span class="r-in"><span>                 rfx_basis_test <span class="op">=</span> <span class="va">rfx_basis_test</span>, </span></span>
 <span class="r-in"><span>                 num_gfr <span class="op">=</span> <span class="fl">100</span>, num_burnin <span class="op">=</span> <span class="fl">0</span>, num_mcmc <span class="op">=</span> <span class="fl">100</span>, </span></span>
 <span class="r-in"><span>                 sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">TRUE</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in bcf(X_train = X_train, Z_train = Z_train, y_train = y_train,     pi_train = pi_train, group_ids_train = group_ids_train, rfx_basis_train = rfx_basis_train,     X_test = X_test, Z_test = Z_test, pi_test = pi_test, group_ids_test = group_ids_test,     rfx_basis_test = rfx_basis_test, num_gfr = 100, num_burnin = 0,     num_mcmc = 100, sample_sigma_leaf_mu = TRUE, sample_sigma_leaf_tau = FALSE):</span> unused arguments (sample_sigma_leaf_mu = TRUE, sample_sigma_leaf_tau = FALSE)</span>
 <span class="r-in"><span><span class="va">rfx_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="getRandomEffectSamples.html">getRandomEffectSamples</a></span><span class="op">(</span><span class="va">bcf_model</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'bcf_model' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

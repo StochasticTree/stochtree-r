@@ -37,8 +37,10 @@
     <li><h6 class="dropdown-header" data-toc-skip>High-Level Model Fitting</h6></li>
     <li><a class="dropdown-item" href="../articles/BayesianSupervisedLearning.html">Bayesian Supervised Learning in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/CausalInference.html">Causal Machine Learning in StochTree</a></li>
+    <li><a class="dropdown-item" href="../articles/Heteroskedasticity.html">Bayesian Supervised Learning with Heteroskedasticity in StochTree</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Advanced Model Interface</h6></li>
+    <li><a class="dropdown-item" href="../articles/MultiChain.html">Running Multiple Chains (Sequentially or in Parallel) in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/ModelSerialization.html">Model Serialization in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/PriorCalibration.html">Prior Calibration Approaches for Parametric Components of Stochastic Tree Ensembles</a></li>
     <li><a class="dropdown-item" href="../articles/EnsembleKernel.html">Kernel Methods from Tree Ensembles in StochTree</a></li>
@@ -167,11 +169,12 @@ default in <code>stochtree</code>.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_warmstart</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples that were initialized with an XBART
 warm-start</p>
@@ -202,7 +205,7 @@ warm-start</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.93</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.88</span></span></code></pre></div>
 </div>
 <div class="section level5">
 <h5 id="bart-mcmc-without-warmstart">BART MCMC without Warmstart<a class="anchor" aria-label="anchor" href="#bart-mcmc-without-warmstart"></a>
@@ -214,11 +217,12 @@ initialization.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples after burnin</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -248,7 +252,7 @@ initialization.</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.95</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.92</span></span></code></pre></div>
 </div>
 </div>
 </div>
@@ -330,11 +334,12 @@ default in <code>stochtree</code>.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_warmstart</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples that were initialized with an XBART
 warm-start</p>
@@ -365,7 +370,7 @@ warm-start</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.91</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.77</span></span></code></pre></div>
 </div>
 <div class="section level5">
 <h5 id="bart-mcmc-without-warmstart-1">BART MCMC without Warmstart<a class="anchor" aria-label="anchor" href="#bart-mcmc-without-warmstart-1"></a>
@@ -377,11 +382,12 @@ initialization.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples after burnin</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
@@ -411,7 +417,7 @@ initialization.</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.73</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.83</span></span></code></pre></div>
 </div>
 </div>
 </div>
@@ -493,11 +499,12 @@ default in <code>stochtree</code>.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_warmstart</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples that were initialized with an XBART
 warm-start</p>
@@ -540,11 +547,12 @@ initialization.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples after burnin</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
@@ -654,11 +662,12 @@ default in <code>stochtree</code>.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_warmstart</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples that were initialized with an XBART
 warm-start</p>
@@ -689,7 +698,7 @@ warm-start</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.97</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.84</span></span></code></pre></div>
 </div>
 <div class="section level5">
 <h5 id="bart-mcmc-without-warmstart-3">BART MCMC without Warmstart<a class="anchor" aria-label="anchor" href="#bart-mcmc-without-warmstart-3"></a>
@@ -701,11 +710,12 @@ initialization.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples after burnin</p>
 <div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
@@ -735,7 +745,7 @@ initialization.</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.97</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.9</span></span></code></pre></div>
 </div>
 </div>
 </div>
@@ -815,13 +825,13 @@ snippet by setting <code>num_gfr &lt;- 0</code> and
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_warmstart</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    group_ids_train <span class="op">=</span> <span class="va">group_ids_train</span>, rfx_basis_train <span class="op">=</span> <span class="va">rfx_basis_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, group_ids_test <span class="op">=</span> <span class="va">group_ids_test</span>,</span>
-<span>    rfx_basis_test <span class="op">=</span> <span class="va">rfx_basis_test</span>, </span>
-<span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">T</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    rfx_basis_test <span class="op">=</span> <span class="va">rfx_basis_test</span>, num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples that were initialized with an XBART
 warm-start</p>
@@ -862,7 +872,7 @@ warm-start</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.96</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.84</span></span></code></pre></div>
 <p>It is clear that causal inference is much more difficult in the
 presence of <strong>both</strong> strong covariate-dependent prognostic
 effects and strong group-level random effects. In this sense, proper
@@ -953,11 +963,12 @@ forests.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the burned-in samples</p>
 <div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
@@ -992,15 +1003,15 @@ forests.</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.792</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.756</span></span></code></pre></div>
 <p>And test set RMSE</p>
 <div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_tau_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bcf_model_mcmc</span><span class="op">$</span><span class="va">tau_hat_test</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">test_tau_mean</span> <span class="op">-</span> <span class="va">tau_test</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.512766</span></span>
+<span><span class="co">#&gt; [1] 1.954429</span></span>
 <span><span class="va">test_outcome_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bcf_model_mcmc</span><span class="op">$</span><span class="va">y_hat_test</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">test_outcome_mean</span> <span class="op">-</span> <span class="va">y_test</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.912132</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 1.889987</span></span></code></pre></div>
 </div>
 <div class="section level5">
 <h5 id="mcmc-covariate-subset-in-taux">MCMC, covariate subset in
@@ -1015,12 +1026,12 @@ in the treatment effect forest.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span>, keep_vars_tau <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x1"</span>,<span class="st">"x2"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span>, </span>
-<span>    keep_vars_tau <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x1"</span>,<span class="st">"x2"</span><span class="op">)</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples</p>
 <div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
@@ -1055,15 +1066,15 @@ in the treatment effect forest.</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.836</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.812</span></span></code></pre></div>
 <p>And test set RMSE</p>
 <div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bcf_model_mcmc</span><span class="op">$</span><span class="va">tau_hat_test</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">test_mean</span> <span class="op">-</span> <span class="va">tau_test</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.330455</span></span>
+<span><span class="co">#&gt; [1] 1.584357</span></span>
 <span><span class="va">test_outcome_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bcf_model_mcmc</span><span class="op">$</span><span class="va">y_hat_test</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">test_outcome_mean</span> <span class="op">-</span> <span class="va">y_test</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.864776</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 1.99342</span></span></code></pre></div>
 </div>
 <div class="section level5">
 <h5 id="warmstart-full-covariate-set-in-taux">Warmstart, full covariate set in
@@ -1080,11 +1091,12 @@ forests.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_warmstart</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples that were initialized with an XBART
 warm-start</p>
@@ -1120,15 +1132,15 @@ warm-start</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.884</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.756</span></span></code></pre></div>
 <p>And test set RMSE</p>
 <div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_tau_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bcf_model_warmstart</span><span class="op">$</span><span class="va">tau_hat_test</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">tau_test</span> <span class="op">-</span> <span class="va">test_tau_mean</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.478661</span></span>
+<span><span class="co">#&gt; [1] 1.976746</span></span>
 <span><span class="va">test_outcome_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bcf_model_warmstart</span><span class="op">$</span><span class="va">y_hat_test</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">y_test</span> <span class="op">-</span> <span class="va">test_outcome_mean</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.866693</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 1.936995</span></span></code></pre></div>
 </div>
 <div class="section level5">
 <h5 id="warmstart-covariate-subset-in-taux">Warmstart, covariate subset in
@@ -1143,12 +1155,12 @@ in the treatment effect forest.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span>, keep_vars_tau <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x1"</span>,<span class="st">"x2"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_warmstart</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span>, </span>
-<span>    keep_vars_tau <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x1"</span>, <span class="st">"x2"</span><span class="op">)</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples that were initialized with an XBART
 warm-start</p>
@@ -1184,15 +1196,15 @@ warm-start</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.864</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.72</span></span></code></pre></div>
 <p>And test set RMSE</p>
 <div class="sourceCode" id="cb83"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_tau_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bcf_model_warmstart</span><span class="op">$</span><span class="va">tau_hat_test</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">tau_test</span> <span class="op">-</span> <span class="va">test_tau_mean</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.428011</span></span>
+<span><span class="co">#&gt; [1] 1.543481</span></span>
 <span><span class="va">test_outcome_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bcf_model_warmstart</span><span class="op">$</span><span class="va">y_hat_test</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">y_test</span> <span class="op">-</span> <span class="va">test_outcome_mean</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.917739</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 1.918742</span></span></code></pre></div>
 </div>
 </div>
 </div>
@@ -1273,11 +1285,12 @@ default in <code>stochtree</code>.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_warmstart</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples that were initialized with an XBART
 warm-start</p>
@@ -1308,7 +1321,7 @@ warm-start</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.83</span></span></code></pre></div>
 </div>
 <div class="section level5">
 <h5 id="bart-mcmc-without-warmstart-4">BART MCMC without Warmstart<a class="anchor" aria-label="anchor" href="#bart-mcmc-without-warmstart-4"></a>
@@ -1320,11 +1333,12 @@ initialization.</p>
 <span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">num_samples</span> <span class="op">&lt;-</span> <span class="va">num_gfr</span> <span class="op">+</span> <span class="va">num_burnin</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span><span class="va">bcf_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="va">bcf_model_root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcf.html">bcf</a></span><span class="op">(</span></span>
 <span>    X_train <span class="op">=</span> <span class="va">X_train</span>, Z_train <span class="op">=</span> <span class="va">Z_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, pi_train <span class="op">=</span> <span class="va">pi_train</span>, </span>
 <span>    X_test <span class="op">=</span> <span class="va">X_test</span>, Z_test <span class="op">=</span> <span class="va">Z_test</span>, pi_test <span class="op">=</span> <span class="va">pi_test</span>, </span>
 <span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, </span>
-<span>    sample_sigma_leaf_mu <span class="op">=</span> <span class="cn">F</span>, sample_sigma_leaf_tau <span class="op">=</span> <span class="cn">F</span></span>
+<span>    params <span class="op">=</span> <span class="va">bcf_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Inspect the BART samples after burnin</p>
 <div class="sourceCode" id="cb91"><pre class="downlit sourceCode r">
@@ -1354,7 +1368,7 @@ initialization.</p>
 <span>    <span class="op">(</span><span class="va">test_ub</span> <span class="op">&gt;=</span> <span class="va">tau_x</span><span class="op">[</span><span class="va">test_inds</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">cover</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.96</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.89</span></span></code></pre></div>
 </div>
 </div>
 </div>
