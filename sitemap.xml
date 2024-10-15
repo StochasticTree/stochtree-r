@@ -16,7 +16,6 @@
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/CppJson.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/CppRNG.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/ForestDataset.html</loc></url>
-<url><loc>https://stochastictree.github.io/stochtree-r/reference/ForestKernel.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/ForestModel.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/ForestSamples.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/Outcome.html</loc></url>
@@ -27,8 +26,8 @@
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/bart.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/bcf.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/calibrate_inverse_gamma_error_variance.html</loc></url>
-<url><loc>https://stochastictree.github.io/stochtree-r/reference/computeForestKernels.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/computeForestLeafIndices.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/computeMaxLeafIndex.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/convertBARTModelToJson.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/convertBCFModelToJson.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createBARTModelFromCombinedJson.html</loc></url>
@@ -46,7 +45,6 @@
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createForestCovariates.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createForestCovariatesFromMetadata.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createForestDataset.html</loc></url>
-<url><loc>https://stochastictree.github.io/stochtree-r/reference/createForestKernel.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createForestModel.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createOutcome.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/createRNG.html</loc></url>

@@ -421,18 +421,6 @@
         <dd>Create a container of forest samples</dd>
       </dl><dl><dt>
 
-          <code><a href="ForestKernel.html">ForestKernel</a></code>
-
-        </dt>
-        <dd>Class that provides functionality for statistical kernel definition and computation based on shared leaf membership of observations in a tree ensemble.</dd>
-      </dl><dl><dt>
-
-          <code><a href="createForestKernel.html">createForestKernel()</a></code>
-
-        </dt>
-        <dd>Create a <code>ForestKernel</code> object</dd>
-      </dl><dl><dt>
-
           <code><a href="CppRNG.html">CppRNG</a></code>
 
         </dt>
@@ -461,6 +449,18 @@
 
         </dt>
         <dd>Preprocess BCF parameter list. Override defaults with any provided parameters.</dd>
+      </dl><dl><dt>
+
+          <code><a href="computeForestLeafIndices.html">computeForestLeafIndices()</a></code>
+
+        </dt>
+        <dd>Compute and return a vector representation of a forest's leaf predictions for every observation in a dataset. The vector has a "column-major" format that can be easily re-represented as as a CSC sparse matrix: elements are organized so that the first <code>n</code> elements correspond to leaf predictions for all <code>n</code> observations in a dataset for the first tree in an ensemble, the next <code>n</code> elements correspond to predictions for the second tree and so on. The "data" for each element corresponds to a uniquely mapped column index that corresponds to a single leaf of a single tree (i.e. if tree 1 has 3 leaves, its column indices range from 0 to 2, and then tree 2's leaf indices begin at 3, etc...).</dd>
+      </dl><dl><dt>
+
+          <code><a href="computeMaxLeafIndex.html">computeMaxLeafIndex()</a></code>
+
+        </dt>
+        <dd>Compute and return the largest possible leaf index computable by <code>computeForestLeafIndices</code> for the forests in a designated forest sample container.</dd>
       </dl></div><div class="section level2">
 
       <h3 id="random-effects">Random Effects<a class="anchor" aria-label="anchor" href="#random-effects"></a></h3>
@@ -538,18 +538,6 @@
 
         </dt>
         <dd>Sample one iteration of the leaf parameter variance model (only for univariate basis and constant leaf!)</dd>
-      </dl><dl><dt>
-
-          <code><a href="computeForestKernels.html">computeForestKernels()</a></code>
-
-        </dt>
-        <dd>Compute a kernel from a tree ensemble, defined by the fraction of trees of an ensemble in which two observations fall into the same leaf.</dd>
-      </dl><dl><dt>
-
-          <code><a href="computeForestLeafIndices.html">computeForestLeafIndices()</a></code>
-
-        </dt>
-        <dd>Compute and return a vector representation of a forest's leaf predictions for every observation in a dataset. The vector has a "column-major" format that can be easily re-represented as as a CSC sparse matrix: elements are organized so that the first <code>n</code> elements correspond to leaf predictions for all <code>n</code> observations in a dataset for the first tree in an ensemble, the next <code>n</code> elements correspond to predictions for the second tree and so on. The "data" for each element corresponds to a uniquely mapped column index that corresponds to a single leaf of a single tree (i.e. if tree 1 has 3 leaves, its column indices range from 0 to 2, and then tree 2's leaf indices begin at 3, etc...). Users may pass a single dataset (which we refer to here as a "training set") or two datasets (which we refer to as "training and test sets"). This verbiage hints that one potential use-case for a matrix of leaf indices is to define a ensemble-based kernel for kriging.</dd>
       </dl></div><div class="section level2">
       <h2 id="package-info">Package info<a class="anchor" aria-label="anchor" href="#package-info"></a></h2>
 
