@@ -79,6 +79,8 @@ trees, and exposes functionality to run a forest sampler
 
 <ul><li><p><a href="#method-ForestModel-new"><code>ForestModel$new()</code></a></p></li>
 <li><p><a href="#method-ForestModel-sample_one_iteration"><code>ForestModel$sample_one_iteration()</code></a></p></li>
+<li><p><a href="#method-ForestModel-propagate_basis_update"><code>ForestModel$propagate_basis_update()</code></a></p></li>
+<li><p><a href="#method-ForestModel-propagate_residual_update"><code>ForestModel$propagate_residual_update()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-ForestModel-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a new ForestModel object.</p><div class="section">
@@ -217,6 +219,66 @@ trees, and exposes functionality to run a forest sampler
 
 
 </dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-ForestModel-propagate_basis_update"></a><div class="section">
+<h3 id="method-propagate-basis-update-">Method <code>propagate_basis_update()</code><a class="anchor" aria-label="anchor" href="#method-propagate-basis-update-"></a></h3>
+<p>Propagates basis update through to the (full/partial) residual by iteratively
+(a) adding back in the previous prediction of each tree, (b) recomputing predictions
+for each tree (caching on the C++ side), (c) subtracting the new predictions from the residual.</p>
+<p>This is useful in cases where a basis (for e.g. leaf regression) is updated outside
+of a tree sampler (as with e.g. adaptive coding for binary treatment BCF).
+Once a basis has been updated, the overall "function" represented by a tree model has
+changed and this should be reflected through to the residual before the next sampling loop is run.</p><div class="section">
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestModel</span><span class="op">$</span><span class="fu">propagate_basis_update</span><span class="op">(</span></span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  <span class="va">outcome</span>,</span>
+<span>  <span class="va">forest_samples</span>,</span>
+<span>  <span class="va">forest_num</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>dataset</code></dt>
+<dd><p><code>ForestDataset</code> object storing the covariates and bases for a given forest</p></dd>
+
+
+<dt><code>outcome</code></dt>
+<dd><p><code>Outcome</code> object storing the residuals to be updated based on forest predictions</p></dd>
+
+
+<dt><code>forest_samples</code></dt>
+<dd><p><code>ForestSamples</code> object storing draws of tree ensembles</p></dd>
+
+
+<dt><code>forest_num</code></dt>
+<dd><p>Index of forest used to update residuals (starting at 1, in R style)</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-ForestModel-propagate_residual_update"></a><div class="section">
+<h3 id="method-propagate-residual-update-">Method <code>propagate_residual_update()</code><a class="anchor" aria-label="anchor" href="#method-propagate-residual-update-"></a></h3>
+<p>Update the current state of the outcome (i.e. partial residual) data by subtracting the current predictions of each tree.
+This function is run after the <code>Outcome</code> class's <code>update_data</code> method, which overwrites the partial residual with an entirely new stream of outcome data.</p><div class="section">
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestModel</span><span class="op">$</span><span class="fu">propagate_residual_update</span><span class="op">(</span><span class="va">residual</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>residual</code></dt>
+<dd><p>Outcome used to sample the forest</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
+<p>NULL</p>
 </div>
 
 </div>

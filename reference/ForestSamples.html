@@ -78,7 +78,6 @@
 <li><p><a href="#method-ForestSamples-set_root_leaves"><code>ForestSamples$set_root_leaves()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-prepare_for_sampler"><code>ForestSamples$prepare_for_sampler()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-adjust_residual"><code>ForestSamples$adjust_residual()</code></a></p></li>
-<li><p><a href="#method-ForestSamples-update_residual"><code>ForestSamples$update_residual()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-save_json"><code>ForestSamples$save_json()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-load_json"><code>ForestSamples$load_json()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-num_samples"><code>ForestSamples$num_samples()</code></a></p></li>
@@ -404,49 +403,15 @@ After trees are initialized with constant root node predictions, their root pred
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-ForestSamples-update_residual"></a><div class="section">
-<h3 id="method-update-residual-">Method <code>update_residual()</code><a class="anchor" aria-label="anchor" href="#method-update-residual-"></a></h3>
-<p>Updates the residual used for training tree ensembles by iteratively
-(a) adding back in the previous prediction of each tree, (b) recomputing predictions
-for each tree (caching on the C++ side), (c) subtracting the new predictions from the residual.</p>
-<p>This is useful in cases where a basis (for e.g. leaf regression) is updated outside
-of a tree sampler (as with e.g. adaptive coding for binary treatment BCF).
-Once a basis has been updated, the overall "function" represented by a tree model has
-changed and this should be reflected through to the residual before the next sampling loop is run.</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">update_residual</span><span class="op">(</span><span class="va">dataset</span>, <span class="va">outcome</span>, <span class="va">forest_model</span>, <span class="va">forest_num</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>dataset</code></dt>
-<dd><p><code>ForestDataset</code> object storing the covariates and bases for a given forest</p></dd>
-
-
-<dt><code>outcome</code></dt>
-<dd><p><code>Outcome</code> object storing the residuals to be updated based on forest predictions</p></dd>
-
-
-<dt><code>forest_model</code></dt>
-<dd><p><code>ForestModel</code> object storing tracking structures used in training / sampling</p></dd>
-
-
-<dt><code>forest_num</code></dt>
-<dd><p>Index of forest used to update residuals (starting at 1, in R style)</p></dd>
-
-
-</dl><p></p></div>
-</div>
-
 </div><p></p><hr><a id="method-ForestSamples-save_json"></a><div class="section">
 <h3 id="method-save-json-">Method <code>save_json()</code><a class="anchor" aria-label="anchor" href="#method-save-json-"></a></h3>
 <p>Store the trees and metadata of <code>ForestDataset</code> class in a json file</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">save_json</span><span class="op">(</span><span class="va">json_filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-12">Arguments<a class="anchor" aria-label="anchor" href="#arguments-12"></a></h4>
+<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>json_filename</code></dt>
 <dd><p>Name of output json file (must end in ".json")</p></dd>
 
@@ -459,12 +424,12 @@ changed and this should be reflected through to the residual before the next sam
 <p>Load trees and metadata for an ensemble from a json file. Note that
 any trees and metadata already present in <code>ForestDataset</code> class will
 be overwritten.</p><div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">load_json</span><span class="op">(</span><span class="va">json_filename</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-13">Arguments<a class="anchor" aria-label="anchor" href="#arguments-13"></a></h4>
+<h4 id="arguments-12">Arguments<a class="anchor" aria-label="anchor" href="#arguments-12"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>json_filename</code></dt>
 <dd><p>Name of model input json file (must end in ".json")</p></dd>
 
@@ -475,7 +440,7 @@ be overwritten.</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-num_samples"></a><div class="section">
 <h3 id="method-num-samples-">Method <code>num_samples()</code><a class="anchor" aria-label="anchor" href="#method-num-samples-"></a></h3>
 <p>Return number of samples in a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">num_samples</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -487,7 +452,7 @@ be overwritten.</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-num_trees"></a><div class="section">
 <h3 id="method-num-trees-">Method <code>num_trees()</code><a class="anchor" aria-label="anchor" href="#method-num-trees-"></a></h3>
 <p>Return number of trees in each ensemble of a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">num_trees</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -499,7 +464,7 @@ be overwritten.</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-output_dimension"></a><div class="section">
 <h3 id="method-output-dimension-">Method <code>output_dimension()</code><a class="anchor" aria-label="anchor" href="#method-output-dimension-"></a></h3>
 <p>Return output dimension of trees in a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">output_dimension</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -512,12 +477,12 @@ be overwritten.</p><div class="section">
 <h3 id="method-add-forest-with-constant-leaves-">Method <code>add_forest_with_constant_leaves()</code><a class="anchor" aria-label="anchor" href="#method-add-forest-with-constant-leaves-"></a></h3>
 <p>Add a new all-root ensemble to the container, with all of the leaves
 set to the value / vector provided</p><div class="section">
-<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">add_forest_with_constant_leaves</span><span class="op">(</span><span class="va">leaf_value</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-14">Arguments<a class="anchor" aria-label="anchor" href="#arguments-14"></a></h4>
+<h4 id="arguments-13">Arguments<a class="anchor" aria-label="anchor" href="#arguments-13"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>leaf_value</code></dt>
 <dd><p>Value (or vector of values) to initialize root nodes in tree</p></dd>
 
@@ -528,7 +493,7 @@ set to the value / vector provided</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-add_numeric_split_tree"></a><div class="section">
 <h3 id="method-add-numeric-split-tree-">Method <code>add_numeric_split_tree()</code><a class="anchor" aria-label="anchor" href="#method-add-numeric-split-tree-"></a></h3>
 <p>Add a numeric (i.e. X,i &lt;= c) split to a given tree in the ensemble</p><div class="section">
-<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">add_numeric_split_tree</span><span class="op">(</span></span>
 <span>  <span class="va">forest_num</span>,</span>
 <span>  <span class="va">tree_num</span>,</span>
@@ -541,7 +506,7 @@ set to the value / vector provided</p><div class="section">
 </div>
 
 <div class="section">
-<h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
+<h4 id="arguments-14">Arguments<a class="anchor" aria-label="anchor" href="#arguments-14"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>forest_num</code></dt>
 <dd><p>Index of the forest which contains the tree to be split</p></dd>
 
@@ -576,12 +541,12 @@ set to the value / vector provided</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-get_tree_leaves"></a><div class="section">
 <h3 id="method-get-tree-leaves-">Method <code>get_tree_leaves()</code><a class="anchor" aria-label="anchor" href="#method-get-tree-leaves-"></a></h3>
 <p>Retrieve a vector of indices of leaf nodes for a given tree in a given forest</p><div class="section">
-<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
+<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">get_tree_leaves</span><span class="op">(</span><span class="va">forest_num</span>, <span class="va">tree_num</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-16">Arguments<a class="anchor" aria-label="anchor" href="#arguments-16"></a></h4>
+<h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>forest_num</code></dt>
 <dd><p>Index of the forest which contains tree <code>tree_num</code></p></dd>
 
@@ -596,12 +561,12 @@ set to the value / vector provided</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-get_tree_split_counts"></a><div class="section">
 <h3 id="method-get-tree-split-counts-">Method <code>get_tree_split_counts()</code><a class="anchor" aria-label="anchor" href="#method-get-tree-split-counts-"></a></h3>
 <p>Retrieve a vector of split counts for every training set variable in a given tree in a given forest</p><div class="section">
-<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
+<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">get_tree_split_counts</span><span class="op">(</span><span class="va">forest_num</span>, <span class="va">tree_num</span>, <span class="va">num_features</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-17">Arguments<a class="anchor" aria-label="anchor" href="#arguments-17"></a></h4>
+<h4 id="arguments-16">Arguments<a class="anchor" aria-label="anchor" href="#arguments-16"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>forest_num</code></dt>
 <dd><p>Index of the forest which contains tree <code>tree_num</code></p></dd>
 
@@ -620,12 +585,12 @@ set to the value / vector provided</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-get_forest_split_counts"></a><div class="section">
 <h3 id="method-get-forest-split-counts-">Method <code>get_forest_split_counts()</code><a class="anchor" aria-label="anchor" href="#method-get-forest-split-counts-"></a></h3>
 <p>Retrieve a vector of split counts for every training set variable in a given forest</p><div class="section">
-<h4 id="usage-21">Usage<a class="anchor" aria-label="anchor" href="#usage-21"></a></h4>
+<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">get_forest_split_counts</span><span class="op">(</span><span class="va">forest_num</span>, <span class="va">num_features</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-18">Arguments<a class="anchor" aria-label="anchor" href="#arguments-18"></a></h4>
+<h4 id="arguments-17">Arguments<a class="anchor" aria-label="anchor" href="#arguments-17"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>forest_num</code></dt>
 <dd><p>Index of the forest for which split counts will be retrieved</p></dd>
 
@@ -640,8 +605,24 @@ set to the value / vector provided</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-get_aggregate_split_counts"></a><div class="section">
 <h3 id="method-get-aggregate-split-counts-">Method <code>get_aggregate_split_counts()</code><a class="anchor" aria-label="anchor" href="#method-get-aggregate-split-counts-"></a></h3>
 <p>Retrieve a vector of split counts for every training set variable in a given forest, aggregated across ensembles and trees</p><div class="section">
-<h4 id="usage-22">Usage<a class="anchor" aria-label="anchor" href="#usage-22"></a></h4>
+<h4 id="usage-21">Usage<a class="anchor" aria-label="anchor" href="#usage-21"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">get_aggregate_split_counts</span><span class="op">(</span><span class="va">num_features</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-18">Arguments<a class="anchor" aria-label="anchor" href="#arguments-18"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>num_features</code></dt>
+<dd><p>Total number of features in the training set</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-ForestSamples-get_granular_split_counts"></a><div class="section">
+<h3 id="method-get-granular-split-counts-">Method <code>get_granular_split_counts()</code><a class="anchor" aria-label="anchor" href="#method-get-granular-split-counts-"></a></h3>
+<p>Retrieve a vector of split counts for every training set variable in a given forest, reported separately for each ensemble and tree</p><div class="section">
+<h4 id="usage-22">Usage<a class="anchor" aria-label="anchor" href="#usage-22"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">get_granular_split_counts</span><span class="op">(</span><span class="va">num_features</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -653,31 +634,15 @@ set to the value / vector provided</p><div class="section">
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-ForestSamples-get_granular_split_counts"></a><div class="section">
-<h3 id="method-get-granular-split-counts-">Method <code>get_granular_split_counts()</code><a class="anchor" aria-label="anchor" href="#method-get-granular-split-counts-"></a></h3>
-<p>Retrieve a vector of split counts for every training set variable in a given forest, reported separately for each ensemble and tree</p><div class="section">
-<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">get_granular_split_counts</span><span class="op">(</span><span class="va">num_features</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-20">Arguments<a class="anchor" aria-label="anchor" href="#arguments-20"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>num_features</code></dt>
-<dd><p>Total number of features in the training set</p></dd>
-
-
-</dl><p></p></div>
-</div>
-
 </div><p></p><hr><a id="method-ForestSamples-ensemble_tree_max_depth"></a><div class="section">
 <h3 id="method-ensemble-tree-max-depth-">Method <code>ensemble_tree_max_depth()</code><a class="anchor" aria-label="anchor" href="#method-ensemble-tree-max-depth-"></a></h3>
 <p>Maximum depth of a specific tree in a specific ensemble in a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-24">Usage<a class="anchor" aria-label="anchor" href="#usage-24"></a></h4>
+<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">ensemble_tree_max_depth</span><span class="op">(</span><span class="va">ensemble_num</span>, <span class="va">tree_num</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-21">Arguments<a class="anchor" aria-label="anchor" href="#arguments-21"></a></h4>
+<h4 id="arguments-20">Arguments<a class="anchor" aria-label="anchor" href="#arguments-20"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>ensemble_num</code></dt>
 <dd><p>Ensemble number</p></dd>
 
@@ -696,12 +661,12 @@ set to the value / vector provided</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-average_ensemble_max_depth"></a><div class="section">
 <h3 id="method-average-ensemble-max-depth-">Method <code>average_ensemble_max_depth()</code><a class="anchor" aria-label="anchor" href="#method-average-ensemble-max-depth-"></a></h3>
 <p>Average the maximum depth of each tree in a given ensemble in a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-25">Usage<a class="anchor" aria-label="anchor" href="#usage-25"></a></h4>
+<h4 id="usage-24">Usage<a class="anchor" aria-label="anchor" href="#usage-24"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">average_ensemble_max_depth</span><span class="op">(</span><span class="va">ensemble_num</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-22">Arguments<a class="anchor" aria-label="anchor" href="#arguments-22"></a></h4>
+<h4 id="arguments-21">Arguments<a class="anchor" aria-label="anchor" href="#arguments-21"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>ensemble_num</code></dt>
 <dd><p>Ensemble number</p></dd>
 
@@ -716,7 +681,7 @@ set to the value / vector provided</p><div class="section">
 </div><p></p><hr><a id="method-ForestSamples-average_max_depth"></a><div class="section">
 <h3 id="method-average-max-depth-">Method <code>average_max_depth()</code><a class="anchor" aria-label="anchor" href="#method-average-max-depth-"></a></h3>
 <p>Average the maximum depth of each tree in each ensemble in a <code>ForestContainer</code> object</p><div class="section">
-<h4 id="usage-26">Usage<a class="anchor" aria-label="anchor" href="#usage-26"></a></h4>
+<h4 id="usage-25">Usage<a class="anchor" aria-label="anchor" href="#usage-25"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">average_max_depth</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 

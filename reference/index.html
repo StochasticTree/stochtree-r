@@ -451,16 +451,22 @@
         <dd>Preprocess BCF parameter list. Override defaults with any provided parameters.</dd>
       </dl><dl><dt>
 
-          <code><a href="computeForestLeafIndices.html">computeForestLeafIndices()</a></code>
-
-        </dt>
-        <dd>Compute and return a vector representation of a forest's leaf predictions for every observation in a dataset. The vector has a "column-major" format that can be easily re-represented as as a CSC sparse matrix: elements are organized so that the first <code>n</code> elements correspond to leaf predictions for all <code>n</code> observations in a dataset for the first tree in an ensemble, the next <code>n</code> elements correspond to predictions for the second tree and so on. The "data" for each element corresponds to a uniquely mapped column index that corresponds to a single leaf of a single tree (i.e. if tree 1 has 3 leaves, its column indices range from 0 to 2, and then tree 2's leaf indices begin at 3, etc...).</dd>
-      </dl><dl><dt>
-
           <code><a href="computeMaxLeafIndex.html">computeMaxLeafIndex()</a></code>
 
         </dt>
         <dd>Compute and return the largest possible leaf index computable by <code>computeForestLeafIndices</code> for the forests in a designated forest sample container.</dd>
+      </dl><dl><dt>
+
+          <code><a href="computeForestLeafIndices.html">computeForestLeafIndices()</a></code>
+
+        </dt>
+        <dd>Compute vector of forest leaf indices</dd>
+      </dl><dl><dt>
+
+          <code><a href="computeForestLeafVariances.html">computeForestLeafVariances()</a></code>
+
+        </dt>
+        <dd>Compute vector of forest leaf scale parameters</dd>
       </dl></div><div class="section level2">
 
       <h3 id="random-effects">Random Effects<a class="anchor" aria-label="anchor" href="#random-effects"></a></h3>

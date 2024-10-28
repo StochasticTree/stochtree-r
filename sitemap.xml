@@ -27,6 +27,7 @@
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/bcf.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/calibrate_inverse_gamma_error_variance.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/computeForestLeafIndices.html</loc></url>
+<url><loc>https://stochastictree.github.io/stochtree-r/reference/computeForestLeafVariances.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/computeMaxLeafIndex.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/convertBARTModelToJson.html</loc></url>
 <url><loc>https://stochastictree.github.io/stochtree-r/reference/convertBCFModelToJson.html</loc></url>
