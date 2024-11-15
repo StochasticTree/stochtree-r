@@ -94,6 +94,8 @@
 <li><p><a href="#method-ForestSamples-ensemble_tree_max_depth"><code>ForestSamples$ensemble_tree_max_depth()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-average_ensemble_max_depth"><code>ForestSamples$average_ensemble_max_depth()</code></a></p></li>
 <li><p><a href="#method-ForestSamples-average_max_depth"><code>ForestSamples$average_max_depth()</code></a></p></li>
+<li><p><a href="#method-ForestSamples-num_leaves"><code>ForestSamples$num_leaves()</code></a></p></li>
+<li><p><a href="#method-ForestSamples-sum_leaves_squared"><code>ForestSamples$sum_leaves_squared()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-ForestSamples-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a new ForestContainer object.</p><div class="section">
@@ -717,6 +719,46 @@ set to the value / vector provided</p><div class="section">
 
 <div class="section">
 <h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
+<p>Average maximum depth</p>
+</div>
+
+</div><p></p><hr><a id="method-ForestSamples-num_leaves"></a><div class="section">
+<h3 id="method-num-leaves-">Method <code>num_leaves()</code><a class="anchor" aria-label="anchor" href="#method-num-leaves-"></a></h3>
+<p>Number of leaves in a given ensemble in a <code>ForestContainer</code> object</p><div class="section">
+<h4 id="usage-27">Usage<a class="anchor" aria-label="anchor" href="#usage-27"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">num_leaves</span><span class="op">(</span><span class="va">forest_num</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-23">Arguments<a class="anchor" aria-label="anchor" href="#arguments-23"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>forest_num</code></dt>
+<dd><p>Index of the ensemble to be queried</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
+<p>Count of leaves in the ensemble stored at <code>forest_num</code></p>
+</div>
+
+</div><p></p><hr><a id="method-ForestSamples-sum_leaves_squared"></a><div class="section">
+<h3 id="method-sum-leaves-squared-">Method <code>sum_leaves_squared()</code><a class="anchor" aria-label="anchor" href="#method-sum-leaves-squared-"></a></h3>
+<p>Sum of squared (raw) leaf values in a given ensemble in a <code>ForestContainer</code> object</p><div class="section">
+<h4 id="usage-28">Usage<a class="anchor" aria-label="anchor" href="#usage-28"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ForestSamples</span><span class="op">$</span><span class="fu">sum_leaves_squared</span><span class="op">(</span><span class="va">forest_num</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-24">Arguments<a class="anchor" aria-label="anchor" href="#arguments-24"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>forest_num</code></dt>
+<dd><p>Index of the ensemble to be queried</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-16">Returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
 <p>Average maximum depth</p>
 </div>
 
