@@ -10,7 +10,8 @@ articles:
   ModelSerialization: ModelSerialization.html
   MultiChain: MultiChain.html
   PriorCalibration: PriorCalibration.html
-last_built: 2024-11-15T04:28Z
+  TreeInspection: TreeInspection.html
+last_built: 2024-11-15T08:29Z
 urls:
   reference: https://stochastictree.github.io/stochtree-r/reference
   article: https://stochastictree.github.io/stochtree-r/articles

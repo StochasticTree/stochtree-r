@@ -44,6 +44,7 @@
     <li><a class="dropdown-item" href="../articles/ModelSerialization.html">Model Serialization in StochTree</a></li>
     <li><a class="dropdown-item" href="../articles/PriorCalibration.html">Prior Calibration Approaches for Parametric Components of Stochastic Tree Ensembles</a></li>
     <li><a class="dropdown-item" href="../articles/EnsembleKernel.html">Kernel Methods from Tree Ensembles in StochTree</a></li>
+    <li><a class="dropdown-item" href="../articles/TreeInspection.html">Deeper Dive on Sampled Forests in StochTree</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Prototype Interface</h6></li>
     <li><a class="dropdown-item" href="../articles/CustomSamplingRoutine.html">Custom Sampling Routines in StochTree</a></li>
@@ -210,7 +211,7 @@ classical Gaussian Process.</p>
 <p>Assess the RMSE</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">yhat_mean_test</span> <span class="op">-</span> <span class="va">y_test</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.08498006</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.09334566</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -287,7 +288,7 @@ classical Gaussian Process.</p>
 <p>Assess the RMSE</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">yhat_mean_test</span> <span class="op">-</span> <span class="va">y_test</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 5.049257</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 4.927223</span></span></code></pre></div>
 <p>While the use case of a BART kernel for classical kriging is perhaps
 unclear without more empirical investigation, we will see in a later
 vignette that the kernel approach can be very beneficial for causal
