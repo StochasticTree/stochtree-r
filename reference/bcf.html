@@ -158,6 +158,7 @@ that were not in the training set.</p></dd>
 <li><p><code>random_seed</code> Integer parameterizing the C++ random number generator. If not specified, the C++ random number generator is seeded according to <code>std::random_device</code>.</p></li>
 <li><p><code>keep_burnin</code> Whether or not "burnin" samples should be included in cached predictions. Default <code>FALSE</code>. Ignored if <code>num_mcmc = 0</code>.</p></li>
 <li><p><code>keep_gfr</code> Whether or not "grow-from-root" samples should be included in cached predictions. Default <code>FALSE</code>. Ignored if <code>num_mcmc = 0</code>.</p></li>
+<li><p><code>standardize</code> Whether or not to standardize the outcome (and store the offset / scale in the model object). Default: <code>TRUE</code>.</p></li>
 <li><p><code>verbose</code> Whether or not to print progress during the sampling loops. Default: <code>FALSE</code>.</p></li>
 <li><p><code>sample_sigma_global</code> Whether or not to update the <code>sigma^2</code> global error variance parameter based on <code>IG(a_global, b_global)</code>. Default: <code>TRUE</code>.</p></li>
 </ul><p><strong>2. Prognostic Forest Parameters</strong></p><ul><li><p><code>num_trees_mu</code> Number of trees in the prognostic forest. Default: <code>200</code>.</p></li>
