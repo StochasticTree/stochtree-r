@@ -8,8 +8,8 @@
 <title>Running Multiple Chains (Sequentially or in Parallel) in StochTree • stochtree</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Running Multiple Chains (Sequentially or in Parallel) in StochTree">
 </head>
 <body>
@@ -285,6 +285,117 @@ values.</p>
 <span><span class="op">}</span></span></code></pre></div>
 <p><img src="MultiChain_files/figure-html/unnamed-chunk-15-1.png" width="700"><img src="MultiChain_files/figure-html/unnamed-chunk-15-2.png" width="700"></p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="warmstarting-multiple-chains-in-parallel">Warmstarting Multiple Chains in Parallel<a class="anchor" aria-label="anchor" href="#warmstarting-multiple-chains-in-parallel"></a>
+</h3>
+<p>In the above example, we ran multiple parallel chains with each MCMC
+sampler starting from a “root” forest. Consider instead the “warmstart”
+approach of <span class="citation">He and Hahn (2023)</span>, where
+forests are sampled using the fast “grow-from-root” (GFR) algorithm and
+then several MCMC chains are run using different GFR forests.</p>
+<p>We use the same high-level parameters as in the parallel demo.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">num_chains</span> <span class="op">&lt;-</span> <span class="fl">4</span></span>
+<span><span class="va">num_gfr</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">num_burnin</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span><span class="va">num_mcmc</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
+<span><span class="va">num_trees</span> <span class="op">&lt;-</span> <span class="fl">100</span></span></code></pre></div>
+<p>First, we sample this model using the grow-from-root algorithm in the
+main R session for several iterations (we will use these forests to see
+independent parallel chains in a moment).</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">xbart_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_global <span class="op">=</span> <span class="cn">T</span>, sample_sigma_leaf <span class="op">=</span> <span class="cn">T</span>, </span>
+<span>                     num_trees_mean <span class="op">=</span> <span class="va">num_trees</span><span class="op">)</span></span>
+<span><span class="va">xbart_model</span> <span class="op">&lt;-</span> <span class="fu">stochtree</span><span class="fu">::</span><span class="fu"><a href="../reference/bart.html">bart</a></span><span class="op">(</span></span>
+<span>    X_train <span class="op">=</span> <span class="va">X_train</span>, W_train <span class="op">=</span> <span class="va">W_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, X_test <span class="op">=</span> <span class="va">X_test</span>, W_test <span class="op">=</span> <span class="va">W_test</span>, </span>
+<span>    num_gfr <span class="op">=</span> <span class="va">num_gfr</span>, num_burnin <span class="op">=</span> <span class="fl">0</span>, num_mcmc <span class="op">=</span> <span class="fl">0</span>, params <span class="op">=</span> <span class="va">xbart_params</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">xbart_model_string</span> <span class="op">&lt;-</span> <span class="fu">stochtree</span><span class="fu">::</span><span class="fu"><a href="../reference/saveBARTModelToJsonString.html">saveBARTModelToJsonString</a></span><span class="op">(</span><span class="va">xbart_model</span><span class="op">)</span></span></code></pre></div>
+<p>In order to run this sampler in parallel, a parallel backend must be
+registered in your R environment. The code below will register a
+parallel backend with access to as many cores are available on your
+machine. Note that we do not <strong>evaluate</strong> the code snippet
+below in order to interact nicely with CRAN / Github Actions
+environments.</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ncores</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">cl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/parallel/makeCluster.html" class="external-link">makeCluster</a></span><span class="op">(</span><span class="va">ncores</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/doParallel/man/registerDoParallel.html" class="external-link">registerDoParallel</a></span><span class="op">(</span><span class="va">cl</span><span class="op">)</span></span></code></pre></div>
+<p>Note that the <code>bartmodel</code> object contains external
+pointers to forests created by the <code>stochtree</code> shared object,
+and when <code><a href="../reference/bart.html">stochtree::bart()</a></code> is run in parallel on
+independent subprocesses, these pointers are not generally accessible in
+the session that kicked off the parallel run.</p>
+<p>To overcome this, you can return a JSON representation of a
+<code>bartmodel</code> in memory and combine them into a single
+in-memory <code>bartmodel</code> object.</p>
+<p>The first step of this process is to run the sampler in parallel,
+storing the resulting BART JSON strings in a list.</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bart_model_outputs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/foreach/man/foreach.html" class="external-link">foreach</a></span> <span class="op">(</span>i <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_chains</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/foreach/man/foreach.html" class="external-link">%dopar%</a></span> <span class="op">{</span></span>
+<span>  <span class="va">random_seed</span> <span class="op">&lt;-</span> <span class="va">i</span></span>
+<span>  <span class="va">bart_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sample_sigma_global <span class="op">=</span> <span class="cn">T</span>, sample_sigma_leaf <span class="op">=</span> <span class="cn">T</span>, </span>
+<span>                      num_trees_mean <span class="op">=</span> <span class="va">num_trees</span>, random_seed <span class="op">=</span> <span class="va">random_seed</span><span class="op">)</span></span>
+<span>  <span class="va">bart_model</span> <span class="op">&lt;-</span> <span class="fu">stochtree</span><span class="fu">::</span><span class="fu"><a href="../reference/bart.html">bart</a></span><span class="op">(</span></span>
+<span>      X_train <span class="op">=</span> <span class="va">X_train</span>, W_train <span class="op">=</span> <span class="va">W_train</span>, y_train <span class="op">=</span> <span class="va">y_train</span>, X_test <span class="op">=</span> <span class="va">X_test</span>, W_test <span class="op">=</span> <span class="va">W_test</span>, </span>
+<span>      num_gfr <span class="op">=</span> <span class="fl">0</span>, num_burnin <span class="op">=</span> <span class="va">num_burnin</span>, num_mcmc <span class="op">=</span> <span class="va">num_mcmc</span>, params <span class="op">=</span> <span class="va">bart_params</span>, </span>
+<span>      previous_model_json <span class="op">=</span> <span class="va">xbart_model_string</span>, warmstart_sample_num <span class="op">=</span> <span class="va">num_gfr</span> <span class="op">-</span> <span class="va">i</span> <span class="op">+</span> <span class="fl">1</span>, </span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="va">bart_model_string</span> <span class="op">&lt;-</span> <span class="fu">stochtree</span><span class="fu">::</span><span class="fu"><a href="../reference/saveBARTModelToJsonString.html">saveBARTModelToJsonString</a></span><span class="op">(</span><span class="va">bart_model</span><span class="op">)</span></span>
+<span>  <span class="va">y_hat_test</span> <span class="op">&lt;-</span> <span class="va">bart_model</span><span class="op">$</span><span class="va">y_hat_test</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>model<span class="op">=</span><span class="va">bart_model_string</span>, yhat<span class="op">=</span><span class="va">y_hat_test</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Close the parallel cluster (not evaluated here, as explained
+above).</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/parallel/makeCluster.html" class="external-link">stopCluster</a></span><span class="op">(</span><span class="va">cl</span><span class="op">)</span></span></code></pre></div>
+<p>Now, if we want to combine the forests from each of these BART models
+into a single forest, we can do so as follows</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bart_model_strings</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">bart_model_yhats</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="cn">NA</span>, nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">y_test</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="va">num_chains</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">bart_model_outputs</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">bart_model_strings</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">bart_model_outputs</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">model</span></span>
+<span>    <span class="va">bart_model_yhats</span><span class="op">[</span>,<span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums-methods.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">bart_model_outputs</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">yhat</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">combined_bart</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createBARTModelFromCombinedJsonString.html">createBARTModelFromCombinedJsonString</a></span><span class="op">(</span><span class="va">bart_model_strings</span><span class="op">)</span></span></code></pre></div>
+<p>We can predict from this combined forest as follows</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">yhat_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">combined_bart</span>, <span class="va">X_test</span>, <span class="va">W_test</span><span class="op">)</span><span class="op">$</span><span class="va">y_hat</span></span></code></pre></div>
+<p>Compare average predictions from each chain to the original
+predictions.</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_chains</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">offset</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">i</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">*</span><span class="va">num_mcmc</span></span>
+<span>    <span class="va">inds_start</span> <span class="op">&lt;-</span> <span class="va">offset</span> <span class="op">+</span> <span class="fl">1</span></span>
+<span>    <span class="va">inds_end</span> <span class="op">&lt;-</span> <span class="va">offset</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums-methods.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">yhat_combined</span><span class="op">[</span>,<span class="va">inds_start</span><span class="op">:</span><span class="va">inds_end</span><span class="op">]</span><span class="op">)</span>, <span class="va">bart_model_yhats</span><span class="op">[</span>,<span class="va">i</span><span class="op">]</span>,</span>
+<span>         xlab <span class="op">=</span> <span class="st">"deserialized"</span>, ylab <span class="op">=</span> <span class="st">"original"</span>, </span>
+<span>         main <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Chain "</span>, <span class="va">i</span>, <span class="st">"\nPredictions"</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lty<span class="op">=</span><span class="fl">3</span>,lwd<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p><img src="MultiChain_files/figure-html/unnamed-chunk-23-1.png" width="700"><img src="MultiChain_files/figure-html/unnamed-chunk-23-2.png" width="700"></p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>And to the true
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>
+values.</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_chains</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">offset</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">i</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">*</span><span class="va">num_mcmc</span></span>
+<span>    <span class="va">inds_start</span> <span class="op">&lt;-</span> <span class="va">offset</span> <span class="op">+</span> <span class="fl">1</span></span>
+<span>    <span class="va">inds_end</span> <span class="op">&lt;-</span> <span class="va">offset</span> <span class="op">+</span> <span class="va">num_mcmc</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums-methods.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">yhat_combined</span><span class="op">[</span>,<span class="va">inds_start</span><span class="op">:</span><span class="va">inds_end</span><span class="op">]</span><span class="op">)</span>, <span class="va">y_test</span>,</span>
+<span>         xlab <span class="op">=</span> <span class="st">"predicted"</span>, ylab <span class="op">=</span> <span class="st">"actual"</span>, </span>
+<span>         main <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Chain "</span>, <span class="va">i</span>, <span class="st">"\nPredictions"</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,col<span class="op">=</span><span class="st">"red"</span>,lty<span class="op">=</span><span class="fl">3</span>,lwd<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p><img src="MultiChain_files/figure-html/unnamed-chunk-24-1.png" width="700"><img src="MultiChain_files/figure-html/unnamed-chunk-24-2.png" width="700"></p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>

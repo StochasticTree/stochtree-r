@@ -8,8 +8,8 @@
 <title>Custom Sampling Routines in StochTree • stochtree</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Custom Sampling Routines in StochTree">
 </head>
 <body>
@@ -238,11 +238,15 @@ model</p>
 <span>                                  <span class="va">num_trees</span>, <span class="va">n</span>, <span class="va">alpha</span>, <span class="va">beta</span>, </span>
 <span>                                  <span class="va">min_samples_leaf</span>, <span class="va">max_depth</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Container of forest samples</span></span>
+<span><span class="co"># "Active forest" (which gets updated by the sample) and </span></span>
+<span><span class="co"># container of forest samples (which is written to when </span></span>
+<span><span class="co"># a sample is not discarded due to burn-in / thinning)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">leaf_regression</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">forest_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
+<span>    <span class="va">active_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForest.html">createForest</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>    <span class="va">forest_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
+<span>    <span class="va">active_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForest.html">createForest</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Prepare to run the sampler</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -256,9 +260,9 @@ model</p>
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_warmstart</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="co"># Sample forest</span></span>
 <span>    <span class="va">forest_model</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
+<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
 <span>        <span class="va">outcome_model_type</span>, <span class="va">leaf_prior_scale</span>, <span class="va">var_weights</span>, </span>
-<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">T</span></span>
+<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">T</span></span>
 <span>    <span class="op">)</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample global variance parameter</span></span>
@@ -268,7 +272,7 @@ model</p>
 <span>    </span>
 <span>    <span class="co"># Sample leaf node variance parameter and update `leaf_prior_scale`</span></span>
 <span>    <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_tau_one_iteration.html">sample_tau_one_iteration</a></span><span class="op">(</span></span>
-<span>        <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span>, <span class="va">i</span><span class="op">-</span><span class="fl">1</span></span>
+<span>        <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span></span>
 <span>    <span class="op">)</span></span>
 <span>    <span class="va">leaf_prior_scale</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="op">}</span></span></code></pre></div>
@@ -278,9 +282,9 @@ leaf scale parameters) with an MCMC sampler</p>
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="va">num_warmstart</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="co"># Sample forest</span></span>
 <span>    <span class="va">forest_model</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
+<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
 <span>        <span class="va">outcome_model_type</span>, <span class="va">leaf_prior_scale</span>, <span class="va">var_weights</span>, </span>
-<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">F</span></span>
+<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">F</span></span>
 <span>    <span class="op">)</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample global variance parameter</span></span>
@@ -290,7 +294,7 @@ leaf scale parameters) with an MCMC sampler</p>
 <span>    </span>
 <span>    <span class="co"># Sample leaf node variance parameter and update `leaf_prior_scale`</span></span>
 <span>    <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_tau_one_iteration.html">sample_tau_one_iteration</a></span><span class="op">(</span></span>
-<span>        <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span>, <span class="va">i</span><span class="op">-</span><span class="fl">1</span></span>
+<span>        <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span></span>
 <span>    <span class="op">)</span></span>
 <span>    <span class="va">leaf_prior_scale</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="op">}</span></span></code></pre></div>
@@ -412,11 +416,15 @@ model</p>
 <span>                                  <span class="va">num_trees</span>, <span class="va">n</span>, <span class="va">alpha</span>, <span class="va">beta</span>, </span>
 <span>                                  <span class="va">min_samples_leaf</span>, <span class="va">max_depth</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Container of forest samples</span></span>
+<span><span class="co"># "Active forest" (which gets updated by the sample) and </span></span>
+<span><span class="co"># container of forest samples (which is written to when </span></span>
+<span><span class="co"># a sample is not discarded due to burn-in / thinning)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">leaf_regression</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">forest_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
+<span>    <span class="va">active_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForest.html">createForest</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>    <span class="va">forest_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
+<span>    <span class="va">active_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForest.html">createForest</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Random effects dataset</span></span>
@@ -454,9 +462,9 @@ model</p>
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_warmstart</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="co"># Sample forest</span></span>
 <span>    <span class="va">forest_model</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
+<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
 <span>        <span class="va">outcome_model_type</span>, <span class="va">leaf_prior_scale</span>, <span class="va">var_weights</span>, </span>
-<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">T</span></span>
+<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">T</span></span>
 <span>    <span class="op">)</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample global variance parameter</span></span>
@@ -466,12 +474,13 @@ model</p>
 <span>    </span>
 <span>    <span class="co"># Sample leaf node variance parameter and update `leaf_prior_scale`</span></span>
 <span>    <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_tau_one_iteration.html">sample_tau_one_iteration</a></span><span class="op">(</span></span>
-<span>        <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span>, <span class="va">i</span><span class="op">-</span><span class="fl">1</span></span>
+<span>        <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span></span>
 <span>    <span class="op">)</span></span>
 <span>    <span class="va">leaf_prior_scale</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample random effects model</span></span>
-<span>    <span class="va">rfx_model</span><span class="op">$</span><span class="fu">sample_random_effect</span><span class="op">(</span><span class="va">rfx_dataset</span>, <span class="va">outcome</span>, <span class="va">rfx_tracker</span>, <span class="va">rfx_samples</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span>, <span class="va">rng</span><span class="op">)</span></span>
+<span>    <span class="va">rfx_model</span><span class="op">$</span><span class="fu">sample_random_effect</span><span class="op">(</span><span class="va">rfx_dataset</span>, <span class="va">outcome</span>, <span class="va">rfx_tracker</span>, <span class="va">rfx_samples</span>, </span>
+<span>                                   <span class="cn">TRUE</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span>, <span class="va">rng</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Pick up from the last GFR forest (and associated global variance /
 leaf scale parameters) with an MCMC sampler</p>
@@ -479,9 +488,9 @@ leaf scale parameters) with an MCMC sampler</p>
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="va">num_warmstart</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="co"># Sample forest</span></span>
 <span>    <span class="va">forest_model</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
+<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
 <span>        <span class="va">outcome_model_type</span>, <span class="va">leaf_prior_scale</span>, <span class="va">var_weights</span>, </span>
-<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">F</span></span>
+<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">F</span></span>
 <span>    <span class="op">)</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample global variance parameter</span></span>
@@ -491,12 +500,13 @@ leaf scale parameters) with an MCMC sampler</p>
 <span>    </span>
 <span>    <span class="co"># Sample leaf node variance parameter and update `leaf_prior_scale`</span></span>
 <span>    <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_tau_one_iteration.html">sample_tau_one_iteration</a></span><span class="op">(</span></span>
-<span>        <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span>, <span class="va">i</span><span class="op">-</span><span class="fl">1</span></span>
+<span>        <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span></span>
 <span>    <span class="op">)</span></span>
 <span>    <span class="va">leaf_prior_scale</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample random effects model</span></span>
-<span>    <span class="va">rfx_model</span><span class="op">$</span><span class="fu">sample_random_effect</span><span class="op">(</span><span class="va">rfx_dataset</span>, <span class="va">outcome</span>, <span class="va">rfx_tracker</span>, <span class="va">rfx_samples</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span>, <span class="va">rng</span><span class="op">)</span></span>
+<span>    <span class="va">rfx_model</span><span class="op">$</span><span class="fu">sample_random_effect</span><span class="op">(</span><span class="va">rfx_dataset</span>, <span class="va">outcome</span>, <span class="va">rfx_tracker</span>, <span class="va">rfx_samples</span>, </span>
+<span>                                   <span class="cn">TRUE</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span>, <span class="va">rng</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Predict and rescale samples</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
@@ -631,11 +641,15 @@ model</p>
 <span>                                  <span class="va">num_trees</span>, <span class="va">n</span>, <span class="va">alpha</span>, <span class="va">beta</span>, </span>
 <span>                                  <span class="va">min_samples_leaf</span>, <span class="va">max_depth</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Container of forest samples</span></span>
+<span><span class="co"># "Active forest" (which gets updated by the sample) and </span></span>
+<span><span class="co"># container of forest samples (which is written to when </span></span>
+<span><span class="co"># a sample is not discarded due to burn-in / thinning)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">leaf_regression</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">forest_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
+<span>    <span class="va">active_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForest.html">createForest</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>    <span class="va">forest_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
+<span>    <span class="va">active_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForest.html">createForest</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Random effects dataset</span></span>
@@ -673,9 +687,9 @@ model</p>
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_warmstart</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="co"># Sample forest</span></span>
 <span>    <span class="va">forest_model</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
+<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
 <span>        <span class="va">outcome_model_type</span>, <span class="va">leaf_prior_scale</span>, <span class="va">var_weights</span>, </span>
-<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">T</span></span>
+<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">T</span></span>
 <span>    <span class="op">)</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample global variance parameter</span></span>
@@ -685,12 +699,13 @@ model</p>
 <span>    </span>
 <span>    <span class="co"># Sample leaf node variance parameter and update `leaf_prior_scale`</span></span>
 <span>    <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_tau_one_iteration.html">sample_tau_one_iteration</a></span><span class="op">(</span></span>
-<span>        <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span>, <span class="va">i</span><span class="op">-</span><span class="fl">1</span></span>
+<span>        <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span></span>
 <span>    <span class="op">)</span></span>
 <span>    <span class="va">leaf_prior_scale</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample random effects model</span></span>
-<span>    <span class="va">rfx_model</span><span class="op">$</span><span class="fu">sample_random_effect</span><span class="op">(</span><span class="va">rfx_dataset</span>, <span class="va">outcome</span>, <span class="va">rfx_tracker</span>, <span class="va">rfx_samples</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span>, <span class="va">rng</span><span class="op">)</span></span>
+<span>    <span class="va">rfx_model</span><span class="op">$</span><span class="fu">sample_random_effect</span><span class="op">(</span><span class="va">rfx_dataset</span>, <span class="va">outcome</span>, <span class="va">rfx_tracker</span>, <span class="va">rfx_samples</span>, </span>
+<span>                                   <span class="cn">TRUE</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span>, <span class="va">rng</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Pick up from the last GFR forest (and associated global variance /
 leaf scale parameters) with an MCMC sampler</p>
@@ -698,9 +713,9 @@ leaf scale parameters) with an MCMC sampler</p>
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="va">num_warmstart</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="co"># Sample forest</span></span>
 <span>    <span class="va">forest_model</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
+<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
 <span>        <span class="va">outcome_model_type</span>, <span class="va">leaf_prior_scale</span>, <span class="va">var_weights</span>, </span>
-<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">F</span></span>
+<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">F</span></span>
 <span>    <span class="op">)</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample global variance parameter</span></span>
@@ -710,12 +725,13 @@ leaf scale parameters) with an MCMC sampler</p>
 <span>    </span>
 <span>    <span class="co"># Sample leaf node variance parameter and update `leaf_prior_scale`</span></span>
 <span>    <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_tau_one_iteration.html">sample_tau_one_iteration</a></span><span class="op">(</span></span>
-<span>        <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span>, <span class="va">i</span><span class="op">-</span><span class="fl">1</span></span>
+<span>        <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">a_leaf</span>, <span class="va">b_leaf</span></span>
 <span>    <span class="op">)</span></span>
 <span>    <span class="va">leaf_prior_scale</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">leaf_scale_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample random effects model</span></span>
-<span>    <span class="va">rfx_model</span><span class="op">$</span><span class="fu">sample_random_effect</span><span class="op">(</span><span class="va">rfx_dataset</span>, <span class="va">outcome</span>, <span class="va">rfx_tracker</span>, <span class="va">rfx_samples</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span>, <span class="va">rng</span><span class="op">)</span></span>
+<span>    <span class="va">rfx_model</span><span class="op">$</span><span class="fu">sample_random_effect</span><span class="op">(</span><span class="va">rfx_dataset</span>, <span class="va">outcome</span>, <span class="va">rfx_tracker</span>, <span class="va">rfx_samples</span>, </span>
+<span>                                   <span class="cn">TRUE</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span>, <span class="va">rng</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Predict and rescale samples</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
@@ -849,11 +865,15 @@ model</p>
 <span>                                  <span class="va">num_trees</span>, <span class="va">n</span>, <span class="va">alpha_bart</span>, <span class="va">beta_bart</span>, </span>
 <span>                                  <span class="va">min_samples_leaf</span>, <span class="va">max_depth</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Container of forest samples</span></span>
+<span><span class="co"># "Active forest" (which gets updated by the sample) and </span></span>
+<span><span class="co"># container of forest samples (which is written to when </span></span>
+<span><span class="co"># a sample is not discarded due to burn-in / thinning)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">leaf_regression</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">forest_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
+<span>    <span class="va">active_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForest.html">createForest</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>    <span class="va">forest_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
+<span>    <span class="va">active_forest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForest.html">createForest</a></span><span class="op">(</span><span class="va">num_trees</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Prepare to run the sampler</p>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
@@ -888,9 +908,9 @@ model</p>
 <span>    </span>
 <span>    <span class="co"># Sample forest</span></span>
 <span>    <span class="va">forest_model</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
+<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
 <span>        <span class="va">outcome_model_type</span>, <span class="va">leaf_prior_scale</span>, <span class="va">var_weights</span>, </span>
-<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">sigma2</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">T</span></span>
+<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">sigma2</span>, <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">T</span></span>
 <span>    <span class="op">)</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample global variance parameter</span></span>
@@ -923,9 +943,9 @@ leaf scale parameters) with an MCMC sampler</p>
 <span>    </span>
 <span>    <span class="co"># Sample forest</span></span>
 <span>    <span class="va">forest_model</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
+<span>        <span class="va">forest_dataset</span>, <span class="va">outcome</span>, <span class="va">forest_samples</span>, <span class="va">active_forest</span>, <span class="va">rng</span>, <span class="va">feature_types</span>, </span>
 <span>        <span class="va">outcome_model_type</span>, <span class="va">leaf_prior_scale</span>, <span class="va">var_weights</span>, </span>
-<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">F</span></span>
+<span>        <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">global_var_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">F</span></span>
 <span>    <span class="op">)</span></span>
 <span>    </span>
 <span>    <span class="co"># Sample global variance parameter</span></span>
@@ -1246,19 +1266,17 @@ model</p>
 <span></span>
 <span><span class="co"># Container of forest samples</span></span>
 <span><span class="va">forest_samples_mu</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees_mu</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
+<span><span class="va">active_forest_mu</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForest.html">createForest</a></span><span class="op">(</span><span class="va">num_trees_mu</span>, <span class="fl">1</span>, <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="va">forest_samples_tau</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForestContainer.html">createForestContainer</a></span><span class="op">(</span><span class="va">num_trees_tau</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
+<span><span class="va">active_forest_tau</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createForest.html">createForest</a></span><span class="op">(</span><span class="va">num_trees_tau</span>, <span class="fl">1</span>, <span class="cn">F</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Initialize the leaves of each tree in the prognostic forest</span></span>
-<span><span class="va">forest_samples_mu</span><span class="op">$</span><span class="fu">set_root_leaves</span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">resid</span><span class="op">)</span> <span class="op">/</span> <span class="va">num_trees_mu</span><span class="op">)</span></span>
-<span><span class="va">forest_samples_mu</span><span class="op">$</span><span class="fu">adjust_residual</span><span class="op">(</span></span>
-<span>    <span class="va">forest_dataset_mu</span>, <span class="va">outcome</span>, <span class="va">forest_model_mu</span>, <span class="cn">F</span>, <span class="fl">0</span>, <span class="cn">F</span></span>
-<span><span class="op">)</span></span>
+<span><span class="va">active_forest_mu</span><span class="op">$</span><span class="fu">prepare_for_sampler</span><span class="op">(</span><span class="va">forest_dataset_mu</span>, <span class="va">outcome</span>, <span class="va">forest_model_mu</span>, <span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">resid</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">active_forest_mu</span><span class="op">$</span><span class="fu">adjust_residual</span><span class="op">(</span><span class="va">forest_dataset_mu</span>, <span class="va">outcome</span>, <span class="va">forest_model_mu</span>, <span class="cn">F</span>, <span class="cn">F</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Initialize the leaves of each tree in the treatment effect forest</span></span>
-<span><span class="va">forest_samples_tau</span><span class="op">$</span><span class="fu">set_root_leaves</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.</span><span class="op">)</span></span>
-<span><span class="va">forest_samples_tau</span><span class="op">$</span><span class="fu">adjust_residual</span><span class="op">(</span></span>
-<span>    <span class="va">forest_dataset_tau</span>, <span class="va">outcome</span>, <span class="va">forest_model_tau</span>, <span class="cn">T</span>, <span class="fl">0</span>, <span class="cn">F</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">active_forest_tau</span><span class="op">$</span><span class="fu">prepare_for_sampler</span><span class="op">(</span><span class="va">forest_dataset_tau</span>, <span class="va">outcome</span>, <span class="va">forest_model_tau</span>, <span class="fl">1</span>, <span class="fl">0.</span><span class="op">)</span></span>
+<span><span class="va">active_forest_tau</span><span class="op">$</span><span class="fu">adjust_residual</span><span class="op">(</span><span class="va">forest_dataset_tau</span>, <span class="va">outcome</span>, <span class="va">forest_model_tau</span>, <span class="cn">T</span>, <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
 <p>Run the grow-from-root sampler to “warm-start” BART, also updating
 the adaptive coding parameter
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>0</mn></msub><annotation encoding="application/x-tex">b_0</annotation></semantics></math>
@@ -1269,9 +1287,10 @@ and
 <span>    <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_gfr</span><span class="op">)</span> <span class="op">{</span></span>
 <span>        <span class="co"># Sample the prognostic forest</span></span>
 <span>        <span class="va">forest_model_mu</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>            <span class="va">forest_dataset_mu</span>, <span class="va">outcome</span>, <span class="va">forest_samples_mu</span>, <span class="va">rng</span>, </span>
+<span>            <span class="va">forest_dataset_mu</span>, <span class="va">outcome</span>, <span class="va">forest_samples_mu</span>, <span class="va">active_forest_mu</span>, <span class="va">rng</span>, </span>
 <span>            <span class="va">feature_types_mu</span>, <span class="fl">0</span>, <span class="va">current_leaf_scale_mu</span>, <span class="va">variable_weights_mu</span>, </span>
-<span>            <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">current_sigma2</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">T</span>, pre_initialized <span class="op">=</span> <span class="cn">T</span></span>
+<span>            <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">current_sigma2</span>, <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">T</span>, </span>
+<span>            pre_initialized <span class="op">=</span> <span class="cn">T</span></span>
 <span>        <span class="op">)</span></span>
 <span>        </span>
 <span>        <span class="co"># Sample variance parameters (if requested)</span></span>
@@ -1282,14 +1301,15 @@ and
 <span></span>
 <span>        <span class="co"># Sample the treatment forest</span></span>
 <span>        <span class="va">forest_model_tau</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>            <span class="va">forest_dataset_tau</span>, <span class="va">outcome</span>, <span class="va">forest_samples_tau</span>, <span class="va">rng</span>, </span>
+<span>            <span class="va">forest_dataset_tau</span>, <span class="va">outcome</span>, <span class="va">forest_samples_tau</span>, <span class="va">active_forest_tau</span>, <span class="va">rng</span>, </span>
 <span>            <span class="va">feature_types_tau</span>, <span class="fl">1</span>, <span class="va">current_leaf_scale_tau</span>, <span class="va">variable_weights_tau</span>, </span>
-<span>            <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">current_sigma2</span>, <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">T</span>, pre_initialized <span class="op">=</span> <span class="cn">T</span></span>
+<span>            <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">current_sigma2</span>, <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">T</span>, </span>
+<span>            pre_initialized <span class="op">=</span> <span class="cn">T</span></span>
 <span>        <span class="op">)</span></span>
 <span>        </span>
 <span>        <span class="co"># Sample adaptive coding parameters</span></span>
-<span>        <span class="va">mu_x_raw</span> <span class="op">&lt;-</span> <span class="va">forest_samples_mu</span><span class="op">$</span><span class="fu">predict_raw_single_forest</span><span class="op">(</span><span class="va">forest_dataset_mu</span>, <span class="va">i</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
-<span>        <span class="va">tau_x_raw</span> <span class="op">&lt;-</span> <span class="va">forest_samples_tau</span><span class="op">$</span><span class="fu">predict_raw_single_forest</span><span class="op">(</span><span class="va">forest_dataset_tau</span>, <span class="va">i</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span>        <span class="va">mu_x_raw</span> <span class="op">&lt;-</span> <span class="va">active_forest_mu</span><span class="op">$</span><span class="fu">predict_raw</span><span class="op">(</span><span class="va">forest_dataset_mu</span><span class="op">)</span></span>
+<span>        <span class="va">tau_x_raw</span> <span class="op">&lt;-</span> <span class="va">active_forest_tau</span><span class="op">$</span><span class="fu">predict_raw</span><span class="op">(</span><span class="va">forest_dataset_tau</span><span class="op">)</span></span>
 <span>        <span class="va">s_tt0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">tau_x_raw</span><span class="op">*</span><span class="va">tau_x_raw</span><span class="op">*</span><span class="op">(</span><span class="va">Z</span><span class="op">==</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span>        <span class="va">s_tt1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">tau_x_raw</span><span class="op">*</span><span class="va">tau_x_raw</span><span class="op">*</span><span class="op">(</span><span class="va">Z</span><span class="op">==</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span>        <span class="va">partial_resid_mu</span> <span class="op">&lt;-</span> <span class="va">resid</span> <span class="op">-</span> <span class="va">mu_x_raw</span></span>
@@ -1301,6 +1321,7 @@ and
 <span>                             <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">current_sigma2</span><span class="op">/</span><span class="op">(</span><span class="va">s_tt1</span> <span class="op">+</span> <span class="fl">2</span><span class="op">*</span><span class="va">current_sigma2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span>        <span class="va">tau_basis</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fl">1</span><span class="op">-</span><span class="va">Z</span><span class="op">)</span><span class="op">*</span><span class="va">current_b_0</span> <span class="op">+</span> <span class="va">Z</span><span class="op">*</span><span class="va">current_b_1</span></span>
 <span>        <span class="va">forest_dataset_tau</span><span class="op">$</span><span class="fu">update_basis</span><span class="op">(</span><span class="va">tau_basis</span><span class="op">)</span></span>
+<span>        <span class="va">forest_model_tau</span><span class="op">$</span><span class="fu">propagate_basis_update</span><span class="op">(</span><span class="va">forest_dataset_tau</span>, <span class="va">outcome</span>, <span class="va">active_forest_tau</span><span class="op">)</span></span>
 <span>        <span class="va">b_0_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">current_b_0</span></span>
 <span>        <span class="va">b_1_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">current_b_1</span></span>
 <span>        </span>
@@ -1316,9 +1337,9 @@ leaf scale parameters) with an MCMC sampler</p>
 <span>    <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">)</span> <span class="op">{</span></span>
 <span>        <span class="co"># Sample the prognostic forest</span></span>
 <span>        <span class="va">forest_model_mu</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>            <span class="va">forest_dataset_mu</span>, <span class="va">outcome</span>, <span class="va">forest_samples_mu</span>, <span class="va">rng</span>, <span class="va">feature_types_mu</span>, </span>
+<span>            <span class="va">forest_dataset_mu</span>, <span class="va">outcome</span>, <span class="va">forest_samples_mu</span>, <span class="va">active_forest_mu</span>, <span class="va">rng</span>, <span class="va">feature_types_mu</span>, </span>
 <span>            <span class="fl">0</span>, <span class="va">current_leaf_scale_mu</span>, <span class="va">variable_weights_mu</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">current_sigma2</span>, </span>
-<span>            <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">F</span>, pre_initialized <span class="op">=</span> <span class="cn">T</span></span>
+<span>            <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">F</span>, pre_initialized <span class="op">=</span> <span class="cn">T</span></span>
 <span>        <span class="op">)</span></span>
 <span>        </span>
 <span>        <span class="co"># Sample global variance parameter</span></span>
@@ -1327,14 +1348,14 @@ leaf scale parameters) with an MCMC sampler</p>
 <span></span>
 <span>        <span class="co"># Sample the treatment forest</span></span>
 <span>        <span class="va">forest_model_tau</span><span class="op">$</span><span class="fu">sample_one_iteration</span><span class="op">(</span></span>
-<span>            <span class="va">forest_dataset_tau</span>, <span class="va">outcome</span>, <span class="va">forest_samples_tau</span>, <span class="va">rng</span>, <span class="va">feature_types_tau</span>, </span>
+<span>            <span class="va">forest_dataset_tau</span>, <span class="va">outcome</span>, <span class="va">forest_samples_tau</span>, <span class="va">active_forest_tau</span>, <span class="va">rng</span>, <span class="va">feature_types_tau</span>, </span>
 <span>            <span class="fl">1</span>, <span class="va">current_leaf_scale_tau</span>, <span class="va">variable_weights_tau</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="va">current_sigma2</span>, </span>
-<span>            <span class="va">cutpoint_grid_size</span>, gfr <span class="op">=</span> <span class="cn">F</span>, pre_initialized <span class="op">=</span> <span class="cn">T</span></span>
+<span>            <span class="va">cutpoint_grid_size</span>, keep_forest <span class="op">=</span> <span class="cn">T</span>, gfr <span class="op">=</span> <span class="cn">F</span>, pre_initialized <span class="op">=</span> <span class="cn">T</span></span>
 <span>        <span class="op">)</span></span>
 <span>        </span>
 <span>        <span class="co"># Sample coding parameters</span></span>
-<span>        <span class="va">mu_x_raw</span> <span class="op">&lt;-</span> <span class="va">forest_samples_mu</span><span class="op">$</span><span class="fu">predict_raw_single_forest</span><span class="op">(</span><span class="va">forest_dataset_mu</span>, <span class="va">i</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
-<span>        <span class="va">tau_x_raw</span> <span class="op">&lt;-</span> <span class="va">forest_samples_tau</span><span class="op">$</span><span class="fu">predict_raw_single_forest</span><span class="op">(</span><span class="va">forest_dataset_tau</span>, <span class="va">i</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span>        <span class="va">mu_x_raw</span> <span class="op">&lt;-</span> <span class="va">active_forest_mu</span><span class="op">$</span><span class="fu">predict_raw</span><span class="op">(</span><span class="va">forest_dataset_mu</span><span class="op">)</span></span>
+<span>        <span class="va">tau_x_raw</span> <span class="op">&lt;-</span> <span class="va">active_forest_tau</span><span class="op">$</span><span class="fu">predict_raw</span><span class="op">(</span><span class="va">forest_dataset_tau</span><span class="op">)</span></span>
 <span>        <span class="va">s_tt0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">tau_x_raw</span><span class="op">*</span><span class="va">tau_x_raw</span><span class="op">*</span><span class="op">(</span><span class="va">Z</span><span class="op">==</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span>        <span class="va">s_tt1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">tau_x_raw</span><span class="op">*</span><span class="va">tau_x_raw</span><span class="op">*</span><span class="op">(</span><span class="va">Z</span><span class="op">==</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span>        <span class="va">partial_resid_mu</span> <span class="op">&lt;-</span> <span class="va">resid</span> <span class="op">-</span> <span class="va">mu_x_raw</span></span>
@@ -1346,6 +1367,7 @@ leaf scale parameters) with an MCMC sampler</p>
 <span>                             <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">current_sigma2</span><span class="op">/</span><span class="op">(</span><span class="va">s_tt1</span> <span class="op">+</span> <span class="fl">2</span><span class="op">*</span><span class="va">current_sigma2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span>        <span class="va">tau_basis</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fl">1</span><span class="op">-</span><span class="va">Z</span><span class="op">)</span><span class="op">*</span><span class="va">current_b_0</span> <span class="op">+</span> <span class="va">Z</span><span class="op">*</span><span class="va">current_b_1</span></span>
 <span>        <span class="va">forest_dataset_tau</span><span class="op">$</span><span class="fu">update_basis</span><span class="op">(</span><span class="va">tau_basis</span><span class="op">)</span></span>
+<span>        <span class="va">forest_model_tau</span><span class="op">$</span><span class="fu">propagate_basis_update</span><span class="op">(</span><span class="va">forest_dataset_tau</span>, <span class="va">outcome</span>, <span class="va">active_forest_tau</span><span class="op">)</span></span>
 <span>        <span class="va">b_0_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">current_b_0</span></span>
 <span>        <span class="va">b_1_samples</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">current_b_1</span></span>
 <span></span>
@@ -1384,10 +1406,10 @@ leaf scale parameters) with an MCMC sampler</p>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_xbcf_plot-3.png" width="700"></p>
 <div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">tau_hat</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="va">num_gfr</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="va">tau_x</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.282934</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.264747</span></span></code></pre></div>
 <p>Inspect the warm start BART results</p>
 <div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sigma_samples</span><span class="op">[</span><span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span>, ylab<span class="op">=</span><span class="st">"sigma^2"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sigma2_samples</span><span class="op">[</span><span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span>, ylab<span class="op">=</span><span class="st">"sigma^2"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_warm_start_plot-1.png" width="700"></p>
 <div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">mu_hat</span><span class="op">[</span>,<span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span><span class="op">)</span>, <span class="va">mu_x</span>, pch<span class="op">=</span><span class="fl">16</span>, cex<span class="op">=</span><span class="fl">0.75</span>, </span>
@@ -1401,7 +1423,7 @@ leaf scale parameters) with an MCMC sampler</p>
 <p><img src="CustomSamplingRoutine_files/figure-html/bcf_warm_start_plot-3.png" width="700"></p>
 <div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans</a></span><span class="op">(</span><span class="va">tau_hat</span><span class="op">[</span>,<span class="op">(</span><span class="va">num_gfr</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">:</span><span class="va">num_samples</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="va">tau_x</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.3074347</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.320933</span></span></code></pre></div>
 <p>Inspect the “adaptive coding” parameters
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>0</mn></msub><annotation encoding="application/x-tex">b_0</annotation></semantics></math>
 and
