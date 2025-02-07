@@ -1,5 +1,3 @@
-# StochasticTree R Package Documentation
+# ARCHIVED
 
-This is documentation repository, which builds and publishes 
-docs for the [stochtree R package](https://stochastictree.github.io/stochtree-r/). 
-The source code for the R package (as well as Python and C++) is available at https://github.com/StochasticTree/stochtree
+Please see https://stochtree.ai/R_docs/pkgdown/index.html for complete R documentation. This repo used to build and serve the R documentation as a standalone github pages site. Now, the documentation is centralized at https://stochtree.ai/ for the R, Python, and C++ interfaces.
